@@ -32,6 +32,10 @@ public class Grant {
     private Person pi;
     private List<Person> copis;
 
+    private String school; //could be enum?
+    private String department;
+    private String organizationalUnit;
+    
     public enum  status {
         ACTIVE,
         PRE_AWARD,
@@ -132,5 +136,27 @@ public class Grant {
         this.copis = copis;
     }
 
+    public String getSchool() {
+        return school;
+    }
 
+    public void setSchool(String school) {
+        this.school = school;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public String getOrganizationalUnit() {
+        return organizationalUnit;
+    }
+
+    public void setOrganizationalUnit(String organizationalUnit) {
+        this.organizationalUnit = organizationalUnit;
+    }
 }
