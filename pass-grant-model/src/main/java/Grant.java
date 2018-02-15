@@ -35,7 +35,7 @@ public class Grant {
     private String school; //could be enum?
     private String department;
     private String organizationalUnit;
-    
+
     public enum  status {
         ACTIVE,
         PRE_AWARD,
