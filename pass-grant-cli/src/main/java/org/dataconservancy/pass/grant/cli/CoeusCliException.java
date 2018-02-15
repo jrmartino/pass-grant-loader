@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataconservancy.pass.grant.cli;
 
-public class Identifier {
-    private String idType;
-    private String id;
-
-    public String getIdType() {
-        return idType;
+public class CoeusCliException extends Exception {
+    public CoeusCliException(String message) {
+        super(message);
     }
 
-    public void setIdType(String idType) {
-        this.idType = idType;
+    public CoeusCliException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public CoeusCliException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
     }
 }

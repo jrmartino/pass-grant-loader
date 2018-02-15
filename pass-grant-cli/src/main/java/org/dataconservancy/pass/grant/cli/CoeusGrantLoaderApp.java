@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-import org.junit.Test;
+package org.dataconservancy.pass.grant.cli;
 
-public class HttpCoeusConnectorTest {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    @Test
-    public void testCoeusConnector(){
+public class CoeusGrantLoaderApp {
 
+
+
+     boolean verifyDateFormat(String date) {
+        String regex = "^(1[0-2]|0[1-9])/(3[01]|[12][0-9]|0[1-9])/[0-9]{4}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(date);
+        return matcher.matches();
     }
-
-    @Test
-    public void testBuildString() {
-
-      HttpCoeusConnector connector = new HttpCoeusConnector(null);
-        System.out.println(connector.buildQueryString("12/12/2012", "12/13/2012"));
-
-    }
-
 }

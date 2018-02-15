@@ -30,5 +30,23 @@
         <module>pass-grant-model</module>
     </modules>
 
+    <properties>
+        <args4j.version>2.33</args4j.version>
+        <ojdbc8.versi0n>12.1.0</ojdbc8.versi0n>
+    </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>args4j</groupId>
+                <artifactId>args4j</artifactId>
+                <version>${args4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.oracle</groupId>
+                <artifactId>ojdbc8</artifactId>
+                <version>${ojdbc8.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

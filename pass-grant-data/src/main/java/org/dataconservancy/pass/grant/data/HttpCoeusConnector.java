@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataconservancy.pass.grant.data;
+
+import org.dataconservancy.pass.grant.model.Grant;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -21,8 +24,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
 import java.util.StringJoiner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class connects to a COEUS database via the Oracle JDBC driver
@@ -140,11 +141,4 @@ public class HttpCoeusConnector {
         return sb.toString();
     }
 
-
-    protected boolean verifyDateFormat(String date) {
-        String regex = "^(1[0-2]|0[1-9])/(3[01]|[12][0-9]|0[1-9])/[0-9]{4}$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(date);
-        return matcher.matches();
-    }
 }
