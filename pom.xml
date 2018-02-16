@@ -31,7 +31,9 @@
     </modules>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <args4j.version>2.33</args4j.version>
+        <commons-codec.version>1.9</commons-codec.version>
         <ojdbc8.versi0n>12.1.0</ojdbc8.versi0n>
     </properties>
 
@@ -46,6 +48,11 @@
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc8</artifactId>
                 <version>${ojdbc8.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${commons-codec.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

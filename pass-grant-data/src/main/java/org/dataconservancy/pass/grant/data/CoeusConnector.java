@@ -28,7 +28,7 @@ import java.util.StringJoiner;
 /**
  * This class connects to a COEUS database via the Oracle JDBC driver
  */
-public class HttpCoeusConnector {
+public class CoeusConnector {
 
     //property names
     private static final String COEUS_URL = "coeus.url";
@@ -39,7 +39,7 @@ public class HttpCoeusConnector {
     private String coeusUser;
     private String coeusPassword;
 
-    HttpCoeusConnector(Map<String, String> connectionProperties) {
+    public CoeusConnector(Map<String, String> connectionProperties) {
         if (connectionProperties != null) {
 
             if (connectionProperties.get(COEUS_URL) != null) {
@@ -60,7 +60,7 @@ public class HttpCoeusConnector {
      * @param queryString the query string to the COEUS database needed to update the information
      * @return the {@code ResultSet} from the query
      */
-    ResultSet retrieveCoeusUpdates(String queryString) {
+    public ResultSet retrieveCoeusUpdates(String queryString) {
 
         ResultSet rs=null;
 
@@ -104,20 +104,20 @@ public class HttpCoeusConnector {
      * @param endDate - the date we want to end the query against LAST_MODIFIED
      * @return the SQL query string
      */
-    String buildQueryString(String startDate, String endDate){
+    public String buildQueryString(String startDate, String endDate){
 
         //TODO handle dates to agree with javadoc on method
 
         String[] propViewFields = { "TITLE", "GRANT_NUMBER", "AWARD_DATE", "AWARD_END",
-                "AWARD_NUMBER", "AWARD_STATUS", "PRIME_SPONSOR_CODE", "SPONSOR", "SPOSNOR_CODE", "DEPARTMENT",
-                "DIVISION", "UNIT_NAME", "UNIT_NUMBER", "INST_PROPOSAL"};
+                "AWARD_NUMBER", "AWARD_START", "AWARD_STATUS", "PRIME_SPONSOR_CODE", "SPONSOR", "SPOSNOR_CODE", "DEPARTMENT",
+                "DIVISION", "TITLE", "UNIT_NAME", "UNIT_NUMBER", "INST_PROPOSAL"}; //TODO add LAST_MODIFIED
 
         StringJoiner propViewQuery = new StringJoiner(", A.", "A.", ", ");
         for (String field : propViewFields){
             propViewQuery.add(field);
         }
 
-        String[] personDetailViewFields = {"JHED_ID", "FIRST_NAME", "LAST_NAME", "EMAIL_ADDRESS"};
+        String[] personDetailViewFields = {"JHED_ID", "FIRST_NAME", "LAST_NAME", "EMAIL_ADDRESS"}; //TODO add AFFILIATION
 
         StringJoiner personDetailViewQuery = new StringJoiner(", C.", "C.", "");
         for (String field : personDetailViewFields){
@@ -132,11 +132,14 @@ public class HttpCoeusConnector {
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID ");
         //TODO change to comparing A.LAST_MODIFIED when available. This is just for testing purposes
-        sb.append("WHERE (TO_DATE(A.AWARD_DATE, 'mm/dd/yyyy') BETWEEN TO_DATE('");
+        sb.append("WHERE (TO_DATE(A.AWARD_DATE, 'mm/dd/yyyy') BETWEEN ");
+       // if(startDate.length() == 0) {
+        //    sb.append("TRUNC(s/")
+       // }
         sb.append(startDate);
-        sb.append("', 'mm/dd/yyyy') AND TO_DATE('");
+        sb.append(", 'mm/dd/yyyy') AND TO_DATE(");
         sb.append(endDate);
-        sb.append("', 'mm/dd/yyyy')) AND A.PROPOSAL_STATUS = 'Funded'");
+        sb.append(", 'mm/dd/yyyy')) AND A.PROPOSAL_STATUS = 'Funded'");
 
         return sb.toString();
     }

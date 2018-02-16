@@ -17,7 +17,7 @@ package org.dataconservancy.pass.grant.data;
 
 import org.junit.Test;
 
-public class HttpCoeusConnectorTest {
+public class CoeusConnectorTest {
 
     @Test
     public void testCoeusConnector(){
@@ -27,7 +27,7 @@ public class HttpCoeusConnectorTest {
     @Test
     public void testBuildString() {
 
-      HttpCoeusConnector connector = new HttpCoeusConnector(null);
+      CoeusConnector connector = new CoeusConnector(null);
         System.out.println(connector.buildQueryString("12/12/2012", "12/13/2012"));
 
     }
