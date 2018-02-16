@@ -26,13 +26,5 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>pass-grant-model</artifactId>
-    <dependencies>
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-            <version>2.9.9</version>
-        </dependency>
-    </dependencies>
-
 
 </project>

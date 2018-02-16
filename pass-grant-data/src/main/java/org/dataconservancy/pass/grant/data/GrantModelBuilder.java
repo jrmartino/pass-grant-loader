@@ -35,7 +35,7 @@ public class GrantModelBuilder {
 
     public List<Grant> buildGrantList() {
         //populate model
-        List<Grant> grantList = new ArrayList<Grant>();
+        List<Grant> grantList = new ArrayList<>();
 
         try {
             while (rs.next()) {
