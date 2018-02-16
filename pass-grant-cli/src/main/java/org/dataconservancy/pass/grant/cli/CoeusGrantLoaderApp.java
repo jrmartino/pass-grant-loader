@@ -16,17 +16,77 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.apache.commons.codec.binary.Base64InputStream;
+import org.dataconservancy.pass.grant.data.CoeusConnector;
+import org.dataconservancy.pass.grant.data.GrantModelBuilder;
+
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.sql.ResultSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import static java.lang.String.format;
 
 public class CoeusGrantLoaderApp {
+    private static String ERR_PROPERTIES_FILE_NOT_FOUND = "No classpath resource found for COEUS connection configuration. File '%s' " +
+            " not found on classpath.";
+    private File propertiesFile;
+    private String startDate;
+    private String endDate;
 
+    public CoeusGrantLoaderApp(File propertiesFile, String startDate, String endDate) {
 
-
-     boolean verifyDateFormat(String date) {
-        String regex = "^(1[0-2]|0[1-9])/(3[01]|[12][0-9]|0[1-9])/[0-9]{4}$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(date);
-        return matcher.matches();
+        this.propertiesFile = propertiesFile;
+        this.startDate = startDate;
+        this.endDate = endDate;
     }
+
+    void run() throws CoeusCliException {
+        Map<String, String> connectionProperties = new HashMap<>();
+
+        CoeusConnector connector = new CoeusConnector(decodeProperties(propertiesFile));
+        String queryString = connector.buildQueryString(startDate, endDate);
+        ResultSet rs = connector.retrieveCoeusUpdates(queryString);
+        GrantModelBuilder builder = new GrantModelBuilder(rs);
+        List grantList = builder.buildGrantList();
+
+    }
+        private Map<String, String> decodeProperties (File propertiesFile){
+
+            String resource = null;
+            try {
+                resource = propertiesFile.getCanonicalPath();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            InputStream resourceStream = this.getClass().getResourceAsStream(resource);
+
+            if (resourceStream == null) {
+                throw new RuntimeException(new CoeusCliException(
+                        format(ERR_PROPERTIES_FILE_NOT_FOUND, resource)));
+            }
+
+            Properties connectionProperties = new Properties();
+            try {
+                connectionProperties.load(new Base64InputStream(resourceStream));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return ((Map<String, String>) (Map) connectionProperties);
+        }
+
+
+        private void normalizeStartAndEndDates () {
+            String today = "";
+
+
+        }
+
 }
