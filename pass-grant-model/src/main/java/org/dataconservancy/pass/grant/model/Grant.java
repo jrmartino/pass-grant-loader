@@ -15,27 +15,32 @@
  */
 package org.dataconservancy.pass.grant.model;
 
-import org.joda.time.DateTime;
-
 import java.util.List;
 
 public class Grant {
 
     private Identifier id;
+    private Identifier institutionalId;
     private String awardNumber;
     private String projectName;
-    private String funder;
-    private DateTime startDate;
-    private DateTime endDate;
+    private String sponsor;
+    private String sponsorCode;
+    private String primeSponsor;
+    private String awardDate;
+    private String startDate;
+    private String endDate;
     private List<Identifier> alternateIds;
     private Person creator;
-    private DateTime creationDate;
+    private String creationDate;
     private Person pi;
     private List<Person> copis;
-
-    private String school; //could be enum?
+    private String division; //could be enum?
     private String department;
-    private String organizationalUnit;
+    private String organizationalUnitName;
+    private String organizationalunitNumber;
+
+
+    private status awardStatus;
 
     public enum  status {
         ACTIVE,
@@ -73,27 +78,50 @@ public class Grant {
         this.projectName = projectName;
     }
 
-    public String getFunder() {
-        return funder;
+    public String getSponsor() {
+        return sponsor;
     }
 
-    public void setFunder(String funder) {
-        this.funder = funder;
+    public void setSponsor(String sponsor) {
+        this.sponsor = sponsor;
     }
 
-    public DateTime getStartDate() {
+    public String getSponsorCode() {
+        return sponsorCode;
+    }
+    public void setSponsorCode(String sponsorCode) {
+        this.sponsorCode = sponsorCode;
+    }
+
+    public String getPrimeSponsor() {
+        return primeSponsor;
+    }
+
+    public void setPrimeSponsor(String primeSponsor) {
+        this.primeSponsor = primeSponsor;
+    }
+
+    public String getAwardDate() {
+        return awardDate;
+    }
+
+    public void setAwardDate(String awardDate) {
+        this.awardDate = awardDate;
+    }
+
+    public String getStartDate() {
         return startDate;
     }
 
-    public void setStartDate(DateTime startDate) {
+    public void setStartDate(String startDate) {
         this.startDate = startDate;
     }
 
-    public DateTime getEndDate() {
+    public String getEndDate() {
         return endDate;
     }
 
-    public void setEndDate(DateTime endDate) {
+    public void setEndDate(String endDate) {
         this.endDate = endDate;
     }
 
@@ -113,11 +141,11 @@ public class Grant {
         this.creator = creator;
     }
 
-    public DateTime getCreationDate() {
+    public String getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(DateTime creationDate) {
+    public void setCreationDate(String creationDate) {
         this.creationDate = creationDate;
     }
 
@@ -137,12 +165,12 @@ public class Grant {
         this.copis = copis;
     }
 
-    public String getSchool() {
-        return school;
+    public String getDivision() {
+        return division;
     }
 
-    public void setSchool(String school) {
-        this.school = school;
+    public void setDivision(String division) {
+        this.division = division;
     }
 
     public String getDepartment() {
@@ -153,11 +181,31 @@ public class Grant {
         this.department = department;
     }
 
-    public String getOrganizationalUnit() {
-        return organizationalUnit;
+    public String getOrganizationalUnitName() {
+        return organizationalUnitName;
     }
 
-    public void setOrganizationalUnit(String organizationalUnit) {
-        this.organizationalUnit = organizationalUnit;
+    public void setOrganizationalUnitName(String organizationalUnit) { this.organizationalUnitName = organizationalUnit; }
+
+    public String getOrganizationalunitNumber() { return organizationalunitNumber; }
+
+    public void setOrganizationalunitNumber(String organizationalunitNumber) { this.organizationalunitNumber = organizationalunitNumber; }
+
+    public status getAwardStatus() {
+        return awardStatus;
     }
+
+    public void setAwardStatus(status awardStatus) {
+        this.awardStatus = awardStatus;
+    }
+
+    public Identifier getInstitutionalId() {
+        return institutionalId;
+    }
+
+    public void setInstitutionalId(Identifier institutionalId) {
+        this.institutionalId = institutionalId;
+    }
+
+
 }

@@ -19,6 +19,11 @@ public class Identifier {
     private String idType;
     private String id;
 
+    public Identifier(String type, String value) {
+        this.idType = type;
+        this.id = value;
+    }
+
     public String getIdType() {
         return idType;
     }

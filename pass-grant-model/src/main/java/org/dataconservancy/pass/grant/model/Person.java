@@ -23,7 +23,9 @@ public class Person {
     private String lastName;
     private String email;
     private String affiliation;
-    private List<Identifier> ids;
+    private String id;
+    private String institutionalId;
+    private List<Identifier> alternateIds;
 
     public String getFirstName() {
         return firstName;
@@ -57,19 +59,24 @@ public class Person {
         this.email = email;
     }
 
-    public String getAffiliation() {
-        return affiliation;
-    }
+    public String getAffiliation() { return affiliation; }
 
     public void setAffiliation(String affiliation) {
         this.affiliation = affiliation;
     }
 
-    public List<Identifier> getIds() {
-        return ids;
+    public List<Identifier> getAlternateIds() { return alternateIds; }
+
+    public void setAlternateIds(List<Identifier> ids) {
+        this.alternateIds = ids;
     }
 
-    public void setIds(List<Identifier> ids) {
-        this.ids = ids;
-    }
+    public String getId() { return id; }
+
+    public void setId(String id) { this.id = id; }
+
+    public String getInstitutionalId() { return institutionalId; }
+
+    public void setInstitutionalId(String institutionalId) { this.institutionalId = institutionalId; }
+
 }
