@@ -58,15 +58,12 @@ public class GrantModelBuilder {
                     case "Terminated":
                         grant.setAwardStatus(Grant.status.TERMINATED);
                 }
-                grant.setPrimeSponsor(rs.getString("PRIME_SPONSOR_CODE"));
-                grant.setSponsor(rs.getString("SPONSOR"));
-                grant.setSponsorCode(rs.getString("SPOSNOR_CODE"));
+                grant.setPrimaryFunder(rs.getString("PRIME_SPONSOR_CODE"));
+                grant.setDirectFunder(rs.getString("SPONSOR"));
                 grant.setDepartment(rs.getString("DEPARTMENT"));
                 grant.setDivision(rs.getString("DIVISION"));
                 grant.setOrganizationalUnitName(rs.getString("UNIT_NAME"));
-                grant.setOrganizationalunitNumber(rs.getString("UNIT_NUMBER"));
-                grant.setInstitutionalId(new Identifier("Coeus", rs.getString("INST_PROPOSAL")));
-                //rs.getString("LAST_MODIFIED");
+                grant.setLocalAwardId(rs.getString("AWARD_NUMBER"));
 
                 person.setInstitutionalId(rs.getString("JHED_ID"));
                 person.setFirstName(rs.getString("FIRST_NAME"));

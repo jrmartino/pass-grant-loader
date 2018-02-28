@@ -35,9 +35,30 @@
         <args4j.version>2.33</args4j.version>
         <commons-codec.version>1.9</commons-codec.version>
         <junit.version>4.12</junit.version>
-        <ojdbc8.versi0n>12.1.0</ojdbc8.versi0n>
+        <logback-classic.version>1.2.3</logback-classic.version>
+        <maven.compiler.plugin.version>2.5.1</maven.compiler.plugin.version>
+        <ojdbc8.version>12.1.0</ojdbc8.version>
+        <slf4j.version>1.7.25</slf4j.version>
     </properties>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin.version}</version>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                        <compilerArgument>-Xlint:all</compilerArgument>
+                        <showWarnings>true</showWarnings>
+                        <showDeprecation>true</showDeprecation>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -54,6 +75,16 @@
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback-classic.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
             <dependency>
                 <groupId>junit</groupId>

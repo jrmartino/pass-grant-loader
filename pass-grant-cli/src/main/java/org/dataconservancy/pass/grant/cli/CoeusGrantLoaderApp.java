@@ -25,14 +25,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static java.lang.String.format;
 
 public class CoeusGrantLoaderApp {
+    private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
+
     private static String ERR_PROPERTIES_FILE_NOT_FOUND = "No classpath resource found for COEUS connection configuration. File '%s' " +
             " not found on classpath.";
     private File propertiesFile;
@@ -48,15 +54,27 @@ public class CoeusGrantLoaderApp {
 
     void run() throws CoeusCliException {
         Map<String, String> connectionProperties = new HashMap<>();
-
-        CoeusConnector connector = new CoeusConnector(decodeProperties(propertiesFile));
-        String queryString = connector.buildQueryString(startDate, endDate);
-        ResultSet rs = connector.retrieveCoeusUpdates(queryString);
-        GrantModelBuilder builder = new GrantModelBuilder(rs);
-        List grantList = builder.buildGrantList();
+        String queryString =null;
+        try {
+            CoeusConnector connector = new CoeusConnector(decodeProperties(propertiesFile));
+            queryString = connector.buildQueryString(startDate, endDate);
+            ResultSet rs = connector.retrieveCoeusUpdates(queryString);
+            GrantModelBuilder builder = new GrantModelBuilder(rs);
+            List grantList = builder.buildGrantList();
+        } catch (IOException e) {// this is thrown if the properties file is not found - should never happen
+            LOG.error(e.getMessage(), e.getCause());
+            throw new CoeusCliException("Properties in " + propertiesFile.getPath()
+            + " could not be decoded.", e);
+        } catch (SQLException e) {// this is thrown if queryString is malformed
+            LOG.error(e.getMessage(), e.getCause());
+            throw new CoeusCliException("SQL error in malformed statement " + queryString, e);
+        } catch (ClassNotFoundException e) {//thrown if the db driver was not found
+            LOG.error(e.getMessage(), e.getCause());
+            throw new CoeusCliException("Class oracle.jdbc.driver.OracleDriver was not found on classpath", e);
+        }
 
     }
-        private Map<String, String> decodeProperties (File propertiesFile){
+        private Map<String, String> decodeProperties (File propertiesFile) throws IOException {
 
             String resource = null;
             try {
@@ -73,12 +91,9 @@ public class CoeusGrantLoaderApp {
             }
 
             Properties connectionProperties = new Properties();
-            try {
-                connectionProperties.load(new Base64InputStream(resourceStream));
 
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            connectionProperties.load(new Base64InputStream(resourceStream));
+
             return ((Map<String, String>) (Map) connectionProperties);
         }
 

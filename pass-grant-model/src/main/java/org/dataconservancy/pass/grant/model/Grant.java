@@ -15,29 +15,28 @@
  */
 package org.dataconservancy.pass.grant.model;
 
+import org.joda.time.DateTime;
+
 import java.util.List;
 
 public class Grant {
 
-    private Identifier id;
-    private Identifier institutionalId;
     private String awardNumber;
+    private String localAwardId;
     private String projectName;
-    private String sponsor;
-    private String sponsorCode;
-    private String primeSponsor;
+    private String primaryFunder;
+    private String directFunder;
     private String awardDate;
     private String startDate;
     private String endDate;
-    private List<Identifier> alternateIds;
     private Person creator;
-    private String creationDate;
+    private DateTime created;
+    private DateTime lastModified;
     private Person pi;
     private List<Person> copis;
     private String division; //could be enum?
     private String department;
     private String organizationalUnitName;
-    private String organizationalunitNumber;
 
 
     private status awardStatus;
@@ -54,13 +53,6 @@ public class Grant {
         IN_PROGRESS
     }
 
-    public Identifier getId() {
-        return id;
-    }
-
-    public void setId(Identifier id) {
-        this.id = id;
-    }
 
     public String getAwardNumber() {
         return awardNumber;
@@ -76,29 +68,6 @@ public class Grant {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
-    }
-
-    public String getSponsor() {
-        return sponsor;
-    }
-
-    public void setSponsor(String sponsor) {
-        this.sponsor = sponsor;
-    }
-
-    public String getSponsorCode() {
-        return sponsorCode;
-    }
-    public void setSponsorCode(String sponsorCode) {
-        this.sponsorCode = sponsorCode;
-    }
-
-    public String getPrimeSponsor() {
-        return primeSponsor;
-    }
-
-    public void setPrimeSponsor(String primeSponsor) {
-        this.primeSponsor = primeSponsor;
     }
 
     public String getAwardDate() {
@@ -125,13 +94,6 @@ public class Grant {
         this.endDate = endDate;
     }
 
-    public List<Identifier> getAlternateIds() {
-        return alternateIds;
-    }
-
-    public void setAlternateIds(List<Identifier> alternateIds) {
-        this.alternateIds = alternateIds;
-    }
 
     public Person getCreator() {
         return creator;
@@ -139,14 +101,6 @@ public class Grant {
 
     public void setCreator(Person creator) {
         this.creator = creator;
-    }
-
-    public String getCreationDate() {
-        return creationDate;
-    }
-
-    public void setCreationDate(String creationDate) {
-        this.creationDate = creationDate;
     }
 
     public Person getPi() {
@@ -187,10 +141,6 @@ public class Grant {
 
     public void setOrganizationalUnitName(String organizationalUnit) { this.organizationalUnitName = organizationalUnit; }
 
-    public String getOrganizationalunitNumber() { return organizationalunitNumber; }
-
-    public void setOrganizationalunitNumber(String organizationalunitNumber) { this.organizationalunitNumber = organizationalunitNumber; }
-
     public status getAwardStatus() {
         return awardStatus;
     }
@@ -199,13 +149,40 @@ public class Grant {
         this.awardStatus = awardStatus;
     }
 
-    public Identifier getInstitutionalId() {
-        return institutionalId;
+    public String getLocalAwardId() {
+        return localAwardId;
     }
 
-    public void setInstitutionalId(Identifier institutionalId) {
-        this.institutionalId = institutionalId;
+    public void setLocalAwardId(String localAwardId) {
+        this.localAwardId = localAwardId;
     }
+
+    public String getPrimaryFunder() {
+        return primaryFunder;
+    }
+
+    public void setPrimaryFunder(String primaryFunder) {
+        this.primaryFunder = primaryFunder;
+    }
+
+    public String getDirectFunder() {
+        return directFunder;
+    }
+
+    public void setDirectFunder(String directFunder) {
+        this.directFunder = directFunder;
+    }
+
+    /**created is system generated, not modifiable */
+    public DateTime getCreated() {
+        return created;
+    }
+
+    /** lastModified is system generated, not modifiable */
+    public DateTime getLastModified() {
+        return lastModified;
+    }
+
 
 
 }
