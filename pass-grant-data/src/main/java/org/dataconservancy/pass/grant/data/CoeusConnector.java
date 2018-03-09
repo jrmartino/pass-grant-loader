@@ -15,7 +15,6 @@
  */
 package org.dataconservancy.pass.grant.data;
 
-import org.dataconservancy.pass.grant.model.Grant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
