@@ -38,7 +38,6 @@
         <logback-classic.version>1.2.3</logback-classic.version>
         <maven.compiler.plugin.version>2.5.1</maven.compiler.plugin.version>
         <ojdbc8.version>12.1.0</ojdbc8.version>
-        <simplejavamail.version>4.1.2</simplejavamail.version>
         <slf4j.version>1.7.25</slf4j.version>
     </properties>
 
@@ -81,11 +80,6 @@
                 <groupId>org.simplejavamail</groupId>
                 <artifactId>simple-java-mail</artifactId>
                 <version>${simplejavamail.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback-classic.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
