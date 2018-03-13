@@ -91,11 +91,10 @@ public class CoeusConnector {
      * If only the start date is specified, we take the end date as being yesterday.
      * If only the end date is specified, we throw an exception, as there is no natural default for start date.
      *
-     * @param startDate - the date we want to start the query against LAST_MODIFIED
-     * @param endDate - the date we want to end the query against LAST_MODIFIED
+     * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    public String buildQueryString(String startDate, String endDate){
+    public String buildQueryString(String startDate){
 
         //TODO handle dates to agree with javadoc on method
 
@@ -136,7 +135,7 @@ public class CoeusConnector {
        // }
         sb.append(startDate);
         sb.append("', 'mm/dd/yyyy') AND TO_DATE('");
-        sb.append(endDate);
+        //sb.append(endDate);
         sb.append("', 'mm/dd/yyyy')) AND (A.PROPOSAL_STATUS = 'Funded') ");
         sb.append("AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated')");
 

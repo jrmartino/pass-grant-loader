@@ -48,13 +48,17 @@ public class CoeusGrantLoaderCLI {
     @Option(name = "-v", aliases = { "-version", "--version" }, usage = "print version information")
     public boolean version = false;
 
+    /** Requests the current version number of the cli application. */
+    @Option(name = "-s", aliases = { "-startDateTime", "--startDateTime" }, usage = "DateTime to start the query against COEUS. This will cause " +
+            "a return of all records updated since this DateTime. Syntax must be yyyy-mm-dd hh:mm:ss.m{mm}. This value will override the most recent " +
+            "dateTime listed in the updates file.")
+    public static String startDate = "";
+
 
     public static void main(String[] args) {
 
         final CoeusGrantLoaderCLI application = new CoeusGrantLoaderCLI();
         CmdLineParser parser = new CmdLineParser(application);
-
-        String emailMessageBody = "";
 
         try {
             parser.parseArgument(args);
@@ -70,7 +74,7 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(coeusLoaderHome);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(coeusLoaderHome, startDate);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

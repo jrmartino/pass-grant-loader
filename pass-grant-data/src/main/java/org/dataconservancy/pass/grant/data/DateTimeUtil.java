@@ -20,8 +20,7 @@ import org.joda.time.DateTime;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-public class DateTimeUtil {
+ public class DateTimeUtil {
 
     public static DateTime createJodaDateTime(String sqlDateTime) {
         String[] parts = sqlDateTime.split(" ");
