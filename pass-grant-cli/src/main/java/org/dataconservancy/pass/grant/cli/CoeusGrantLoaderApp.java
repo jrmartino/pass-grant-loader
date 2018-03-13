@@ -190,8 +190,6 @@ public class CoeusGrantLoaderApp {
             emailService.sendEmailMessage(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, updateTimestampsFileName));
             throw new CoeusCliException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, updateTimestampsFileName));
         } else {
-            //TODO open timestamp file and read the last line; assign it to startDate, check validity
-
             try {
                 BufferedReader br = new BufferedReader(new FileReader(updateTimestampsFile));
                 String readLine;

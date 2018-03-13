@@ -28,7 +28,7 @@ public class CoeusConnectorTest {
     public void testBuildString() {
 
       CoeusConnector connector = new CoeusConnector(null);
-        System.out.println(connector.buildQueryString("12/12/2012", "12/13/2012"));
+        System.out.println(connector.buildQueryString("12/12/2012"));
 
     }
 
