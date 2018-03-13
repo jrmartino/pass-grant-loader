@@ -17,17 +17,11 @@
 package org.dataconservancy.pass.grant.cli;
 
 import org.apache.commons.codec.binary.Base64InputStream;
-import org.dataconservancy.pass.grant.data.CoeusConnector;
-import org.dataconservancy.pass.grant.data.GrantModelBuilder;
-
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -39,69 +33,97 @@ import static java.lang.String.format;
 public class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
 
-    private static String ERR_PROPERTIES_FILE_NOT_FOUND = "No classpath resource found for COEUS connection configuration. File '%s' " +
-            " not found on classpath.";
-    private File propertiesFile;
-    private String startDate;
-    private String endDate;
+    private static String ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE = "Supplied home directory must be readable" +
+            " and writable by the user running this application.";
+    private static String ERR_REQUIRED_CONFIGURATION_FILE_MISSING = "Required file %s is missing in the specified home directory.";
+    private static String ERR_COULD_NOT_OPEN_CONFIGURATION_FILE = "Could not open configuration file";
+    private static String connectionPropertiesFileName= "connection.properties";
+    private static String mailPropertiesFileName = "mail.properties";
 
-    public CoeusGrantLoaderApp(File propertiesFile, String startDate, String endDate) {
+    private EmailService emailService;
 
-        this.propertiesFile = propertiesFile;
-        this.startDate = startDate;
-        this.endDate = endDate;
-    }
+    private File appHome;
+    private File  mailPropertiesFile = new File(appHome, mailPropertiesFileName);
+    private File connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
+
+    Map<String, String> connectionPropertiesMap = new HashMap<>();
+    Properties mailProperties;
+    String queryString = null;
+
+    public CoeusGrantLoaderApp(File coeusLoaderHome) {
+        this.appHome = coeusLoaderHome;
+        }
 
     void run() throws CoeusCliException {
-        Map<String, String> connectionProperties = new HashMap<>();
-        String queryString =null;
+        checkFilesAreOK(appHome);
+
         try {
-            CoeusConnector connector = new CoeusConnector(decodeProperties(propertiesFile));
-            queryString = connector.buildQueryString(startDate, endDate);
-            ResultSet rs = connector.retrieveCoeusUpdates(queryString);
-            GrantModelBuilder builder = new GrantModelBuilder(rs);
-            List grantList = builder.buildGrantList();
-        } catch (IOException e) {// this is thrown if the properties file is not found - should never happen
-            LOG.error(e.getMessage(), e.getCause());
-            throw new CoeusCliException("Properties in " + propertiesFile.getPath()
-            + " could not be decoded.", e);
-        } catch (SQLException e) {// this is thrown if queryString is malformed
-            LOG.error(e.getMessage(), e.getCause());
-            throw new CoeusCliException("SQL error in malformed statement " + queryString, e);
-        } catch (ClassNotFoundException e) {//thrown if the db driver was not found
-            LOG.error(e.getMessage(), e.getCause());
-            throw new CoeusCliException("Class oracle.jdbc.driver.OracleDriver was not found on classpath", e);
+            connectionPropertiesMap = decodeProperties(connectionPropertiesFile);
+            mailProperties = loadProperties(mailPropertiesFile);
+            emailService = new EmailService(mailProperties);
+        } catch (IOException | RuntimeException e) {
+            LOG.error(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e.getMessage());
+            throw new CoeusCliException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
         }
+
 
     }
-        private Map<String, String> decodeProperties (File propertiesFile) throws IOException {
 
-            String resource = null;
-            try {
-                resource = propertiesFile.getCanonicalPath();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            InputStream resourceStream = this.getClass().getResourceAsStream(resource);
-
-            if (resourceStream == null) {
-                throw new RuntimeException(new CoeusCliException(
-                        format(ERR_PROPERTIES_FILE_NOT_FOUND, resource)));
-            }
-
-            Properties connectionProperties = new Properties();
-
-            connectionProperties.load(new Base64InputStream(resourceStream));
-
-            return ((Map<String, String>) (Map) connectionProperties);
+    private void checkFilesAreOK(File appHome) throws CoeusCliException {
+        //First make sure the specified home directory exists and is suitable
+        if (!appHome.exists()) {
+            String ERR_HOME_DIRECTORY_NOT_FOUND = "No home directory found for the application. " +
+                    "Please check the supplied absolute path";
+            throw new CoeusCliException(ERR_HOME_DIRECTORY_NOT_FOUND);
+        }
+        if (!appHome.canRead() || !appHome.canWrite()) {
+            LOG.error(ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE);
+            throw new CoeusCliException(ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE);
         }
 
-
-        private void normalizeStartAndEndDates () {
-            String today = "";
-
-
+        // and also the required properties files
+        if (!connectionPropertiesFile.exists()) {
+            LOG.error(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName));
+            throw new CoeusCliException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName));
         }
+        if (!mailPropertiesFile.exists()) {
+            LOG.error(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName));
+            throw new CoeusCliException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName));
+        }
+    }
+
+    private Map<String, String> decodeProperties(File propertiesFile) throws IOException, RuntimeException {
+
+        String resource = propertiesFile.getCanonicalPath();
+        InputStream resourceStream = this.getClass().getResourceAsStream(resource);
+
+        if (resourceStream == null) {
+            LOG.error(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource));
+            throw new RuntimeException(new CoeusCliException(
+                    format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource)));
+        }
+
+        Properties connectionProperties = new Properties();
+        connectionProperties.load(new Base64InputStream(resourceStream));
+
+        return ((Map<String, String>) (Map) connectionProperties);
+    }
+
+    private Properties loadProperties(File propertiesFile) throws IOException, RuntimeException {
+
+        String resource = propertiesFile.getCanonicalPath();
+        InputStream resourceStream = this.getClass().getResourceAsStream(resource);
+
+        if (resourceStream == null) {
+            LOG.error(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource));
+            throw new RuntimeException(new CoeusCliException(
+                    format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource)));
+        }
+
+        Properties properties = new Properties();
+        properties.load(resourceStream);
+
+        return properties;
+    }
 
 }

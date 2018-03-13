@@ -21,16 +21,21 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 import java.io.File;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
+import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 public class CoeusGrantLoaderCLI {
 
     /**
      * Arguments - just the property file containing the submission elements
      */
-    @Argument(required = true, index = 0, metaVar = "[properties file]", usage = "properties file for the COEUS connection")
-    public static File propertiesFile = null;
+    @Argument(required = true, index = 0, metaVar = "[Home Directory]", usage = "Absolute path of the directory which is " +
+            "readable and writable by the user executing this application, " +
+            "containing the encrypted properties file for the COEUS connection (\"connection.properties\") and " +
+            "the plain text smtp properties (\"mail.properties\"), " +
+            "and where the log file and the update_timestamps files will be written.")
+
+    public static File coeusLoaderHome = null;
 
     /**
      *
@@ -45,17 +50,13 @@ public class CoeusGrantLoaderCLI {
     @Option(name = "-v", aliases = { "-version", "--version" }, usage = "print version information")
     public boolean version = false;
 
-    @Option(name = "-s", aliases = { "-start", "-startDate", "--start", "--startDate" }, usage = "start date")
-    public static String startDate="";
-
-    @Option(name = "-e", aliases = {"-end", "-endDate", "--end", "--endDate"}, usage = "end date")
-    public static String endDate="";
 
     public static void main(String[] args) {
 
         final CoeusGrantLoaderCLI application = new CoeusGrantLoaderCLI();
         CmdLineParser parser = new CmdLineParser(application);
-        //parser.setUsageWidth(80);
+
+        String emailMessageBody = "";
 
         try {
             parser.parseArgument(args);
@@ -68,16 +69,10 @@ public class CoeusGrantLoaderCLI {
                 System.err.println(CoeusCliException.class.getPackage()
                         .getImplementationVersion());
                 System.exit(0);
-            } else if (application.startDate.length()>0 && !verifyDateFormat(startDate)){
-                System.err.println(startDate + " is not a valid date format. Date must be in the format mm/dd/yyyy");
-            } else if (application.endDate.length()>0 && !verifyDateFormat(endDate)) {
-                System.err.println(endDate + " is not a valid date format. Date must be in the format mm/dd/yyyy");
-            } else if (application.startDate.length() == 0 && application.endDate.length()>0){
-                System.err.println("Start date is required when end date is specified");
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(propertiesFile, startDate, endDate);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(coeusLoaderHome);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {
@@ -97,17 +92,7 @@ public class CoeusGrantLoaderCLI {
     }
 
 
-    /**
-     * Dates must be specified in the format mm/dd/yyyy. We only check for this format, and not for validity
-     * (for example, 2/31/2018 passes)
-     * @param date the date to be checked
-     * @return a boolean indicating whether the date matches the mm/dd/yyyy format
-     */
-    static boolean verifyDateFormat(String date) {
-        String regex = "^(1[0-2]|0[1-9])/(3[01]|[12][0-9]|0[1-9])/[0-9]{4}$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(date);
-        return matcher.matches();
-    }
+
+
 
 }
