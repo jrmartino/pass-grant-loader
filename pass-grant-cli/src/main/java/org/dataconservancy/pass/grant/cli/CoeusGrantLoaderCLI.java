@@ -22,8 +22,6 @@ import org.kohsuke.args4j.Option;
 
 import java.io.File;
 
-import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
-
 public class CoeusGrantLoaderCLI {
 
     /**
@@ -90,9 +88,5 @@ public class CoeusGrantLoaderCLI {
             System.exit(1);
         }
     }
-
-
-
-
 
 }

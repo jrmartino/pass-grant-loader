@@ -34,9 +34,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <args4j.version>2.33</args4j.version>
         <commons-codec.version>1.9</commons-codec.version>
+        <greenmail.version>1.5.7</greenmail.version>
+        <javax.mail.version>1.6.0</javax.mail.version>
         <junit.version>4.12</junit.version>
         <logback-classic.version>1.2.3</logback-classic.version>
         <maven.compiler.plugin.version>2.5.1</maven.compiler.plugin.version>
+        <maven.shade.plugin.version>3.1.0</maven.shade.plugin.version>
+        <maven.surefire.plugin.version>2.21.0</maven.surefire.plugin.version>
         <ojdbc8.version>12.1.0</ojdbc8.version>
         <slf4j.version>1.7.25</slf4j.version>
     </properties>
@@ -56,6 +60,16 @@
                         <showDeprecation>true</showDeprecation>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven.surefire.plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>${maven.shade.plugin.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -67,6 +81,11 @@
                 <version>${args4j.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.icegreen</groupId>
+                <artifactId>greenmail</artifactId>
+                <version>${greenmail.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc8</artifactId>
                 <version>${ojdbc8.version}</version>
@@ -75,6 +94,11 @@
                 <groupId>commons-codec</groupId>
                 <artifactId>commons-codec</artifactId>
                 <version>${commons-codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.sun.mail</groupId>
+                <artifactId>javax.mail</artifactId>
+                <version>${javax.mail.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.simplejavamail</groupId>

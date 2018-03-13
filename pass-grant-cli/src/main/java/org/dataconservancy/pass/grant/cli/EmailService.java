@@ -16,8 +16,10 @@
 
 package org.dataconservancy.pass.grant.cli;
 
+import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
@@ -33,11 +35,20 @@ public class EmailService {
         this.mailProperties = mailProperties;
     }
 
-    private void sendEmailMessage(String message){
+
+    public void sendEmailMessage(String message){
 
         try {
-            Session session = Session.getInstance(mailProperties, null);
-
+           // Session session = Session.getInstance(mailProperties, pwAuth);
+            Session session = Session.getInstance(mailProperties,
+                    new Authenticator() {
+                        @Override
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(mailProperties
+                                    .getProperty("mail.smtp.user"), mailProperties
+                                    .getProperty("mail.smtp.password"));
+                        }
+                    });
             Message msg = new MimeMessage(session);
             msg.setFrom(new InternetAddress((String) mailProperties.get("mail.from"), "COEUS Data Loader"));
             msg.addRecipient(Message.RecipientType.TO,

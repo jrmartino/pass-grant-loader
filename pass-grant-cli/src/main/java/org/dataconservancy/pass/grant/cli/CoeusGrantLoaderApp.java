@@ -106,7 +106,13 @@ public class CoeusGrantLoaderApp {
         Properties connectionProperties = new Properties();
         connectionProperties.load(new Base64InputStream(resourceStream));
 
-        return ((Map<String, String>) (Map) connectionProperties);
+        @SuppressWarnings("unchecked")
+        Map<String, String> connectionMap =  (Map) connectionProperties;
+        //check types to be safe
+        for(String k : connectionMap.keySet());
+        for(String v : connectionMap.values());
+        return connectionMap;
+        //return ((Map<String, String>) (Map) connectionProperties);
     }
 
     private Properties loadProperties(File propertiesFile) throws IOException, RuntimeException {
