@@ -27,17 +27,21 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EmailService {
+    private static Logger LOG = LoggerFactory.getLogger(EmailService.class);
+    private static String ERR_ADDRESS = "Could not send email: an addressing exception occurred";
+    private static String ERR_MESSAGING = "Could not send email: a messaging exception occurred";
+    private static String ERR_ENCODING = "ould not send email; an encoding exception occurred";
     private Properties mailProperties;
 
-    public EmailService (Properties mailProperties){
+    EmailService(Properties mailProperties){
         this.mailProperties = mailProperties;
     }
 
-
     public void sendEmailMessage(String message){
-
         try {
            // Session session = Session.getInstance(mailProperties, pwAuth);
             Session session = Session.getInstance(mailProperties,
@@ -57,11 +61,14 @@ public class EmailService {
             msg.setText(message);
             Transport.send(msg);
         } catch (AddressException e) {
-            // ...
+            e.printStackTrace();
+            LOG.error(ERR_ADDRESS ,e);
         } catch (MessagingException e) {
             e.printStackTrace();
+            LOG.error(ERR_MESSAGING, e);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+            LOG.error(ERR_ENCODING, e);
         }
 
     }
