@@ -100,7 +100,7 @@ public class CoeusConnector {
 
         String[] propViewFields = { "TITLE", "GRANT_NUMBER", "AWARD_DATE", "AWARD_END",
                 "AWARD_NUMBER", "AWARD_START", "AWARD_STATUS", "PRIME_SPONSOR_CODE", "SPONSOR", "SPOSNOR_CODE", "DEPARTMENT",
-                "DIVISION", "TITLE", "UNIT_NAME", "UNIT_NUMBER", "UPDATE_TIMESTAMP" }; //TODO add LAST_MODIFIED
+                "DIVISION", "TITLE", "UNIT_NAME", "UNIT_NUMBER", "UPDATE_TIMESTAMP" };
 
         StringJoiner propViewQuery = new StringJoiner(", A.", "A.", ", ");
         for (String field : propViewFields){
@@ -129,14 +129,9 @@ public class CoeusConnector {
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID ");
         sb.append("INNER JOIN COEUS.SWIFT_SPONSOR D ON A.SPOSNOR_CODE = D.SPONSOR_CODE ");
-        sb.append("WHERE (TRUNC(A.UPDATE_TIMESTAMP) BETWEEN TO_DATE('");
-       // if(startDate.length() == 0) {
-        //    sb.append("TRUNC(s/")
-       // }
+        sb.append("WHERE A.UPDATE_TIMESTAMP > TIMESTAMP'");
         sb.append(startDate);
-        sb.append("', 'mm/dd/yyyy') AND TO_DATE('");
-        //sb.append(endDate);
-        sb.append("', 'mm/dd/yyyy')) AND (A.PROPOSAL_STATUS = 'Funded') ");
+        sb.append("'), ");
         sb.append("AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated')");
 
         String queryString = sb.toString();

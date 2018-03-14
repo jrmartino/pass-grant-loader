@@ -19,21 +19,26 @@ package org.dataconservancy.pass.grant.data;
 import org.dataconservancy.pass.grant.model.Grant;
 import org.dataconservancy.pass.grant.model.Identifier;
 import org.dataconservancy.pass.grant.model.Person;
+import org.joda.time.DateTime;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.dataconservancy.pass.grant.data.DateTimeUtil.*;
+
 public class GrantModelBuilder {
 
     ResultSet rs;
+    private String baseString = "1980-01-01 00:00:00.0";
+    private String latestUpdateString = "";
 
     public GrantModelBuilder(ResultSet resultSet) {
         this.rs = resultSet;
     }
 
-    public List<Grant> buildGrantList() {
+    public List<Grant> buildGrantList(){
         //populate model
         List<Grant> grantList = new ArrayList<>();
 
@@ -74,12 +79,29 @@ public class GrantModelBuilder {
                 grant.setPi(person);
                 grantList.add(grant);
 
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+                //see if this is the latest grant updated
+
+
+                String grantUpdateString = rs.getString("UPDATE_TIMESTAMP");
+                latestUpdateString = latestUpdateString.length()==0 ? baseString : returnLaterUpdate(grantUpdateString, latestUpdateString);
+
+                }
+
+            } catch (SQLException e1) {
+            e1.printStackTrace();
         }
 
         return grantList;
+    }
+
+    protected String returnLaterUpdate(String currentUpdateString, String latestUpdateString) {
+        DateTime grantUpdateTime = createJodaDateTime(currentUpdateString);
+        DateTime previousLatestUpdateTime = createJodaDateTime(latestUpdateString);
+        return grantUpdateTime.isAfter(previousLatestUpdateTime)? currentUpdateString : latestUpdateString;
+    }
+
+    public String getLatestUpdate(){
+        return this.latestUpdateString;
     }
 
 }

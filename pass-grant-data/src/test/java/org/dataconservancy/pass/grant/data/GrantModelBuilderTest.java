@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.dataconservancy.pass.grant.data;
 
+import org.junit.Assert;
 import org.junit.Test;
 
-public class CoeusConnectorTest {
+public class GrantModelBuilderTest {
 
     @Test
-    public void testCoeusConnector(){
+    public void testReturnLatestUpdate(){
+        String baseString = "1980-01-01 00:00:00.0";
+        String earlyDate  = "2018-01-02 03:04:05.0";
+        String laterDate  = "2018-01-02 04:08:09.0";
 
+        GrantModelBuilder gmb = new GrantModelBuilder(null);
+
+        String latestDate = gmb.returnLaterUpdate(baseString, earlyDate);
+        Assert.assertEquals(earlyDate, latestDate);
+        latestDate = gmb.returnLaterUpdate(latestDate, laterDate);
+        Assert.assertEquals(laterDate, latestDate);
+
+        Assert.assertEquals(earlyDate, gmb.returnLaterUpdate(earlyDate, earlyDate));
     }
-
-    @Test
-    public void testBuildString() {
-
-      CoeusConnector connector = new CoeusConnector(null);
-        System.out.println(connector.buildQueryString("2018-13-14 06:00:00.0"));
-
-    }
-
 }
