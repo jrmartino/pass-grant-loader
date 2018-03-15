@@ -20,8 +20,17 @@ import org.joda.time.DateTime;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
- public class DateTimeUtil {
 
+/**
+ * This utility class provides static methods for intermunging Joda DateTime objects and timestamp strings
+ */
+public class DateTimeUtil {
+
+    /**
+     * A method to convert a timestamp string from our database to a Joda DateTime object
+     * @param sqlDateTime the timestamp string
+     * @return the corresponding DataTime object
+     */
     public static DateTime createJodaDateTime(String sqlDateTime) {
         String[] parts = sqlDateTime.split(" ");
         String date = parts[0]; //yyyy-mm-dd

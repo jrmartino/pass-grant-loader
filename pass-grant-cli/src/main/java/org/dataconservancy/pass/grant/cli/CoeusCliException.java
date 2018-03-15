@@ -15,6 +15,10 @@
  */
 package org.dataconservancy.pass.grant.cli;
 
+/**
+ * An Exception class to manage the various Exceptions thrown to the {@code CoeusGrantLoaderApp}, which then forwards this single exception
+ * type tp the CLI
+ */
 public class CoeusCliException extends Exception {
     public CoeusCliException(String message) {
         super(message);

@@ -22,10 +22,16 @@ import org.junit.Test;
 
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
+/**
+ * Test class for static utility methods
+ *
+ * @author jrm@jhu.edu
+ */
 public class DateTimeUtilTest {
 
-    DateTimeUtil underTest = new DateTimeUtil();
-
+    /**
+     * Test that this boolean valued method returns true if and only a valid timestamp string is supplied
+     */
     @Test
     public void testVerifyDateTimeFormat() {
         //check that zeroes in the time of day are ok
@@ -77,6 +83,10 @@ public class DateTimeUtilTest {
         Assert.assertFalse(verifyDateTimeFormat(date));
     }
 
+    /**
+     * Test that our method to create {@code DateTime} from timestamps objects produces
+     * correct output
+     */
     @Test
     public void testCreateJodaDateTime() {
         String date = "2018-01-30 23:59:58.0";

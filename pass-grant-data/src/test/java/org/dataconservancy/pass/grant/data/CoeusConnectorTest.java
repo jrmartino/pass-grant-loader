@@ -17,6 +17,11 @@ package org.dataconservancy.pass.grant.data;
 
 import org.junit.Test;
 
+/**
+ * Test class for the COEUS connector
+ *
+ * @author jrm@jhu.edu
+ */
 public class CoeusConnectorTest {
 
     @Test
@@ -24,6 +29,9 @@ public class CoeusConnectorTest {
 
     }
 
+    /**
+     * Test that the query string produces is as expected
+     */
     @Test
     public void testBuildString() {
 

@@ -27,7 +27,10 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 /**
- * This class connects to a COEUS database via the Oracle JDBC driver
+ * This class connects to a COEUS database via the Oracle JDBC driver. The query string reflects local JHU
+ * database views
+ *
+ * @author jrm@jhu.edu
  */
 public class CoeusConnector {
     private static Logger LOG = LoggerFactory.getLogger(CoeusConnector.class);
@@ -76,27 +79,18 @@ public class CoeusConnector {
     }
 
     /**
-     * Method for building the query string against the COEUS database. We draw from three views, with the PRSN view
+     * Method for building the query string against the COEUS database. We draw from four views, with the PRSN view
      * (aliased to B) serving just to contain keys for joining the PROP (alias A) and DETAIL (alias C) views.
      *
-     * Since dates are stored in the views as strings, we need to process these strings using the TO_DATE function
-     * String literals are protected by single quotes. This explains some of the strangeness in the query string
-     * construction.
+     * Since dates are stored in the views as timestamps.
      *
-     * Normally, we will pull for just one date - in this case, startDate and endDate will be the same. Dates must be
-     * specified as mm/dd/yyyy. Dates are expected to be valid as supplied.
+     * We will pull all records which have been updated since the last update timestamp - this value becomes out startDate.
      *
-     * If no dates are specified, we assume that this is part of a daily run to get the updates from the previous day,
-     * so start date and end date will be yesterday.
-     * If only the start date is specified, we take the end date as being yesterday.
-     * If only the end date is specified, we throw an exception, as there is no natural default for start date.
      *
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
     public String buildQueryString(String startDate){
-
-        //TODO handle dates to agree with javadoc on method
 
         String[] propViewFields = { "TITLE", "GRANT_NUMBER", "AWARD_DATE", "AWARD_END",
                 "AWARD_NUMBER", "AWARD_START", "AWARD_STATUS", "PRIME_SPONSOR_CODE", "SPONSOR", "SPOSNOR_CODE", "DEPARTMENT",

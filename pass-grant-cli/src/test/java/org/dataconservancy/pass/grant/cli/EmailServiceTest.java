@@ -68,14 +68,15 @@ public class EmailServiceTest {
     @Test
     public void testSendMessage() throws IOException, MessagingException {
         String messageBody = "MOO";
-        underTest.sendEmailMessage(messageBody);
+        String messageSubject = "TEST";
+        underTest.sendEmailMessage(messageSubject, messageBody);
         // Check that only one message was sent
         Integer numMessages = testServer.getReceivedMessages().length;
         Assert.assertTrue("Expected only one message, got " + numMessages, numMessages == 1);
 
         // Check that the message is just a plaintext message
         MimeMessage message = testServer.getReceivedMessages()[0];
-        Assert.assertTrue("Subject of message was not correct", message.getSubject().equals("COEUS Data Loader Message"));
+        Assert.assertTrue("Subject of message was not correct", message.getSubject().equals(messageSubject));
         Assert.assertTrue("Content of message was not a string as expected", message.getContent() instanceof String);
         Assert.assertTrue(message.getContent().toString().contains(messageBody));
     }

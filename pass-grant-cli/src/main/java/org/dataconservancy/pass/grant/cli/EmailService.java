@@ -30,18 +30,33 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * An email service for reporting errors or results of running the {@code CoeusGrantLoaderApp}
+ * @author jrm@jhu.edu
+ */
 public class EmailService {
     private static Logger LOG = LoggerFactory.getLogger(EmailService.class);
-    private static String ERR_ADDRESS = "Could not send email: an addressing exception occurred";
-    private static String ERR_MESSAGING = "Could not send email: a messaging exception occurred";
-    private static String ERR_ENCODING = "ould not send email; an encoding exception occurred";
     private Properties mailProperties;
 
+    private static String ERR_ADDRESS = "Could not send email: an addressing exception occurred";
+    private static String ERR_MESSAGING = "Could not send email: a messaging exception occurred";
+    private static String ERR_ENCODING = "Could not send email; an encoding exception occurred";
+
+    /**
+     * The constructor
+     * @param mailProperties - the mail properties file
+     */
     EmailService(Properties mailProperties){
         this.mailProperties = mailProperties;
     }
 
-    public void sendEmailMessage(String message){
+    /**
+     * The method which sends the email
+     * @param subject the email subject
+     * @param message the body of the email
+     */
+    public void sendEmailMessage(String subject, String message){
+
         try {
            // Session session = Session.getInstance(mailProperties, pwAuth);
             Session session = Session.getInstance(mailProperties,
@@ -57,12 +72,12 @@ public class EmailService {
             msg.setFrom(new InternetAddress((String) mailProperties.get("mail.from"), "COEUS Data Loader"));
             msg.addRecipient(Message.RecipientType.TO,
                     new InternetAddress(mailProperties.getProperty("mail.to"), "COEUS Client"));
-            msg.setSubject("COEUS Data Loader Message");
+            msg.setSubject(subject);
             msg.setText(message);
             Transport.send(msg);
         } catch (AddressException e) {
             e.printStackTrace();
-            LOG.error(ERR_ADDRESS ,e);
+            LOG.error(ERR_ADDRESS, e);
         } catch (MessagingException e) {
             e.printStackTrace();
             LOG.error(ERR_MESSAGING, e);

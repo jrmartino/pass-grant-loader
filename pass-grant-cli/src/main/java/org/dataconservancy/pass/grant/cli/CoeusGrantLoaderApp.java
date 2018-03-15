@@ -41,6 +41,17 @@ import org.slf4j.LoggerFactory;
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
+/**
+ * This class does the orchestration for the pulling of COEUS grant data. The basic steeps are to read in all of the configuration
+ * files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all of the grants updated since the
+ * timestamp at the end of the updated timestamps file; execute the query against this database; use the {@code ResultSet} to populate
+ * a list of {@code Grant}s in our java model; and finally to push this data into our Fedora instance via the java Fedora client.
+ *
+ * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated fashion, so
+ * care must be taken to log errors, report them to STDOUT, and also send email notifications.
+ *
+ * @author jrm@jhu.edu
+ */
 public class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
     private static String ERR_HOME_DIRECTORY_NOT_FOUND = "No home directory found for the application. Please specify a valid absolute path.";
@@ -52,7 +63,7 @@ public class CoeusGrantLoaderApp {
             "is of the form 'yyyy-mm-dd hh:mm:ss.m{mm}";
     private static String ERR_INVALID_TIMESTAMP = "An invalid timestamp was found at the last line of the update timestamp file. Please make sure it" +
             "is of the form 'yyyy-mm-dd hh:mm:ss.m{mm}";
-    private static String ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP = "Could not append last modified date %s to update timestamp file";
+    private static String ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP = "The updated succeeded, but could not append last modified date %s to update timestamp file";
     private static String ERR_SQL_EXCEPTION = "An SQL error occurred querying the COEUS database";
     private static String ERR_ORACLE_DRIVER_NOT_FOUND = "Could not find the oracle db driver on classpath.";
 
@@ -68,12 +79,24 @@ public class CoeusGrantLoaderApp {
     private File mailPropertiesFile;
     private File updateTimestampsFile;
 
-
+    /**
+     * Constructor for this class
+     * @param coeusLoaderHome - the full path for the directory where configuration file, and the file containing all of the
+     *                        timestamps for updates which have previously been run.
+     *
+     * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
+     */
     CoeusGrantLoaderApp(File coeusLoaderHome, String startDate) {
         this.appHome = coeusLoaderHome;
         this.startDate = startDate;
         }
 
+    /**
+     * The orchestration method for everything. This is called by the {@code CoeusGrantLoaderCLI}, which only manages the
+     * command line interaction.
+     *
+     * @throws CoeusCliException if there was any error occurring during the grant loading or updating processes
+     */
     void run() throws CoeusCliException {
         connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
         mailPropertiesFile = new File(appHome, mailPropertiesFileName);
@@ -100,13 +123,10 @@ public class CoeusGrantLoaderApp {
             throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
         } else {
             startDate = getLatestTimestamp();
-            if(!verifyDateTimeFormat(startDate)){
-                throw processException(format(ERR_INVALID_TIMESTAMP, startDate),null);
-            }
         }
 
         //we need a valid dateTime to start the query
-        if (!verifyDateTimeFormat(startDate)){//the last line of the update_timestamps file is not in valid date time format
+        if (!verifyDateTimeFormat(startDate)){//the start timestamp file is not in valid date time format
             throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
         }
 
@@ -114,26 +134,41 @@ public class CoeusGrantLoaderApp {
         CoeusConnector coeusConnector = new CoeusConnector(connectionPropertiesMap);
         String queryString = coeusConnector.buildQueryString(startDate);
         ResultSet resultSet;
+        GrantModelBuilder modelBuilder = null;
         try {
             resultSet = coeusConnector.retrieveCoeusUpdates(queryString);
-            GrantModelBuilder modelBuilder = new GrantModelBuilder(resultSet);
+            modelBuilder = new GrantModelBuilder(resultSet);
             List<Grant> grantList = modelBuilder.buildGrantList();
             for (Grant grant : grantList) {
                 //TODO put grant information in Fedora
                 //create if not already there, update if it is there
             }
-            appendLineToFile(updateTimestampsFile, modelBuilder.getLatestUpdate());
+
         } catch (ClassNotFoundException e) {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
         } catch (SQLException e) {
             throw processException(ERR_SQL_EXCEPTION, e);
-        } catch (IOException e) {
-            throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, startDate), null);
         }
 
+        //apparently the hard part has succeeded, let's write the timestamp to out update timestamps file
+        try{
+            appendLineToFile(updateTimestampsFile, modelBuilder.getLatestUpdate());
+        } catch (IOException e) {
+            throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, modelBuilder.getLatestUpdate()), null);
+        }
 
+        //now everything succeeded - log this result and send email
+        String message = modelBuilder.getReport();
+        LOG.info(message);
+        emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
     }
 
+    /**
+     * This method checks to make sure we can access the necessary configuration files
+     *
+     * @param appHome - the full path to the directory containing the configuration files and update timestamps file
+     * @throws CoeusCliException if the configuration files are not present and accessible
+     */
     private void checkFilesAreOK(File appHome) throws CoeusCliException {
         //First make sure the specified home directory exists and is suitable
         if (!appHome.exists()) {
@@ -152,6 +187,12 @@ public class CoeusGrantLoaderApp {
         }
     }
 
+    /**
+     * This method takes an encoded properties file and returns a map representing the encoded properties
+     * @param propertiesFile - the encoded properties file
+     * @return the map representing the properties in the encoded file
+     * @throws CoeusCliException if configuration files are not accessible
+     */
     private Map<String, String> decodeProperties(File propertiesFile) throws CoeusCliException {
         Properties connectionProperties = new Properties();
         String resource="";
@@ -176,6 +217,12 @@ public class CoeusGrantLoaderApp {
         //return ((Map<String, String>) (Map) connectionProperties);
     }
 
+    /**
+     * This method processes a plain text properties file and returns a property object
+     * @param propertiesFile - the properties {@code File} to be read
+     * @return the Properties object derived from the supplied File
+     * @throws CoeusCliException if the properties file could not be accessed.
+     */
     private Properties loadProperties(File propertiesFile) throws CoeusCliException {
         Properties properties = new Properties();
         try{
@@ -192,7 +239,11 @@ public class CoeusGrantLoaderApp {
         return properties;
     }
 
-
+    /**
+     * Ths method returns  a string representing the timestamp on the last line of the updated timestamps file
+     * @return the timestamp string
+     * @throws CoeusCliException if the updated timestamps file could not be accessed
+     */
     private String getLatestTimestamp() throws CoeusCliException {
         String lastLine="";
         if (!updateTimestampsFile.exists()) {
@@ -212,6 +263,14 @@ public class CoeusGrantLoaderApp {
         return lastLine;
     }
 
+    /**
+     * This method appends the timestamp representing the latest update timestamp of all of the {@code Grant}s being processed
+     * in this running of the loader
+     * @param file - the {@code File} to write to
+     * @param updateString - the timestamp string to append to the {@code File}
+     *
+     * @throws IOException if the append fails
+     */
     private void appendLineToFile(File file, String updateString) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(
                 new FileOutputStream(file.getCanonicalPath(), true), "UTF-8");
@@ -221,14 +280,22 @@ public class CoeusGrantLoaderApp {
         fbw.close();
     }
 
+    /**
+     * This method logs the supplied message and exception, reports the {@code Exception} to STDOUT, and
+     * causes an email regarding this Exception to be sent to the address configures in the mail properties file
+     * @param message - the error message
+     * @param e - the Exception
+     * @return = the {@code CoeusCliException} wrapper
+     */
     private CoeusCliException processException (String message, Exception e){
+        String errorSubject = "COEUS Data Loader ERROR";
         if(e != null) {
             LOG.error(message, e);
-            emailService.sendEmailMessage(message + " " + e.getMessage());
+            emailService.sendEmailMessage(errorSubject,message + " " + e.getMessage());
             return new CoeusCliException(message, e);
         } else {
             LOG.error(message);
-            emailService.sendEmailMessage(message);
+            emailService.sendEmailMessage(errorSubject, message);
             return new CoeusCliException(message);
         }
     }

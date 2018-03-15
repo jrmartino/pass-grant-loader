@@ -22,10 +22,15 @@ import org.kohsuke.args4j.Option;
 
 import java.io.File;
 
+/**
+ * This Class manages the command line interaction for the loading and updating processes
+ *
+ * @author jrm@jhu.edu
+ */
 public class CoeusGrantLoaderCLI {
 
     /**
-     * Arguments - just the property file containing the submission elements
+     * Arguments - just the absolute path to the "home" directory containing configuration files and the updated timestamps file
      */
     @Argument(required = true, index = 0, metaVar = "[Home Directory]", usage = "Absolute path of the directory which is " +
             "readable and writable by the user executing this application, " +
@@ -42,19 +47,23 @@ public class CoeusGrantLoaderCLI {
 
     /** Request for help/usage documentation */
     @Option(name = "-h", aliases = { "-help", "--help" }, usage = "print help message")
-    public boolean help = false;
+    private boolean help = false;
 
     /** Requests the current version number of the cli application. */
     @Option(name = "-v", aliases = { "-version", "--version" }, usage = "print version information")
-    public boolean version = false;
+    private boolean version = false;
 
     /** Requests the current version number of the cli application. */
     @Option(name = "-s", aliases = { "-startDateTime", "--startDateTime" }, usage = "DateTime to start the query against COEUS. This will cause " +
             "a return of all records updated since this DateTime. Syntax must be yyyy-mm-dd hh:mm:ss.m{mm}. This value will override the most recent " +
             "dateTime listed in the updates file.")
-    public static String startDate = "";
+    private static String startDate = "";
 
-
+    /**
+     * The main method which parses the command line arguments and options; also reports errors and exit statuses
+     * when the {@code CoeusGrantLoaderApp} executes
+     * @param args the command line arguments
+     */
     public static void main(String[] args) {
 
         final CoeusGrantLoaderCLI application = new CoeusGrantLoaderCLI();
