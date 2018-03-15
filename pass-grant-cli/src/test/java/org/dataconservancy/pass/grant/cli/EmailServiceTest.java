@@ -28,6 +28,10 @@ import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * Test classs for email service
+ * @author jrm@jhu.edu
+ */
 public class EmailServiceTest {
 
     private Properties mailProperties = System.getProperties();
@@ -65,8 +69,13 @@ public class EmailServiceTest {
 
     }
 
+    /**
+     *  Test for sending a message
+     * @throws IOException if there was a problem getting the content of the message
+     * @throws MessagingException if there was a problem  sending the message
+     */
     @Test
-    public void testSendMessage() throws IOException, MessagingException {
+    public void testSendMessage() throws MessagingException, IOException {
         String messageBody = "MOO";
         String messageSubject = "TEST";
         underTest.sendEmailMessage(messageSubject, messageBody);

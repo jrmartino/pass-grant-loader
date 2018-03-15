@@ -19,8 +19,14 @@ package org.dataconservancy.pass.grant.data;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Test class for building the {@code List} of {@code Grant}s
+ */
 public class GrantModelBuilderTest {
 
+    /**
+     * Method to verify that the timestamp utility method returns the later of two supplied timestamps
+     */
     @Test
     public void testReturnLatestUpdate(){
         String baseString = "1980-01-01 00:00:00.0";
