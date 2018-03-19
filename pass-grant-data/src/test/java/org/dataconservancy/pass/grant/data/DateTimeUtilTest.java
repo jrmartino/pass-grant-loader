@@ -89,8 +89,8 @@ public class DateTimeUtilTest {
      */
     @Test
     public void testCreateJodaDateTime() {
-        String date = "2018-01-30 23:59:58.0";
-        DateTime dateTime = DateTimeUtil.createJodaDateTime(date);
+        String timestamp = "2018-01-30 23:59:58.0";
+        DateTime dateTime = DateTimeUtil.createJodaDateTime(timestamp);
         Assert.assertTrue(dateTime != null);
 
         Assert.assertEquals(2018, dateTime.getYear());
@@ -100,6 +100,18 @@ public class DateTimeUtilTest {
         Assert.assertEquals(23, dateTime.getHourOfDay());
         Assert.assertEquals(59, dateTime.getMinuteOfHour());
         Assert.assertEquals(58, dateTime.getSecondOfMinute());
+
+        Assert.assertEquals(0, dateTime.getMillisOfSecond());
+
+        String date = "01/30/2018";
+        dateTime = DateTimeUtil.createJodaDateTime(date);
+        Assert.assertEquals(2018, dateTime.getYear());
+        Assert.assertEquals(01, dateTime.getMonthOfYear());
+        Assert.assertEquals(30, dateTime.getDayOfMonth());
+
+        Assert.assertEquals(0, dateTime.getHourOfDay());
+        Assert.assertEquals(0, dateTime.getMinuteOfHour());
+        Assert.assertEquals(0, dateTime.getSecondOfMinute());
 
         Assert.assertEquals(0, dateTime.getMillisOfSecond());
 

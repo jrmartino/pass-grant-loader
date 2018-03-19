@@ -16,14 +16,17 @@
 
 package org.dataconservancy.pass.grant.data;
 
-import org.dataconservancy.pass.grant.model.Grant;
-import org.dataconservancy.pass.grant.model.Person;
+import org.dataconservancy.pass.model.Funder;
+import org.dataconservancy.pass.model.Grant;
+import org.dataconservancy.pass.model.Person;
 import org.joda.time.DateTime;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTime;
@@ -46,6 +49,8 @@ public class GrantModelBuilder {
 
     /**
      * Build a List of Grants from a ResultSet
+     * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
+     * these and check to see if any of the fields on these objects need updating.
      * @return the List of constructed Grants
      * @throws SQLException if the database had an issue with our SQL query
      */
@@ -57,37 +62,38 @@ public class GrantModelBuilder {
         while (rs.next()) {
             Grant grant = new Grant();
             Person person = new Person();
+            Funder directFunder = new Funder();
+            Funder primaryFunder = new Funder();
 
-            grant.setProjectName(rs.getString("TITLE"));
             grant.setAwardNumber(rs.getString("GRANT_NUMBER"));
-            grant.setAwardDate(rs.getString("AWARD_DATE"));
-            grant.setEndDate(rs.getString("AWARD_END"));
-            grant.setAwardNumber(rs.getString("AWARD_NUMBER"));
-            grant.setStartDate(rs.getString("AWARD_START"));
             switch (rs.getString("AWARD_STATUS")) {
                 case "Active":
-                    grant.setAwardStatus(Grant.status.ACTIVE);
+                    grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
                     break;
                 case "Pre-Award":
-                    grant.setAwardStatus(Grant.status.PRE_AWARD);
+                    grant.setAwardStatus(Grant.AwardStatus.PRE_AWARD);
                     break;
                 case "Terminated":
-                    grant.setAwardStatus(Grant.status.TERMINATED);
+                    grant.setAwardStatus(Grant.AwardStatus.TERMINATED);
             }
-            grant.setPrimaryFunder(rs.getString("PRIME_SPONSOR_CODE"));
-            grant.setDirectFunder(rs.getString("SPONSOR"));
-            grant.setDepartment(rs.getString("DEPARTMENT"));
-            grant.setDivision(rs.getString("DIVISION"));
-            grant.setOrganizationalUnitName(rs.getString("UNIT_NAME"));
             grant.setLocalAwardId(rs.getString("AWARD_NUMBER"));
+            grant.setProjectName(rs.getString("TITLE"));
+            grant.setAwardDate(createJodaDateTime(rs.getString("AWARD_DATE")));
+            grant.setStartDate(createJodaDateTime(rs.getString("AWARD_START")));
+            grant.setEndDate(createJodaDateTime(rs.getString("AWARD_END")));
 
-            person.setInstitutionalId(rs.getString("JHED_ID"));
             person.setFirstName(rs.getString("FIRST_NAME"));
+            person.setMiddleName(rs.getString("MIDDLE_NAME"));
             person.setLastName(rs.getString("LAST_NAME"));
+            person.setDisplayName(rs.getString("PRINCIPAL_INV"));
             person.setEmail(rs.getString("EMAIL_ADDRESS"));
-            //person.setAffiliation(rs.getString("AFFILIATION"));
+            person.setInstitutionalId(rs.getString("JHED_ID"));
+            //person.setOrcidId();
+            person.setAffiliation(rs.getString("DIVISION"));
 
-            grant.setPi(person);
+            directFunder.setLocalId("");
+            directFunder.setName("");
+
             grantList.add(grant);
 
             //see if this is the latest grant updated
@@ -109,7 +115,7 @@ public class GrantModelBuilder {
      * @param latestUpdateString the new timestamp to be compared against the current latest timestamp
      * @return the later of the two parameters
      */
-    protected String returnLaterUpdate(String currentUpdateString, String latestUpdateString) {
+    protected static String returnLaterUpdate(String currentUpdateString, String latestUpdateString) {
         DateTime grantUpdateTime = createJodaDateTime(currentUpdateString);
         DateTime previousLatestUpdateTime = createJodaDateTime(latestUpdateString);
         return grantUpdateTime.isAfter(previousLatestUpdateTime)? currentUpdateString : latestUpdateString;

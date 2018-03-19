@@ -35,7 +35,7 @@
         <args4j.version>2.33</args4j.version>
         <commons-codec.version>1.9</commons-codec.version>
         <greenmail.version>1.5.7</greenmail.version>
-        <javax.mail.version>1.6.0</javax.mail.version>
+        <javax.mail.version>1.6.1</javax.mail.version>
         <junit.version>4.12</junit.version>
         <logback-classic.version>1.2.3</logback-classic.version>
         <maven.compiler.plugin.version>2.5.1</maven.compiler.plugin.version>
@@ -99,11 +99,6 @@
                 <groupId>com.sun.mail</groupId>
                 <artifactId>javax.mail</artifactId>
                 <version>${javax.mail.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.simplejavamail</groupId>
-                <artifactId>simple-java-mail</artifactId>
-                <version>${simplejavamail.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>

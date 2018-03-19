@@ -32,25 +32,32 @@ public class DateTimeUtil {
      * @return the corresponding DataTime object
      */
     public static DateTime createJodaDateTime(String sqlDateTime) {
-        String[] parts = sqlDateTime.split(" ");
-        String date = parts[0]; //yyyy-mm-dd
-        String time = parts[1]; //hh:mm:ss.m{mm}
+        DateTime dateTime;
 
-        String[] dateParts = date.split("-");
-        String year = dateParts[0];
-        String month = dateParts[1];
-        String day = dateParts[2];
+        String[] parts =  sqlDateTime.split(" ");
 
-        String[] timeParts = time.split(":");
-        String hour = timeParts[0];
-        String minute = timeParts[1];
-
-        String[] secondParts = timeParts[2].split("\\.");
-        String second = secondParts[0];
-        String milliseconds = secondParts[1];
-
-        DateTime dateTime = new DateTime(Integer.parseInt(year), Integer.parseInt(month), Integer.parseInt(day),
-                Integer.parseInt(hour), Integer.parseInt(minute), Integer.parseInt(second), Integer.parseInt(milliseconds));
+        //do we have time parts? the timestamp form is yyyy-mm-dd hh:mm:ss.m
+        if( parts.length > 1) {
+            String date = parts[0]; //yyyy-mm-dd
+            String[] dateParts = date.split("-");
+            int year = Integer.parseInt(dateParts[0]);
+            int month = Integer.parseInt(dateParts[1]);
+            int day = Integer.parseInt(dateParts[2]);
+            String time = parts[1]; //hh:mm:ss.m{mm}
+            String[] timeParts = time.split(":");
+            int hour = Integer.parseInt(timeParts[0]);
+            int minute = Integer.parseInt(timeParts[1]);
+            String[] secondParts = timeParts[2].split("\\.");
+            int second = Integer.parseInt(secondParts[0]);
+            int millisecond = Integer.parseInt(secondParts[1]);//seems to be always 0 in our data
+            dateTime = new DateTime(year, month, day,hour,minute, second, millisecond);
+        } else {//we have just a date - date format is mm/day/year
+            parts = sqlDateTime.split("/");
+            int month = Integer.parseInt(parts[0]);
+            int day = Integer.parseInt(parts[1]);
+            int year = Integer.parseInt(parts[2]);
+            dateTime = new DateTime(year, month, day, 0, 0);
+        }
         return dateTime;
 
     }

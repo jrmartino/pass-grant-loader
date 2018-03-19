@@ -93,22 +93,30 @@ public class CoeusConnector {
     public String buildQueryString(String startDate){
 
         String[] propViewFields = { "TITLE", "GRANT_NUMBER", "AWARD_DATE", "AWARD_END",
-                "AWARD_NUMBER", "AWARD_START", "AWARD_STATUS", "PRIME_SPONSOR_CODE", "SPONSOR", "SPOSNOR_CODE", "DEPARTMENT",
-                "DIVISION", "TITLE", "UNIT_NAME", "UNIT_NUMBER", "UPDATE_TIMESTAMP" };
+                "AWARD_ID", "AWARD_START", "AWARD_STATUS", "PRINCIPAL_INV", "SPONSOR",
+                "SPOSNOR_CODE", "UPDATE_TIMESTAMP" }; //yes, this column header is misspelled in COEUS
 
         StringJoiner propViewQuery = new StringJoiner(", A.", "A.", ", ");
         for (String field : propViewFields){
             propViewQuery.add(field);
         }
 
-        String[] personDetailViewFields = {"JHED_ID", "FIRST_NAME", "LAST_NAME", "EMAIL_ADDRESS"}; //TODO add AFFILIATION
+        String[] prsnViewFields = {"ABBREVIATED_ROLE"};
+
+        StringJoiner prsnViewQuery = new StringJoiner(", B.", "B.", ", ");
+        for (String field : prsnViewFields){
+            prsnViewQuery.add(field);
+        }
+
+
+        String[] personDetailViewFields = {"JHED_ID", "FIRST_NAME", "MIDDLE_NAME", "LAST_NAME", "EMAIL_ADDRESS"};
 
         StringJoiner personDetailViewQuery = new StringJoiner(", C.", "C.", ", ");
         for (String field : personDetailViewFields){
             personDetailViewQuery.add(field);
         }
 
-        String[] sponsorViewFields = { "SPONSOR_NAME" };
+        String[] sponsorViewFields = { "SPONSOR_NAME", "SPONSOR_CODE" };
         StringJoiner sponsorViewQuery = new StringJoiner(", D.", "D.", "");
         for (String field : sponsorViewFields) {
             sponsorViewQuery.add(field);
@@ -117,15 +125,16 @@ public class CoeusConnector {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
         sb.append(propViewQuery.toString());
+        sb.append(prsnViewQuery);
         sb.append(personDetailViewQuery.toString());
         sb.append(sponsorViewQuery.toString());
         sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP A ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID ");
-        sb.append("INNER JOIN COEUS.SWIFT_SPONSOR D ON A.SPOSNOR_CODE = D.SPONSOR_CODE ");
+        sb.append("LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE ");
         sb.append("WHERE A.UPDATE_TIMESTAMP > TIMESTAMP'");
         sb.append(startDate);
-        sb.append("'), ");
+        sb.append("' ");
         sb.append("AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated')");
 
         String queryString = sb.toString();

@@ -19,13 +19,17 @@ package org.dataconservancy.pass.grant.data;
 import org.junit.Assert;
 import org.junit.Test;
 
+import static org.dataconservancy.pass.grant.data.GrantModelBuilder.returnLaterUpdate;
+
 /**
  * Test class for building the {@code List} of {@code Grant}s
+ *
+ * @author jrm@jhu.edu
  */
 public class GrantModelBuilderTest {
 
     /**
-     * Method to verify that the timestamp utility method returns the later of two supplied timestamps
+     * Test static timestamp utility method to verify it returns the later of two supplied timestamps
      */
     @Test
     public void testReturnLatestUpdate(){
@@ -33,13 +37,11 @@ public class GrantModelBuilderTest {
         String earlyDate  = "2018-01-02 03:04:05.0";
         String laterDate  = "2018-01-02 04:08:09.0";
 
-        GrantModelBuilder gmb = new GrantModelBuilder(null);
-
-        String latestDate = gmb.returnLaterUpdate(baseString, earlyDate);
+        String latestDate = returnLaterUpdate(baseString, earlyDate);
         Assert.assertEquals(earlyDate, latestDate);
-        latestDate = gmb.returnLaterUpdate(latestDate, laterDate);
+        latestDate = returnLaterUpdate(latestDate, laterDate);
         Assert.assertEquals(laterDate, latestDate);
 
-        Assert.assertEquals(earlyDate, gmb.returnLaterUpdate(earlyDate, earlyDate));
+        Assert.assertEquals(earlyDate, returnLaterUpdate(earlyDate, earlyDate));
     }
 }
