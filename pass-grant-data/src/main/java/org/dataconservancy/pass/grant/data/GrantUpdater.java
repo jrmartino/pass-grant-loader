@@ -105,7 +105,6 @@ public class GrantUpdater {
                 grant.setStartDate(createJodaDateTime(rs.getString("AWARD_START")));
                 grant.setEndDate(createJodaDateTime(rs.getString("AWARD_END")));
 
-
                 //funder semantics here and sponsor semantics in COEUS are different.
                 //in COEUS, we always have a Sponsor. This is the direct source of the $. (like NIH or another university)
                 //if we are a sub-awardee, we also have a Primary Sponsor (like NSF etc.); else this field is null.
@@ -116,6 +115,7 @@ public class GrantUpdater {
                 Funder directFunder;
                 String directFunderId = rs.getString(("SPOSNOR_CODE"));//A.SPOSNOR_CODE
                 URI directFunderURI;
+                boolean mustUpdate = false;
 
                 if(!funderMap.containsKey(directFunderId)) {
                     directFunderURI = fedoraClient.findByAttribute(Funder.class, "localId", directFunderId);
@@ -123,13 +123,25 @@ public class GrantUpdater {
                         directFunder = new Funder();
                         directFunderURI = fedoraClient.createResource(directFunder);
                     }
+
                     directFunder = (Funder) fedoraClient.readResource(directFunderURI, Funder.class);
 
-                    directFunder.setLocalId(directFunderId);
-                    directFunder.setName(rs.getString("SPONSOR"));//A.SPONSOR
-                    fedoraClient.updateResource(directFunder);
+                    if(directFunder.getLocalId()== null || !directFunder.getLocalId().equals(directFunderId)) {
+                        directFunder.setLocalId(directFunderId);
+                        mustUpdate = true;
+                    }
+
+                    String funderName = rs.getString("SPONSOR");//A.SPONSOR
+                    if(directFunder.getName()==null || !directFunder.getName().equals(funderName)) {
+                        directFunder.setName(funderName);
+                        mustUpdate=true;
+                    }
+                    if(mustUpdate){
+                        fedoraClient.updateResource(directFunder);
+                    }
                     funderMap.put(directFunderId, directFunderURI);
-                } else {//save the overhead of a redundant update
+
+                } else {//save the overhead of checking a redundant update
                     directFunderURI = funderMap.get(directFunderId);
                 }
                 grant.setDirectFunder(directFunderURI);
@@ -137,6 +149,7 @@ public class GrantUpdater {
                 Funder primaryFunder;
                 String primaryFunderId = rs.getString(("SPONSOR_CODE"));//D.SPONSOR_CODE
                 URI primaryFunderURI;
+                mustUpdate = false;
 
                 if (primaryFunderId != null) {
                     if(!funderMap.containsKey(primaryFunderId)) {
@@ -147,15 +160,26 @@ public class GrantUpdater {
                         }
                         primaryFunder = (Funder) fedoraClient.readResource(primaryFunderURI, Funder.class);
 
-                        primaryFunder.setLocalId(primaryFunderId);
-                        primaryFunder.setName(rs.getString("SPONSOR_NAME"));//D.SPONSOR_NAME
-              rs.getString("FIRST_NAME");          fedoraClient.updateResource(primaryFunder);
+                        if(primaryFunder.getLocalId()==null || !primaryFunder.getLocalId().equals(primaryFunderId)) {
+                            primaryFunder.setLocalId(primaryFunderId);
+                            mustUpdate = true;
+                        }
+
+                        String funderName = rs.getString("SPONSOR_NAME");//D.SPONSOR_NAME
+
+                        if(primaryFunder.getName()==null || !primaryFunder.getName().equals(funderName)) {
+                            primaryFunder.setName(funderName);
+                            mustUpdate = true;
+                        }
+                        if(mustUpdate){
+                            fedoraClient.updateResource(primaryFunder);
+                        }
                         funderMap.put(primaryFunderId, primaryFunderURI);
                     } else {
                         primaryFunderURI = funderMap.get(primaryFunderId);
                     }
                     grant.setPrimaryFunder(primaryFunderURI);
-                } else {//save the overhead of a redundant update
+                } else {//save the overhead of checking a redundant update
                     grant.setPrimaryFunder(directFunderURI);
                 }
 
@@ -166,6 +190,7 @@ public class GrantUpdater {
             Person investigator;
             String jhedId = rs.getString("JHED_ID");
             URI investigatorURI;
+            boolean mustUpdate = false;
 
             if(!personMap.containsKey(jhedId)) {
                 investigatorURI = fedoraClient.findByAttribute(Person.class, "institutionalId", jhedId);
@@ -175,16 +200,15 @@ public class GrantUpdater {
                     investigatorURI = fedoraClient.createResource(investigator);
                 }
 
+                investigator = (Person) fedoraClient.readResource(investigatorURI, Person.class);
+
                 String firstName=rs.getString("FIRST_NAME");
                 String middleName=rs.getString("MIDDLE_NAME");
                 String lastName = rs.getString("LAST_NAME");
-
-                investigator = (Person) fedoraClient.readResource(investigatorURI, Person.class);
-                investigator.setFirstName(firstName);
-                investigator.setMiddleName(middleName);
-                investigator.setLastName(lastName);
+                String emailAddress = rs.getString("EMAIL_ADDRESS");
+                String institutionalId = rs.getString("JHED_ID");
                 //set display name = this appears on the grant as the principal investigator's name, which will not
-                //agree with the jhedId on grant if this is so-pi. we simply construct it here.
+                //agree with the jhedId on grant if this is a co-pi. we simply construct it here.
                 StringBuilder sb = new StringBuilder();
                 sb.append(lastName);
                 sb.append(", ");
@@ -193,13 +217,37 @@ public class GrantUpdater {
                     sb.append(" ");
                     sb.append(middleName.charAt(0) );
                 }
-                investigator.setDisplayName(sb.toString());
-                investigator.setEmail(rs.getString("EMAIL_ADDRESS"));
-                investigator.setInstitutionalId(rs.getString("JHED_ID"));
+                String displayName = sb.toString();
 
-                fedoraClient.updateResource(investigator);
+                if(investigator.getFirstName()==null || !investigator.getFirstName().equals(firstName)) {
+                    investigator.setFirstName(firstName);
+                    mustUpdate=true;
+                }
+                if(investigator.getMiddleName()==null || !investigator.getMiddleName().equals(middleName)) {
+                    investigator.setMiddleName(middleName);
+                    mustUpdate=true;
+                }
+                if(investigator.getLastName()==null || !investigator.getLastName().equals(lastName)) {
+                    investigator.setLastName(lastName);
+                    mustUpdate=true;
+                }
+                if(investigator.getDisplayName()==null || !investigator.getDisplayName().equals(displayName)) {
+                    investigator.setFirstName(displayName);
+                    mustUpdate=true;
+                }
+                if(investigator.getEmail()==null || !investigator.getEmail().equals(emailAddress)) {
+                    investigator.setEmail(emailAddress);
+                    mustUpdate = true;
+                }
+                if(investigator.getInstitutionalId()==null || !investigator.getInstitutionalId().equals(institutionalId)) {
+                    investigator.setInstitutionalId(institutionalId);
+                    mustUpdate = true;
+                }
+                if(mustUpdate) {
+                    fedoraClient.updateResource(investigator);
+                }
                 personMap.put(jhedId, investigatorURI);
-            } else {//save the overhead of a redundant update
+            } else {//save the overhead of checking a redundant update
                 investigatorURI = personMap.get(jhedId);
             }
             if (Objects.equals(rs.getString("ABBREVIATED_ROLE"), "P")) {//it's the PI
@@ -212,7 +260,7 @@ public class GrantUpdater {
 
             //see if this is the latest grant updated
             String grantUpdateString = rs.getString("UPDATE_TIMESTAMP");
-            String baseString = "1980-01-01 00:00:00.0";//just some random long ago timestamp to handle the first record
+            String baseString = "1980-01-01 00:00:00.0";//just some random long ago timestamp to handle the display record
             latestUpdateString = latestUpdateString.length()==0 ? baseString : returnLaterUpdate(grantUpdateString, latestUpdateString);
 
             //increment the number of records processed
