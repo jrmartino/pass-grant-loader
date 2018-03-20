@@ -19,14 +19,14 @@ package org.dataconservancy.pass.grant.data;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.dataconservancy.pass.grant.data.GrantModelBuilder.returnLaterUpdate;
+import static org.dataconservancy.pass.grant.data.GrantUpdater.returnLaterUpdate;
 
 /**
  * Test class for building the {@code List} of {@code Grant}s
  *
  * @author jrm@jhu.edu
  */
-public class GrantModelBuilderTest {
+public class GrantUpdaterTest {
 
     /**
      * Test static timestamp utility method to verify it returns the later of two supplied timestamps

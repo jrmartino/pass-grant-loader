@@ -28,13 +28,11 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 import org.dataconservancy.pass.grant.data.CoeusConnector;
-import org.dataconservancy.pass.grant.data.GrantModelBuilder;
-import org.dataconservancy.pass.model.Grant;
+import org.dataconservancy.pass.grant.data.GrantUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,15 +132,11 @@ public class CoeusGrantLoaderApp {
         CoeusConnector coeusConnector = new CoeusConnector(connectionPropertiesMap);
         String queryString = coeusConnector.buildQueryString(startDate);
         ResultSet resultSet;
-        GrantModelBuilder modelBuilder = null;
+        GrantUpdater modelBuilder = null;
         try {
             resultSet = coeusConnector.retrieveCoeusUpdates(queryString);
-            modelBuilder = new GrantModelBuilder(resultSet);
-            List<Grant> grantList = modelBuilder.buildGrantList();
-            for (Grant grant : grantList) {
-                //TODO put grant information in Fedora
-                //create if not already there, update if it is there
-            }
+            modelBuilder = new GrantUpdater(resultSet);
+            modelBuilder.updateGrants();
 
         } catch (ClassNotFoundException e) {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
