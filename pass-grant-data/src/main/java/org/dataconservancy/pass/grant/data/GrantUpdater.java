@@ -270,8 +270,7 @@ public class GrantUpdater {
 
             //see if this is the latest grant updated
             String grantUpdateString = rs.getString("UPDATE_TIMESTAMP");
-            String baseString = "1980-01-01 00:00:00.0";//just some random long ago timestamp to handle the display record
-            latestUpdateString = latestUpdateString.length()==0 ? baseString : returnLaterUpdate(grantUpdateString, latestUpdateString);
+            latestUpdateString = latestUpdateString.length()==0 ? grantUpdateString : returnLaterUpdate(grantUpdateString, latestUpdateString);
 
             //increment the number of records processed
             i++;
