@@ -142,6 +142,8 @@ public class CoeusGrantLoaderApp {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
         } catch (SQLException e) {
             throw processException(ERR_SQL_EXCEPTION, e);
+        } catch (RuntimeException e) {
+            throw processException ("Runtime Exception", e);
         }
 
         //apparently the hard part has succeeded, let's write the timestamp to out update timestamps file

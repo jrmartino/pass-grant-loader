@@ -73,7 +73,7 @@ public class GrantUpdater {
             Grant grant;
             String localAwardId = rs.getString("AWARD_NUMBER");
 
-            URI grantURI = fedoraClient.findByAttribute(Grant.class, "AWARD_NUMBER", localAwardId);
+            URI grantURI = fedoraClient.findByAttribute(Grant.class, "localAwardId", localAwardId);
 
             //is this the first record we have for this grant? If so, check to see if we already know
             //about it in Fedora. Retrieve it if we have it, build a new one if not
@@ -87,7 +87,7 @@ public class GrantUpdater {
                 grant = (Grant) fedoraClient.readResource(grantURI, Grant.class);
                 grant.setCoPis(new ArrayList<>());//we will build this from scratch in either case
 
-                //process all single valued fields - everyone by co-pis at the moment
+                //process all single valued fields - everyone but co-pis at the moment
                 grant.setAwardNumber(rs.getString("GRANT_NUMBER"));
                 switch (rs.getString("AWARD_STATUS")) {
                     case "Active":
@@ -112,12 +112,15 @@ public class GrantUpdater {
                 //our semantics are that we always track two things - the directFunder, which is who gives us the $,
                 //and the primary funder, which is where the $ originated. if it is not a subcontract, these values are the same.
 
+                //process the direct funder. we go to the trouble to see if there are any COEUS fields
+                //which differ from the existing fields (when we have the object in fedora already).
+                //if not, we don't need to send an update.
                 Funder directFunder;
                 String directFunderId = rs.getString(("SPOSNOR_CODE"));//A.SPOSNOR_CODE
                 URI directFunderURI;
                 boolean mustUpdate = false;
 
-                if(!funderMap.containsKey(directFunderId)) {
+                if(!funderMap.containsKey(directFunderId)) {//we haven't processed this funder in this session
                     directFunderURI = fedoraClient.findByAttribute(Funder.class, "localId", directFunderId);
                     if (directFunderURI == null) {
                         directFunder = new Funder();
@@ -146,6 +149,9 @@ public class GrantUpdater {
                 }
                 grant.setDirectFunder(directFunderURI);
 
+                //process the primary funder. we go to the trouble to see if there are any COEUS fields
+                //which differ from the existing fields (when we have the object in fedora already).
+                //if not, we don't need to send an update.
                 Funder primaryFunder;
                 String primaryFunderId = rs.getString(("SPONSOR_CODE"));//D.SPONSOR_CODE
                 URI primaryFunderURI;
@@ -186,7 +192,11 @@ public class GrantUpdater {
             } else {//we have started working on this grant already
                 grant=grantMap.get(localAwardId);//let's continue
             }
-            //now process any person fields on passes subsequent to initial pass (or initial pass)
+
+            //now process any person fields on any record which corresponds to this Grant
+            //we go to the trouble to see if there are any COEUS fields
+            //which differ from the existing fields (when we have the object in fedora already).
+            //if not, we don't need to send an update.
             Person investigator;
             String jhedId = rs.getString("JHED_ID");
             URI investigatorURI;
