@@ -35,7 +35,7 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 
 /**
  * This class is responsible for taking the ResultSet from the database query and constructing a corresponding
- * List of Grant objects.
+ * Collection of Grant objects, which it then sends to fedora to update.
  *
  * @author jrm@jhu.edu
  */
@@ -44,7 +44,7 @@ public class GrantUpdater {
     private ResultSet rs;
     private String latestUpdateString = "";
     private String report = "";
-    FedoraPassClient fedoraClient = new FedoraPassClient();
+    private FedoraPassClient fedoraClient = new FedoraPassClient();
 
     public GrantUpdater(ResultSet resultSet) {
         this.rs = resultSet;
@@ -64,7 +64,7 @@ public class GrantUpdater {
 
         //some entities may be referenced many times during an update, but just need to be updated the first time
         //they are encountered. these include Persons and Funders. we save the overhead of redundant updates
-        //by looking them up here.
+        //of these by looking them up here.
         Map<String, URI> funderMap = new HashMap<>();
         Map<String, URI> personMap = new HashMap<>();
 
@@ -107,8 +107,8 @@ public class GrantUpdater {
 
 
                 //funder semantics here and sponsor semantics in COEUS are different.
-                //in COEUS, we always have a Sponsor. This is the direct source of the $. (like another university)
-                //if we have a sub-award, we also have a Primary Sponsor (like NSF etc.); else this field is null.
+                //in COEUS, we always have a Sponsor. This is the direct source of the $. (like NIH or another university)
+                //if we are a sub-awardee, we also have a Primary Sponsor (like NSF etc.); else this field is null.
 
                 //our semantics are that we always track two things - the directFunder, which is who gives us the $,
                 //and the primary funder, which is where the $ originated. if it is not a subcontract, these values are the same.
@@ -119,7 +119,7 @@ public class GrantUpdater {
 
                 if(!funderMap.containsKey(directFunderId)) {
                     directFunderURI = fedoraClient.findByAttribute(Funder.class, "localId", directFunderId);
-                    if (directFunderId == null) {
+                    if (directFunderURI == null) {
                         directFunder = new Funder();
                         directFunderURI = fedoraClient.createResource(directFunder);
                     }
@@ -141,7 +141,7 @@ public class GrantUpdater {
                 if (primaryFunderId != null) {
                     if(!funderMap.containsKey(primaryFunderId)) {
                         primaryFunderURI = fedoraClient.findByAttribute(Funder.class, "localId", primaryFunderId);
-                        if (primaryFunderId == null) {
+                        if (primaryFunderURI == null) {
                             primaryFunder = new Funder();
                             primaryFunderURI = fedoraClient.createResource(primaryFunder);
                         }
@@ -149,7 +149,7 @@ public class GrantUpdater {
 
                         primaryFunder.setLocalId(primaryFunderId);
                         primaryFunder.setName(rs.getString("SPONSOR_NAME"));//D.SPONSOR_NAME
-                        fedoraClient.updateResource(primaryFunder);
+              rs.getString("FIRST_NAME");          fedoraClient.updateResource(primaryFunder);
                         funderMap.put(primaryFunderId, primaryFunderURI);
                     } else {
                         primaryFunderURI = funderMap.get(primaryFunderId);
@@ -175,11 +175,25 @@ public class GrantUpdater {
                     investigatorURI = fedoraClient.createResource(investigator);
                 }
 
+                String firstName=rs.getString("FIRST_NAME");
+                String middleName=rs.getString("MIDDLE_NAME");
+                String lastName = rs.getString("LAST_NAME");
+
                 investigator = (Person) fedoraClient.readResource(investigatorURI, Person.class);
-                investigator.setFirstName(rs.getString("FIRST_NAME"));
-                investigator.setMiddleName(rs.getString("MIDDLE_NAME"));
-                investigator.setLastName(rs.getString("LAST_NAME"));
-                investigator.setDisplayName(rs.getString("PRINCIPAL_INV"));
+                investigator.setFirstName(firstName);
+                investigator.setMiddleName(middleName);
+                investigator.setLastName(lastName);
+                //set display name = this appears on the grant as the principal investigator's name, which will not
+                //agree with the jhedId on grant if this is so-pi. we simply construct it here.
+                StringBuilder sb = new StringBuilder();
+                sb.append(lastName);
+                sb.append(", ");
+                sb.append(firstName);
+                if (middleName != null && middleName.length()>0){
+                    sb.append(" ");
+                    sb.append(middleName.charAt(0) );
+                }
+                investigator.setDisplayName(sb.toString());
                 investigator.setEmail(rs.getString("EMAIL_ADDRESS"));
                 investigator.setInstitutionalId(rs.getString("JHED_ID"));
 
@@ -221,7 +235,7 @@ public class GrantUpdater {
      * @param latestUpdateString the new timestamp to be compared against the current latest timestamp
      * @return the later of the two parameters
      */
-    protected static String returnLaterUpdate(String currentUpdateString, String latestUpdateString) {
+    static String returnLaterUpdate(String currentUpdateString, String latestUpdateString) {
         DateTime grantUpdateTime = createJodaDateTime(currentUpdateString);
         DateTime previousLatestUpdateTime = createJodaDateTime(latestUpdateString);
         return grantUpdateTime.isAfter(previousLatestUpdateTime)? currentUpdateString : latestUpdateString;
