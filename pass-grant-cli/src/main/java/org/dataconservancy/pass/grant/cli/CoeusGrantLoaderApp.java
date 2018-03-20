@@ -34,7 +34,7 @@ import java.util.Properties;
 
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.GrantModelBuilder;
-import org.dataconservancy.pass.grant.model.Grant;
+import org.dataconservancy.pass.model.Grant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
