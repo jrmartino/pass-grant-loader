@@ -15,32 +15,32 @@ package org.dataconservancy.pass.grant.data;
  *
  * @author jrm@jhu.edu
  */
-public class CoeusFieldNames {
+class CoeusFieldNames {
 
-    public static final String C_GRANT_AWARD_NUMBER = "AWARD_ID";// view A
-    public static final String C_GRANT_AWARD_STATUS="AWARD_STATUS";// view A
-    public static final String C_GRANT_LOCAL_AWARD_ID="GRANT_NUMBER";// view A
-    public static final String C_GRANT_PROJECT_NAME="TITLE";// view A
-    public static final String C_GRANT_AWARD_DATE = "AWARD_DATE";// view A
-    public static final String C_GRANT_START_DATE = "START_DATE";// view A
-    public static final String C_GRANT_END_DATE = "AWARD_END";// view A
+    static final String C_GRANT_AWARD_NUMBER = "AWARD_ID";// view A
+    static final String C_GRANT_AWARD_STATUS="AWARD_STATUS";// view A
+    static final String C_GRANT_LOCAL_AWARD_ID="GRANT_NUMBER";// view A
+    static final String C_GRANT_PROJECT_NAME="TITLE";// view A
+    static final String C_GRANT_AWARD_DATE = "AWARD_DATE";// view A
+    static final String C_GRANT_START_DATE = "START_DATE";// view A
+    static final String C_GRANT_END_DATE = "AWARD_END";// view A
 
-    public static final String C_DIRECT_FUNDER_LOCAL_ID = "SPOSNOR_CODE";// view A; misspelling in COEUS view
-    public static final String C_DIRECT_FUNDER_NAME = "SPONSOR";// view A
-    public static final String C_PRIMARY_FUNDER_LOCAL_ID = "SPONSOR_CODE";// view D
-    public static final String C_PRIMARY_FUNDER_NAME = "SPONSOR_NAME";// view D
+    static final String C_DIRECT_FUNDER_LOCAL_ID = "SPOSNOR_CODE";// view A; misspelling in COEUS view
+    static final String C_DIRECT_FUNDER_NAME = "SPONSOR";// view A
+    static final String C_PRIMARY_FUNDER_LOCAL_ID = "SPONSOR_CODE";// view D
+    static final String C_PRIMARY_FUNDER_NAME = "SPONSOR_NAME";// view D
 
 
-    public static final String C_PERSON_FIRST_NAME = "FIRST_NAME";// view C
-    public static final String C_PERSON_MIDDLE_NAME = "MIDDLE_NAME";// view C
-    public static final String C_PERSON_LAST_NAME = "LAST_NAME";// view C
-    public static final String C_PERSON_EMAIL = "EMAIL_ADDRESS";// view C
-    public static final String C_PERSON_INSTITUTIONAL_ID = "JHED_ID";// view C
-    //public static final String C_PERSON_AFFILIATION = "";
-    //public static final String C_PERSON_ORCID_ID = "";
+    static final String C_PERSON_FIRST_NAME = "FIRST_NAME";// view C
+    static final String C_PERSON_MIDDLE_NAME = "MIDDLE_NAME";// view C
+    static final String C_PERSON_LAST_NAME = "LAST_NAME";// view C
+    static final String C_PERSON_EMAIL = "EMAIL_ADDRESS";// view C
+    static final String C_PERSON_INSTITUTIONAL_ID = "JHED_ID";// view C
+    //static final String C_PERSON_AFFILIATION = "";
+    //static final String C_PERSON_ORCID_ID = "";
 
     //these fields are accessed for processing, but are not mapped to PASS objects
-    public static final String C_UPDATE_TIMESTAMP = "UPDATE_TIMESTAMP";// view A
-    public static final String C_ABBREVIATED_ROLE = "ABBREVIATED_ROLE";// view B
+    static final String C_UPDATE_TIMESTAMP = "UPDATE_TIMESTAMP";// view A
+    static final String C_ABBREVIATED_ROLE = "ABBREVIATED_ROLE";// view B
 
 }
