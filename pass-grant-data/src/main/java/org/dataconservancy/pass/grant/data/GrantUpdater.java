@@ -116,7 +116,7 @@ public class GrantUpdater {
                 //which differ from the existing fields (when we have the object in fedora already).
                 //if not, we don't need to send an update.
                 Funder directFunder;
-                String directFunderId = rs.getString((C_DIRECT_FUNDER_LOCAL_ID));//A.SPOSNOR_CODE
+                String directFunderId = rs.getString((C_DIRECT_FUNDER_LOCAL_ID));
                 URI directFunderURI;
                 boolean mustUpdate = false;
 
@@ -134,7 +134,7 @@ public class GrantUpdater {
                         mustUpdate = true;
                     }
 
-                    String funderName = rs.getString(C_DIRECT_FUNDER_NAME);//A.SPONSOR
+                    String funderName = rs.getString(C_DIRECT_FUNDER_NAME);
                     if(directFunder.getName()==null || !directFunder.getName().equals(funderName)) {
                         directFunder.setName(funderName);
                         mustUpdate=true;
@@ -181,11 +181,11 @@ public class GrantUpdater {
                             fedoraClient.updateResource(primaryFunder);
                         }
                         funderMap.put(primaryFunderId, primaryFunderURI);
-                    } else {
+                    } else {//save the overhead of checking a redundant update
                         primaryFunderURI = funderMap.get(primaryFunderId);
                     }
                     grant.setPrimaryFunder(primaryFunderURI);
-                } else {//save the overhead of checking a redundant update
+                } else {//primaryFunder is the same as directFunder - not a subaward
                     grant.setPrimaryFunder(directFunderURI);
                 }
 

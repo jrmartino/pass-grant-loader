@@ -93,7 +93,7 @@ public class CoeusConnector {
      */
     public String buildQueryString(String startDate){
 
-        String[] propViewFields = {
+        String[] viewFields = {
                 C_GRANT_AWARD_NUMBER,
                 C_GRANT_AWARD_STATUS,
                 C_GRANT_LOCAL_AWARD_ID,
@@ -103,49 +103,23 @@ public class CoeusConnector {
                 C_GRANT_END_DATE,
                 C_DIRECT_FUNDER_NAME,
                 C_DIRECT_FUNDER_LOCAL_ID,
-                C_UPDATE_TIMESTAMP };
+                C_UPDATE_TIMESTAMP,
 
-        StringJoiner propViewQuery = new StringJoiner(", A.", "A.", ", ");
-        for (String field : propViewFields){
-            propViewQuery.add(field);
-        }
+                C_ABBREVIATED_ROLE,
 
-        String[] prsnViewFields = {
-                C_ABBREVIATED_ROLE};
-
-        StringJoiner prsnViewQuery = new StringJoiner(", B.", "B.", ", ");
-        for (String field : prsnViewFields){
-            prsnViewQuery.add(field);
-        }
-
-        String[] personDetailViewFields = {
                 C_PERSON_FIRST_NAME,
                 C_PERSON_MIDDLE_NAME,
                 C_PERSON_LAST_NAME,
                 C_PERSON_EMAIL,
-                C_PERSON_INSTITUTIONAL_ID };
+                C_PERSON_INSTITUTIONAL_ID,
 
-        StringJoiner personDetailViewQuery = new StringJoiner(", C.", "C.", ", ");
-        for (String field : personDetailViewFields){
-            personDetailViewQuery.add(field);
-        }
-
-        String[] sponsorViewFields = {
                 C_PRIMARY_FUNDER_NAME,
                 C_PRIMARY_FUNDER_LOCAL_ID };
 
-        StringJoiner sponsorViewQuery = new StringJoiner(", D.", "D.", " ");
-        for (String field : sponsorViewFields) {
-            sponsorViewQuery.add(field);
-        }
-
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
-        sb.append(propViewQuery.toString());
-        sb.append(prsnViewQuery.toString());
-        sb.append(personDetailViewQuery.toString());
-        sb.append(sponsorViewQuery.toString());
-        sb.append("FROM COEUS.JHU_FACULTY_FORCE_PROP A ");
+        sb.append(String.join(", ",viewFields));
+        sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP A ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID ");
         sb.append("LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE ");

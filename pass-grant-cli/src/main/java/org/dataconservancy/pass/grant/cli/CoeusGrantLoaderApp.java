@@ -132,7 +132,7 @@ public class CoeusGrantLoaderApp {
         CoeusConnector coeusConnector = new CoeusConnector(connectionPropertiesMap);
         String queryString = coeusConnector.buildQueryString(startDate);
         ResultSet resultSet;
-        GrantUpdater modelBuilder = null;
+        GrantUpdater modelBuilder;
         try {
             resultSet = coeusConnector.retrieveCoeusUpdates(queryString);
             modelBuilder = new GrantUpdater(resultSet);
