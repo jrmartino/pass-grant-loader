@@ -106,11 +106,12 @@ public class GrantUpdater {
                 grant.setEndDate(createJodaDateTime(rs.getString(C_GRANT_END_DATE)));
 
                 //funder semantics here and sponsor semantics in COEUS are different.
-                //in COEUS, we always have a Sponsor. This is the direct source of the $. (like NIH or another university)
-                //if we are a sub-awardee, we also have a Primary Sponsor (like NSF etc.); else this field is null.
+                //in COEUS, we always have a Sponsor. This is the direct source of the $. this could be another university
+                //or another department or a funding agency.
+                //if we are a sub-awardee, we will also have a Primary Sponsor (like NSF etc.); else this field is null.
 
                 //our semantics are that we always track two things - the directFunder, which is who gives us the $,
-                //and the primary funder, which is where the $ originated. if it is not a subcontract, these values are the same.
+                //and the primaryFunder, which is where the $ originated. if it is not a subcontract, these values are the same.
 
                 //process the direct funder. we go to the trouble to see if there are any COEUS fields
                 //which differ from the existing fields (when we have the object in fedora already).
@@ -119,6 +120,9 @@ public class GrantUpdater {
                 String directFunderId = rs.getString((C_DIRECT_FUNDER_LOCAL_ID));
                 URI directFunderURI;
                 boolean mustUpdate = false;
+                //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
+                //because the ResultSet fields do not fully cover the model fields
+                //if they ever do, we can use PassObject.equals()
 
                 if(!funderMap.containsKey(directFunderId)) {//we haven't processed this funder in this session
                     directFunderURI = fedoraClient.findByAttribute(Funder.class, "localId", directFunderId);
@@ -156,6 +160,9 @@ public class GrantUpdater {
                 String primaryFunderId = rs.getString((C_PRIMARY_FUNDER_LOCAL_ID));//D.SPONSOR_CODE
                 URI primaryFunderURI;
                 mustUpdate = false;
+                //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
+                //because the ResultSet fields do not fully cover the model fields
+                //if they ever do, we can use PassObject.equals()
 
                 if (primaryFunderId != null) {
                     if(!funderMap.containsKey(primaryFunderId)) {
@@ -203,6 +210,9 @@ public class GrantUpdater {
             String jhedId = rs.getString(C_PERSON_INSTITUTIONAL_ID);
             URI investigatorURI;
             boolean mustUpdate = false;
+            //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
+            //because the ResultSet fields do not fully cover the model fields
+            //if they ever do, we can use PassObject.equals()
 
             if(!personMap.containsKey(jhedId)) {
                 investigatorURI = fedoraClient.findByAttribute(Person.class, "institutionalId", jhedId);
@@ -219,8 +229,7 @@ public class GrantUpdater {
                 String lastName = rs.getString(C_PERSON_LAST_NAME);
                 String emailAddress = rs.getString(C_PERSON_EMAIL);
 
-                //set display name = this appears on the grant as the principal investigator's name, which will not
-                //agree with the jhedId on grant if this is a co-pi. we simply construct it here.
+                //set display name - we simply construct it here.
                 StringBuilder sb = new StringBuilder();
                 sb.append(lastName);
                 sb.append(", ");

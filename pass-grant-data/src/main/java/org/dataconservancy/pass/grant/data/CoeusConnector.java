@@ -24,7 +24,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
-import java.util.StringJoiner;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
@@ -82,11 +81,11 @@ public class CoeusConnector {
 
     /**
      * Method for building the query string against the COEUS database. We draw from four views.
-     *
      * Dates are stored in the views as strings, except for the UPDATE_TIMESTAMP, which is a timestamp.
-     *
      * We will pull all records which have been updated since the last update timestamp - this value becomes out startDate.
      *
+     * NB: the join of the PROP view with the PRSN view will result in one row in the ResultSet for each investigator
+     * on the grant. if there are co-pis in addition to a pi, there will be multiple rows.
      *
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string

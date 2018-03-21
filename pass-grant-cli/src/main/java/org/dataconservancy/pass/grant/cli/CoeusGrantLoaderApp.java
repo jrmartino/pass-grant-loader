@@ -214,9 +214,9 @@ public class CoeusGrantLoaderApp {
     }
 
     /**
-     * This method processes a plain text properties file and returns a property object
+     * This method processes a plain text properties file and returns a {@code Properties} object
      * @param propertiesFile - the properties {@code File} to be read
-     * @return the Properties object derived from the supplied File
+     * @return the Properties object derived from the supplied {@code File}
      * @throws CoeusCliException if the properties file could not be accessed.
      */
     private Properties loadProperties(File propertiesFile) throws CoeusCliException {
@@ -278,7 +278,7 @@ public class CoeusGrantLoaderApp {
 
     /**
      * This method logs the supplied message and exception, reports the {@code Exception} to STDOUT, and
-     * causes an email regarding this Exception to be sent to the address configures in the mail properties file
+     * causes an email regarding this {@code Exception} to be sent to the address configured in the mail properties file
      * @param message - the error message
      * @param e - the Exception
      * @return = the {@code CoeusCliException} wrapper
