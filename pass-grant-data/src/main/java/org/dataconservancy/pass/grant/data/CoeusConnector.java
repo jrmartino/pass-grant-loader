@@ -103,7 +103,7 @@ public class CoeusConnector {
                 C_GRANT_END_DATE,
                 C_DIRECT_FUNDER_NAME,
                 C_DIRECT_FUNDER_LOCAL_ID,
-                C_UPDATE_TIMESTAMP};
+                C_UPDATE_TIMESTAMP };
 
         StringJoiner propViewQuery = new StringJoiner(", A.", "A.", ", ");
         for (String field : propViewFields){
@@ -123,14 +123,17 @@ public class CoeusConnector {
                 C_PERSON_MIDDLE_NAME,
                 C_PERSON_LAST_NAME,
                 C_PERSON_EMAIL,
-                C_PERSON_INSTITUTIONAL_ID,};
+                C_PERSON_INSTITUTIONAL_ID };
 
         StringJoiner personDetailViewQuery = new StringJoiner(", C.", "C.", ", ");
         for (String field : personDetailViewFields){
             personDetailViewQuery.add(field);
         }
 
-        String[] sponsorViewFields = { C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_LOCAL_ID };
+        String[] sponsorViewFields = {
+                C_PRIMARY_FUNDER_NAME,
+                C_PRIMARY_FUNDER_LOCAL_ID };
+
         StringJoiner sponsorViewQuery = new StringJoiner(", D.", "D.", " ");
         for (String field : sponsorViewFields) {
             sponsorViewQuery.add(field);

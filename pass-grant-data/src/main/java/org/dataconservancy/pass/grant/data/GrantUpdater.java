@@ -218,7 +218,7 @@ public class GrantUpdater {
                 String middleName=rs.getString(C_PERSON_MIDDLE_NAME);
                 String lastName = rs.getString(C_PERSON_LAST_NAME);
                 String emailAddress = rs.getString(C_PERSON_EMAIL);
-                String institutionalId = rs.getString(jhedId);
+
                 //set display name = this appears on the grant as the principal investigator's name, which will not
                 //agree with the jhedId on grant if this is a co-pi. we simply construct it here.
                 StringBuilder sb = new StringBuilder();
@@ -251,8 +251,8 @@ public class GrantUpdater {
                     investigator.setEmail(emailAddress);
                     mustUpdate = true;
                 }
-                if(investigator.getInstitutionalId()==null || !investigator.getInstitutionalId().equals(institutionalId)) {
-                    investigator.setInstitutionalId(institutionalId);
+                if(investigator.getInstitutionalId()==null || !investigator.getInstitutionalId().equals(jhedId)) {
+                    investigator.setInstitutionalId(jhedId);
                     mustUpdate = true;
                 }
                 if(mustUpdate) {

@@ -18,9 +18,9 @@ package org.dataconservancy.pass.grant.data;
 class CoeusFieldNames {
 
     static final String C_GRANT_AWARD_NUMBER = "AWARD_ID";// view A
-    static final String C_GRANT_AWARD_STATUS="AWARD_STATUS";// view A
-    static final String C_GRANT_LOCAL_AWARD_ID="GRANT_NUMBER";// view A
-    static final String C_GRANT_PROJECT_NAME="TITLE";// view A
+    static final String C_GRANT_AWARD_STATUS ="AWARD_STATUS";// view A
+    static final String C_GRANT_LOCAL_AWARD_ID ="GRANT_NUMBER";// view A
+    static final String C_GRANT_PROJECT_NAME ="TITLE";// view A
     static final String C_GRANT_AWARD_DATE = "AWARD_DATE";// view A
     static final String C_GRANT_START_DATE = "START_DATE";// view A
     static final String C_GRANT_END_DATE = "AWARD_END";// view A
