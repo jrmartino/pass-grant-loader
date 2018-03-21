@@ -26,6 +26,8 @@ import java.sql.Statement;
 import java.util.Map;
 import java.util.StringJoiner;
 
+import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
+
 /**
  * This class connects to a COEUS database via the Oracle JDBC driver. The query string reflects local JHU
  * database views
@@ -79,10 +81,9 @@ public class CoeusConnector {
     }
 
     /**
-     * Method for building the query string against the COEUS database. We draw from four views, with the PRSN view
-     * (aliased to B) serving just to contain keys for joining the PROP (alias A) and DETAIL (alias C) views.
+     * Method for building the query string against the COEUS database. We draw from four views.
      *
-     * Since dates are stored in the views as timestamps.
+     * Dates are stored in the views as strings, except for the UPDATE_TIMESTAMP, which is a timestamp.
      *
      * We will pull all records which have been updated since the last update timestamp - this value becomes out startDate.
      *
@@ -92,32 +93,45 @@ public class CoeusConnector {
      */
     public String buildQueryString(String startDate){
 
-        String[] propViewFields = { "TITLE", "GRANT_NUMBER", "AWARD_DATE", "AWARD_END",
-                "AWARD_ID", "AWARD_START", "AWARD_STATUS", "PRINCIPAL_INV", "SPONSOR",
-                "SPOSNOR_CODE", "UPDATE_TIMESTAMP" }; //yes, this column header is misspelled in COEUS
+        String[] propViewFields = {
+                C_GRANT_AWARD_NUMBER,
+                C_GRANT_AWARD_STATUS,
+                C_GRANT_LOCAL_AWARD_ID,
+                C_GRANT_PROJECT_NAME,
+                C_GRANT_AWARD_DATE,
+                C_GRANT_START_DATE,
+                C_GRANT_END_DATE,
+                C_DIRECT_FUNDER_NAME,
+                C_DIRECT_FUNDER_LOCAL_ID,
+                C_UPDATE_TIMESTAMP};
 
         StringJoiner propViewQuery = new StringJoiner(", A.", "A.", ", ");
         for (String field : propViewFields){
             propViewQuery.add(field);
         }
 
-        String[] prsnViewFields = {"ABBREVIATED_ROLE"};
+        String[] prsnViewFields = {
+                C_ABBREVIATED_ROLE};
 
         StringJoiner prsnViewQuery = new StringJoiner(", B.", "B.", ", ");
         for (String field : prsnViewFields){
             prsnViewQuery.add(field);
         }
 
-
-        String[] personDetailViewFields = {"JHED_ID", "FIRST_NAME", "MIDDLE_NAME", "LAST_NAME", "EMAIL_ADDRESS"};
+        String[] personDetailViewFields = {
+                C_PERSON_FIRST_NAME,
+                C_PERSON_MIDDLE_NAME,
+                C_PERSON_LAST_NAME,
+                C_PERSON_EMAIL,
+                C_PERSON_INSTITUTIONAL_ID,};
 
         StringJoiner personDetailViewQuery = new StringJoiner(", C.", "C.", ", ");
         for (String field : personDetailViewFields){
             personDetailViewQuery.add(field);
         }
 
-        String[] sponsorViewFields = { "SPONSOR_NAME", "SPONSOR_CODE" };
-        StringJoiner sponsorViewQuery = new StringJoiner(", D.", "D.", "");
+        String[] sponsorViewFields = { C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_LOCAL_ID };
+        StringJoiner sponsorViewQuery = new StringJoiner(", D.", "D.", " ");
         for (String field : sponsorViewFields) {
             sponsorViewQuery.add(field);
         }
@@ -125,10 +139,10 @@ public class CoeusConnector {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
         sb.append(propViewQuery.toString());
-        sb.append(prsnViewQuery);
+        sb.append(prsnViewQuery.toString());
         sb.append(personDetailViewQuery.toString());
         sb.append(sponsorViewQuery.toString());
-        sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP A ");
+        sb.append("FROM COEUS.JHU_FACULTY_FORCE_PROP A ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID ");
         sb.append("LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE ");
