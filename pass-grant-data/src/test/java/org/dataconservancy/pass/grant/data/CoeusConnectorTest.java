@@ -15,6 +15,7 @@
  */
 package org.dataconservancy.pass.grant.data;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -35,8 +36,19 @@ public class CoeusConnectorTest {
     @Test
     public void testBuildString() {
 
-      CoeusConnector connector = new CoeusConnector(null);
-        System.out.println(connector.buildQueryString("2018-13-14 06:00:00.0"));
+        String expectedQueryString= "SELECT A.AWARD_ID, A.AWARD_STATUS, A.GRANT_NUMBER, A.TITLE, A.AWARD_DATE," +
+                " A.START_DATE, A.AWARD_END, A.SPONSOR, A.SPOSNOR_CODE, A.UPDATE_TIMESTAMP, B.ABBREVIATED_ROLE," +
+                " C.FIRST_NAME, C.MIDDLE_NAME, C.LAST_NAME, C.EMAIL_ADDRESS, C.JHED_ID, D.SPONSOR_NAME, D.SPONSOR_CODE" +
+                " FROM COEUS.JHU_FACULTY_FORCE_PROP A INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B" +
+                " ON A.INST_PROPOSAL = B.INST_PROPOSAL INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C" +
+                " ON B.JHED_ID = C.JHED_ID LEFT JOIN COEUS.SWIFT_SPONSOR D" +
+                " ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE" +
+                " WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '2018-13-14 06:00:00.0'" +
+                " AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated')";
+
+
+        CoeusConnector connector = new CoeusConnector(null);
+        Assert.assertEquals(expectedQueryString, connector.buildQueryString("2018-13-14 06:00:00.0"));
 
     }
 

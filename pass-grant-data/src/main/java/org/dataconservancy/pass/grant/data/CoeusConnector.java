@@ -122,7 +122,7 @@ public class CoeusConnector {
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL ");
         sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID ");
         sb.append("LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE ");
-        sb.append("WHERE A.UPDATE_TIMESTAMP > TIMESTAMP'");
+        sb.append("WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
         sb.append(startDate);
         sb.append("' ");
         sb.append("AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated')");
