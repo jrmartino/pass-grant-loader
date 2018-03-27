@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ Copyright 2018 Johns Hopkins University
   ~
@@ -15,17 +14,21 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>pass-grant-loader</artifactId>
-        <groupId>org.dataconservancy.pass</groupId>
-        <version>1.0.0-SNAPSHOT</version>
-    </parent>
-    <modelVersion>4.0.0</modelVersion>
+<configuration>
 
-    <artifactId>pass-grant-model</artifactId>
-
-
-</project>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${COEUS_LOADER_HOME}/coeus_loader.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>
+                %d{HH:mm:ss.SSS} [%10.30thread] %-5level [%15.-30C{0}] - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+    </root>
+    <logger name="org.dataconservancy.pass" additivity="false">
+        <appender-ref ref="FILE"/>
+    </logger>
+</configuration>
