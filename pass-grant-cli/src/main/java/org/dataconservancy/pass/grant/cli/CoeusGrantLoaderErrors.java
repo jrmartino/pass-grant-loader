@@ -16,7 +16,7 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-public class CoeusGrantLoaderErrors {
+class CoeusGrantLoaderErrors {
     static String ERR_HOME_DIRECTORY_NOT_FOUND = "No home directory found for the application. Please specify a valid absolute path.";
     static String ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE = "Supplied home directory must be readable" +
         " and writable by the user running this application.";

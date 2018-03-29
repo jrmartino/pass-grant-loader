@@ -37,7 +37,7 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 
 /**
  * This class is responsible for taking the ResultSet from the database query and constructing a corresponding
- * Collection of Grant objects, which it then sends to fedora to update.
+ * Collection of Grant objects, which it then sends to Fedora to update.
  *
  * @author jrm@jhu.edu
  */
@@ -59,7 +59,6 @@ public class GrantUpdater {
      * these and update these as well
      */
     public void updateGrants() {
-
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
@@ -181,9 +180,6 @@ public class GrantUpdater {
             Person investigator;
             String jhedId = rowMap.get(C_PERSON_INSTITUTIONAL_ID);
             URI investigatorURI;
-            //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
-            //because the ResultSet fields do not fully cover the model fields
-            //if they ever do, we can use PassObject.equals()
 
             if(!personMap.containsKey(jhedId)) {
                 investigatorURI = fedoraClient.findByAttribute(Person.class, "institutionalId", jhedId);
@@ -242,8 +238,11 @@ public class GrantUpdater {
         }
 
         //success - we capture some information to report
-        report = format("%s grant records processed; most recent update in this batch has timestamp %s", grantMap.size(), getLatestUpdate());
-
+        if (grantMap.size() > 0) {
+            report = format("%s grant records processed; most recent update in this batch has timestamp %s", grantMap.size(), getLatestUpdate());
+        } else {
+            report = "No records were processed in this update";
+        }
     }
 
     /**

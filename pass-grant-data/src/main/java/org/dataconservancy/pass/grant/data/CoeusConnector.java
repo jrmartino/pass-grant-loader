@@ -101,6 +101,7 @@ public class CoeusConnector {
                 rowMap.put(C_PERSON_INSTITUTIONAL_ID, rs.getString(C_PERSON_INSTITUTIONAL_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
                 rowMap.put(C_ABBREVIATED_ROLE, rs.getString(C_ABBREVIATED_ROLE));
+                LOG.debug("Record processed: " + rowMap.toString());
                 mapList.add(rowMap);
             }
         }

@@ -16,6 +16,7 @@
 
 package org.dataconservancy.pass.grant.cli;
 
+import com.sun.javafx.runtime.SystemProperties;
 import org.apache.commons.codec.binary.Base64InputStream;
 
 import java.io.BufferedReader;
@@ -42,13 +43,14 @@ import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
- * This class does the orchestration for the pulling of COEUS grant data. The basic steeps are to read in all of the configuration
- * files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all of the grants updated since the
- * timestamp at the end of the updated timestamps file; execute the query against this database; use the {@code ResultSet} to populate
- * a list of {@code Grant}s in our java model; and finally to push this data into our Fedora instance via the java Fedora client.
+ * This class does the orchestration for the pulling of COEUS grant data. The basic steeps are to read in all of the
+ * configuration files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all
+ * of the grants updated since the timestamp at the end of the updated timestamps file; execute the query against this
+ * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s in our java
+ * model; and finally to push this data into our Fedora instance via the java Fedora client.
  *
- * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated fashion, so
- * care must be taken to log errors, report them to STDOUT, and also send email notifications.
+ * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated
+ * fashion, so care must be taken to log errors, report them to STDOUT, and also send email notifications.
  *
  * @author jrm@jhu.edu
  */
@@ -83,6 +85,11 @@ public class CoeusGrantLoaderApp {
         File connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
         String mailPropertiesFileName = "mail.properties";
         File mailPropertiesFile = new File(appHome, mailPropertiesFileName);
+        String systemPropertiesFileName = "system.properties";
+        File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
+        //let's be careful about overwriting system properties
+        String[] systemProperties  = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl"};
+
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
         Properties mailProperties;
@@ -94,6 +101,18 @@ public class CoeusGrantLoaderApp {
         if (!appHome.canRead() || !appHome.canWrite()) {
             throw processException(ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE, null);
         }
+
+        //add new system properties if we have any
+        if(systemPropertiesFile.exists()){
+           Properties sysProps = loadProperties(systemPropertiesFile);
+           for(String key : systemProperties) {
+               String value = sysProps.getProperty(key);
+               if (value != null){
+                   System.setProperty(key, value);
+               }
+           }
+        }
+
 
         //create mail properties and instantiate email service
         if (!mailPropertiesFile.exists()) {
@@ -264,7 +283,7 @@ public class CoeusGrantLoaderApp {
         String errorSubject = "COEUS Data Loader ERROR";
         if(e != null) {
             LOG.error(message, clie);
-            emailService.sendEmailMessage(errorSubject,message + " " + clie.getMessage());
+            emailService.sendEmailMessage(errorSubject, clie.getMessage());
         } else {
             LOG.error(message);
             emailService.sendEmailMessage(errorSubject, message);
