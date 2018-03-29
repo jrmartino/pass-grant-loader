@@ -90,7 +90,7 @@ For example:
  java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -s "2018-03-29 14:30:00.0"
 
 
-##Implementation Details
+## Implementation Details
 
 The processing of the ResultSet is straightforward - we simply construct a list of hash maps which represent the 
 column names and the values for each record. We do not assume that the PASS objects in Fedora are updated 
