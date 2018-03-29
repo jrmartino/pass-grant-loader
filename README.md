@@ -62,7 +62,7 @@ mail.from=
 
 mail.to=
 
-###Fedora configuration (system.properties)
+### Fedora configuration (system.properties)
 This file contains parameters which must be set as system properties so that  the java Fedora client 
 can configure itself to attach to the desired fedora instance. The base URL must contain
 the port number and path to the base container (for example, http://localhost:8080/fcrepo/rest/)
@@ -73,7 +73,7 @@ pass.fedora.password=
 
 pass.fedora.baseurl=
 
-##Invocation
+## Invocation
 The application is provided as an executable jar file. The absolute path for the base directory COEUS_HOME must be provided as a command line
 option to java in order to inject it into the java context. The command line looks like this
 
