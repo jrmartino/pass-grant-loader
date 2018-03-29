@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
@@ -53,30 +54,13 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
  */
 public class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
-    private static String ERR_HOME_DIRECTORY_NOT_FOUND = "No home directory found for the application. Please specify a valid absolute path.";
-    private static String ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE = "Supplied home directory must be readable" +
-            " and writable by the user running this application.";
-    private static String ERR_REQUIRED_CONFIGURATION_FILE_MISSING = "Required file %s is missing in the specified home directory.";
-    private static String ERR_COULD_NOT_OPEN_CONFIGURATION_FILE = "Could not open configuration file";
-    private static String ERR_INVALID_COMMAND_LINE_TIMESTAMP = "An invalid timestamp was specified on the command line: %s. Please make sure it" +
-            " is of the form 'yyyy-mm-dd hh:mm:ss.m{mm}";
-    private static String ERR_INVALID_TIMESTAMP = "An invalid timestamp was found at the last line of the update timestamp file. Please make sure it" +
-            " is of the form 'yyyy-mm-dd hh:mm:ss.m{mm}";
-    private static String ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP = "The updated succeeded, but could not append last modified date %s to update timestamp file";
-    private static String ERR_SQL_EXCEPTION = "An SQL error occurred querying the COEUS database";
-    private static String ERR_ORACLE_DRIVER_NOT_FOUND = "Could not find the oracle db driver on classpath.";
-    private static String ERR_SYSTEM_PROPERTY = "Could not set value %s for system property %s";
 
-    private static String connectionPropertiesFileName= "connection.properties";
-    private static String mailPropertiesFileName = "mail.properties";
     private static String updateTimestampsFileName = "update_timestamps";
 
     private EmailService emailService;
 
     private File appHome;
     private String startDate;
-    private File connectionPropertiesFile;
-    private File mailPropertiesFile;
     private File updateTimestampsFile;
 
     /**
@@ -95,8 +79,10 @@ public class CoeusGrantLoaderApp {
      * @throws CoeusCliException if there was any error occurring during the grant loading or updating processes
      */
     void run() throws CoeusCliException {
-        connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
-        mailPropertiesFile = new File(appHome, mailPropertiesFileName);
+        String connectionPropertiesFileName = "connection.properties";
+        File connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
+        String mailPropertiesFileName = "mail.properties";
+        File mailPropertiesFile = new File(appHome, mailPropertiesFileName);
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
         Properties mailProperties;
@@ -217,10 +203,7 @@ public class CoeusGrantLoaderApp {
         } catch (IOException e) {
             throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
         }
-        try(InputStream resourceStream = new FileInputStream(resource);){
-            if (resourceStream == null) {
-                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource), null);
-            }
+        try(InputStream resourceStream = new FileInputStream(resource)){
             properties.load(resourceStream);
         } catch (IOException e) {
             throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);

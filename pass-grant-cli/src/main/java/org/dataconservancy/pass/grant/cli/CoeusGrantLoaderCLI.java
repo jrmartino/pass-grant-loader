@@ -27,8 +27,7 @@ import org.kohsuke.args4j.Option;
  */
 public class CoeusGrantLoaderCLI {
 
-    /**
-     *
+    /*
      * General Options
      */
 
@@ -74,10 +73,10 @@ public class CoeusGrantLoaderCLI {
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {
-            /**
+            /*
              * This is an error in command line args, just print out usage data
-             * and description of the error.
-             */
+             *and description of the error.
+             * */
             System.err.println(e.getMessage());
             parser.printUsage(System.err);
             System.err.println();

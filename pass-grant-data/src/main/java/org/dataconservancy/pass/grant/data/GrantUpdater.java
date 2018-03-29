@@ -26,7 +26,6 @@ import org.dataconservancy.pass.model.Person;
 import org.joda.time.DateTime;
 
 import java.net.URI;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,9 +57,8 @@ public class GrantUpdater {
      * Build a Collection of Grants from a ResultSet, then update the grants in Fedora
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
-     * @throws SQLException if the database had an issue with our SQL query
      */
-    public void updateGrants() throws SQLException {
+    public void updateGrants() {
 
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
@@ -183,7 +181,6 @@ public class GrantUpdater {
             Person investigator;
             String jhedId = rowMap.get(C_PERSON_INSTITUTIONAL_ID);
             URI investigatorURI;
-            boolean mustUpdate = false;
             //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
             //because the ResultSet fields do not fully cover the model fields
             //if they ever do, we can use PassObject.equals()

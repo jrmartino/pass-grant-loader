@@ -20,11 +20,11 @@ package org.dataconservancy.pass.grant.cli;
  * type tp the CLI
  */
 public class CoeusCliException extends Exception {
-    public CoeusCliException(String message) {
+    CoeusCliException(String message) {
         super(message);
     }
 
-    public CoeusCliException(String message, Throwable cause) {
+    CoeusCliException(String message, Throwable cause) {
         super(message, cause);
     }
 
