@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.dataconservancy.pass.grant.data;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +22,12 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
@@ -44,17 +48,17 @@ public class CoeusConnector {
     private String coeusUser;
     private String coeusPassword;
 
-    public CoeusConnector(Map<String, String> connectionProperties) {
+    public CoeusConnector(Properties connectionProperties) {
         if (connectionProperties != null) {
 
-            if (connectionProperties.get(COEUS_URL) != null) {
-                this.coeusUrl = connectionProperties.get(COEUS_URL);
+            if (connectionProperties.getProperty(COEUS_URL) != null) {
+                this.coeusUrl = connectionProperties.getProperty(COEUS_URL);
             }
-            if (connectionProperties.get(COEUS_USER) != null) {
-                this.coeusUser = connectionProperties.get(COEUS_USER);
+            if (connectionProperties.getProperty(COEUS_USER) != null) {
+                this.coeusUser = connectionProperties.getProperty(COEUS_USER);
             }
-            if (connectionProperties.get(COEUS_PASS) != null) {
-                this.coeusPassword = connectionProperties.get(COEUS_PASS);
+            if (connectionProperties.getProperty(COEUS_PASS) != null) {
+                this.coeusPassword = connectionProperties.getProperty(COEUS_PASS);
             }
         }
     }
@@ -65,18 +69,45 @@ public class CoeusConnector {
      * @param queryString the query string to the COEUS database needed to update the information
      * @return the {@code ResultSet} from the query
      */
-    public ResultSet retrieveCoeusUpdates(String queryString) throws ClassNotFoundException, SQLException {
+    public List<Map<String, String>> retrieveCoeusUpdates(String queryString) throws ClassNotFoundException, SQLException {
 
-        ResultSet rs;
+        List<Map<String, String>> mapList = new ArrayList<>();
 
         Class.forName("oracle.jdbc.driver.OracleDriver");
-        Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
-        Statement stmt = con.createStatement();
-        rs = stmt.executeQuery(queryString);
 
-        LOG.info("Retrieved result set from COEUS");
+        try (
+                Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(queryString)
+        ) {
+            while (rs.next()) {
+                Map<String, String> rowMap = new HashMap<>();
 
-        return rs;
+                rowMap.put(C_GRANT_AWARD_NUMBER, rs.getString(C_GRANT_AWARD_NUMBER));
+                rowMap.put(C_GRANT_AWARD_STATUS, rs.getString(C_GRANT_AWARD_STATUS));
+                rowMap.put(C_GRANT_LOCAL_AWARD_ID, rs.getString(C_GRANT_LOCAL_AWARD_ID));
+                rowMap.put(C_GRANT_PROJECT_NAME, rs.getString(C_GRANT_PROJECT_NAME));
+                rowMap.put(C_GRANT_AWARD_DATE, rs.getString(C_GRANT_AWARD_DATE));
+                rowMap.put(C_GRANT_START_DATE, rs.getString(C_GRANT_START_DATE));
+                rowMap.put(C_GRANT_END_DATE, rs.getString(C_GRANT_END_DATE));
+                rowMap.put(C_DIRECT_FUNDER_LOCAL_ID, rs.getString(C_DIRECT_FUNDER_LOCAL_ID));
+                rowMap.put(C_DIRECT_FUNDER_NAME, rs.getString(C_DIRECT_FUNDER_NAME));
+                rowMap.put(C_PRIMARY_FUNDER_LOCAL_ID, rs.getString(C_PRIMARY_FUNDER_LOCAL_ID));
+                rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
+                rowMap.put(C_PERSON_FIRST_NAME, rs.getString(C_PERSON_FIRST_NAME));
+                rowMap.put(C_PERSON_MIDDLE_NAME, rs.getString(C_PERSON_MIDDLE_NAME));
+                rowMap.put(C_PERSON_LAST_NAME, rs.getString(C_PERSON_LAST_NAME));
+                rowMap.put(C_PERSON_EMAIL, rs.getString(C_PERSON_EMAIL));
+                rowMap.put(C_PERSON_INSTITUTIONAL_ID, rs.getString(C_PERSON_INSTITUTIONAL_ID));
+                rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
+                rowMap.put(C_ABBREVIATED_ROLE, rs.getString(C_ABBREVIATED_ROLE));
+                mapList.add(rowMap);
+            }
+        }
+
+        LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
+
+        return mapList;
     }
 
     /**
@@ -86,6 +117,11 @@ public class CoeusConnector {
      *
      * NB: the join of the PROP view with the PRSN view will result in one row in the ResultSet for each investigator
      * on the grant. if there are co-pis in addition to a pi, there will be multiple rows.
+
+     * COEUS.JHU_FACULTY_FORCE_PROP aliased to A
+     * COEUS.JHU_FACULTY_FORCE_PRSN aliased to B
+     * COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL aliased to C
+     * COEUS.SWIFT_SPONSOR aliased to D
      *
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
@@ -93,27 +129,27 @@ public class CoeusConnector {
     public String buildQueryString(String startDate){
 
         String[] viewFields = {
-                C_GRANT_AWARD_NUMBER,
-                C_GRANT_AWARD_STATUS,
-                C_GRANT_LOCAL_AWARD_ID,
-                C_GRANT_PROJECT_NAME,
-                C_GRANT_AWARD_DATE,
-                C_GRANT_START_DATE,
-                C_GRANT_END_DATE,
-                C_DIRECT_FUNDER_NAME,
-                C_DIRECT_FUNDER_LOCAL_ID,
-                C_UPDATE_TIMESTAMP,
+                "A." + C_GRANT_AWARD_NUMBER,
+                "A." + C_GRANT_AWARD_STATUS,
+                "A." + C_GRANT_LOCAL_AWARD_ID,
+                "A." + C_GRANT_PROJECT_NAME,
+                "A." + C_GRANT_AWARD_DATE,
+                "A." + C_GRANT_START_DATE,
+                "A." + C_GRANT_END_DATE,
+                "A." + C_DIRECT_FUNDER_NAME,
+                "A." + C_DIRECT_FUNDER_LOCAL_ID, //"SPOSNOR_CODE"
+                "A." + C_UPDATE_TIMESTAMP,
 
-                C_ABBREVIATED_ROLE,
+                "B." + C_ABBREVIATED_ROLE,
 
-                C_PERSON_FIRST_NAME,
-                C_PERSON_MIDDLE_NAME,
-                C_PERSON_LAST_NAME,
-                C_PERSON_EMAIL,
-                C_PERSON_INSTITUTIONAL_ID,
+                "C." + C_PERSON_FIRST_NAME,
+                "C." + C_PERSON_MIDDLE_NAME,
+                "C." + C_PERSON_LAST_NAME,
+                "C." + C_PERSON_EMAIL,
+                "C." + C_PERSON_INSTITUTIONAL_ID,
 
-                C_PRIMARY_FUNDER_NAME,
-                C_PRIMARY_FUNDER_LOCAL_ID };
+                "D." + C_PRIMARY_FUNDER_NAME,
+                "D." + C_PRIMARY_FUNDER_LOCAL_ID };
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");

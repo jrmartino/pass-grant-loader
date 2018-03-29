@@ -16,6 +16,9 @@
 
 package org.dataconservancy.pass.grant.data;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
@@ -23,12 +26,11 @@ import org.dataconservancy.pass.model.Person;
 import org.joda.time.DateTime;
 
 import java.net.URI;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -41,14 +43,15 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
  * @author jrm@jhu.edu
  */
 public class GrantUpdater {
+    private static Logger LOG = LoggerFactory.getLogger(GrantUpdater.class);
 
-    private ResultSet rs;
+    private List<Map<String,String>> results;
     private String latestUpdateString = "";
     private String report = "";
     private FedoraPassClient fedoraClient = new FedoraPassClient();
 
-    public GrantUpdater(ResultSet resultSet) {
-        this.rs = resultSet;
+    public GrantUpdater(List<Map<String,String>> results) {
+        this.results = results;
     }
 
     /**
@@ -59,6 +62,7 @@ public class GrantUpdater {
      */
     public void updateGrants() throws SQLException {
 
+
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
         Map<String, Grant> grantMap = new HashMap<>();
@@ -68,11 +72,12 @@ public class GrantUpdater {
         //of these by looking them up here; if they are on the Map, they have already been processed
         Map<String, URI> funderMap = new HashMap<>();
         Map<String, URI> personMap = new HashMap<>();
+        LOG.info("Processing result set with " + results.size() + " rows");
 
-        int i=0;
-        while (rs.next()) {
+        for(Map<String,String> rowMap : results){
             Grant grant;
-            String localAwardId = rs.getString(C_GRANT_LOCAL_AWARD_ID);
+            String localAwardId = rowMap.get(C_GRANT_LOCAL_AWARD_ID);
+            LOG.info("Processing result row for grant number " + localAwardId);
 
             URI grantURI = fedoraClient.findByAttribute(Grant.class, "localAwardId", localAwardId);
 
@@ -84,12 +89,12 @@ public class GrantUpdater {
                     grantURI = fedoraClient.createResource(grant);
                 }
 
-                grant = (Grant) fedoraClient.readResource(grantURI, Grant.class);
+                grant = fedoraClient.readResource(grantURI, Grant.class);
                 grant.setCoPis(new ArrayList<>());//we will build this from scratch in either case
 
                 //process all fields which are the same for every record for this grant
-                grant.setAwardNumber(rs.getString(C_GRANT_AWARD_NUMBER));
-                switch (rs.getString(C_GRANT_AWARD_STATUS)) {
+                grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
+                switch (rowMap.get(C_GRANT_AWARD_STATUS)) {
                     case "Active":
                         grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
                         break;
@@ -100,10 +105,10 @@ public class GrantUpdater {
                         grant.setAwardStatus(Grant.AwardStatus.TERMINATED);
                 }
                 grant.setLocalAwardId(localAwardId);
-                grant.setProjectName(rs.getString(C_GRANT_PROJECT_NAME));
-                grant.setAwardDate(createJodaDateTime(rs.getString(C_GRANT_AWARD_DATE)));
-                grant.setStartDate(createJodaDateTime(rs.getString(C_GRANT_START_DATE)));
-                grant.setEndDate(createJodaDateTime(rs.getString(C_GRANT_END_DATE)));
+                grant.setProjectName(rowMap.get(C_GRANT_PROJECT_NAME));
+                grant.setAwardDate(createJodaDateTime(rowMap.get(C_GRANT_AWARD_DATE)));
+                grant.setStartDate(createJodaDateTime(rowMap.get(C_GRANT_START_DATE)));
+                grant.setEndDate(createJodaDateTime(rowMap.get(C_GRANT_END_DATE)));
 
                 //funder semantics here and sponsor semantics in COEUS are different.
                 //in COEUS, we always have a Sponsor. This is the direct source of the $. this could be another university
@@ -117,12 +122,8 @@ public class GrantUpdater {
                 //which differ from the existing fields (when we have the object in fedora already).
                 //if not, we don't need to send an update.
                 Funder directFunder;
-                String directFunderId = rs.getString((C_DIRECT_FUNDER_LOCAL_ID));
+                String directFunderId = rowMap.get((C_DIRECT_FUNDER_LOCAL_ID));
                 URI directFunderURI;
-                boolean mustUpdate = false;
-                //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
-                //because the ResultSet fields do not fully cover the model fields
-                //if they ever do, we can use PassObject.equals()
 
                 if(!funderMap.containsKey(directFunderId)) {//we haven't processed this funder in this session
                     directFunderURI = fedoraClient.findByAttribute(Funder.class, "localId", directFunderId);
@@ -131,22 +132,12 @@ public class GrantUpdater {
                         directFunderURI = fedoraClient.createResource(directFunder);
                     }
 
-                    directFunder = (Funder) fedoraClient.readResource(directFunderURI, Funder.class);
+                    directFunder = fedoraClient.readResource(directFunderURI, Funder.class);
+                    directFunder.setLocalId(directFunderId);
+                    directFunder.setName(rowMap.get(C_DIRECT_FUNDER_NAME));
 
-                    if(directFunder.getLocalId()== null || !directFunder.getLocalId().equals(directFunderId)) {
-                        directFunder.setLocalId(directFunderId);
-                        mustUpdate = true;
-                    }
-
-                    String funderName = rs.getString(C_DIRECT_FUNDER_NAME);
-                    if(directFunder.getName()==null || !directFunder.getName().equals(funderName)) {
-                        directFunder.setName(funderName);
-                        mustUpdate=true;
-                    }
-                    if(mustUpdate){
-                        fedoraClient.updateResource(directFunder);
-                    }
                     funderMap.put(directFunderId, directFunderURI);
+                    fedoraClient.updateResource(directFunder);
 
                 } else {//save the overhead of checking a redundant update
                     directFunderURI = funderMap.get(directFunderId);
@@ -157,12 +148,8 @@ public class GrantUpdater {
                 //which differ from the existing fields (when we have the object in fedora already).
                 //if not, we don't need to send an update.
                 Funder primaryFunder;
-                String primaryFunderId = rs.getString((C_PRIMARY_FUNDER_LOCAL_ID));//D.SPONSOR_CODE
+                String primaryFunderId = rowMap.get((C_PRIMARY_FUNDER_LOCAL_ID));//D.SPONSOR_CODE
                 URI primaryFunderURI;
-                mustUpdate = false;
-                //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
-                //because the ResultSet fields do not fully cover the model fields
-                //if they ever do, we can use PassObject.equals()
 
                 if (primaryFunderId != null) {
                     if(!funderMap.containsKey(primaryFunderId)) {
@@ -171,23 +158,13 @@ public class GrantUpdater {
                             primaryFunder = new Funder();
                             primaryFunderURI = fedoraClient.createResource(primaryFunder);
                         }
-                        primaryFunder = (Funder) fedoraClient.readResource(primaryFunderURI, Funder.class);
+                        primaryFunder = fedoraClient.readResource(primaryFunderURI, Funder.class);
 
-                        if(primaryFunder.getLocalId()==null || !primaryFunder.getLocalId().equals(primaryFunderId)) {
-                            primaryFunder.setLocalId(primaryFunderId);
-                            mustUpdate = true;
-                        }
+                        primaryFunder.setLocalId(primaryFunderId);
+                        primaryFunder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
 
-                        String funderName = rs.getString(C_PRIMARY_FUNDER_NAME);//D.SPONSOR_NAME
-
-                        if(primaryFunder.getName()==null || !primaryFunder.getName().equals(funderName)) {
-                            primaryFunder.setName(funderName);
-                            mustUpdate = true;
-                        }
-                        if(mustUpdate){
-                            fedoraClient.updateResource(primaryFunder);
-                        }
                         funderMap.put(primaryFunderId, primaryFunderURI);
+                        fedoraClient.updateResource(primaryFunder);
                     } else {//save the overhead of checking a redundant update
                         primaryFunderURI = funderMap.get(primaryFunderId);
                     }
@@ -203,11 +180,8 @@ public class GrantUpdater {
             //now process any person fields on any record which corresponds to this Grant
             //these are different for each record for this grant, as each record
             //refers to a different investigator
-            //we go to the trouble to see if there are any COEUS fields
-            //which differ from the existing fields (when we have the Person object in fedora already).
-            //if not, we don't need to send an update.
             Person investigator;
-            String jhedId = rs.getString(C_PERSON_INSTITUTIONAL_ID);
+            String jhedId = rowMap.get(C_PERSON_INSTITUTIONAL_ID);
             URI investigatorURI;
             boolean mustUpdate = false;
             //we take this windy approach to comparing what we have in Fedora with what we have in the ResultSet
@@ -222,14 +196,13 @@ public class GrantUpdater {
                     investigatorURI = fedoraClient.createResource(investigator);
                 }
 
-                investigator = (Person) fedoraClient.readResource(investigatorURI, Person.class);
+                investigator = fedoraClient.readResource(investigatorURI, Person.class);
 
-                String firstName=rs.getString(C_PERSON_FIRST_NAME);
-                String middleName=rs.getString(C_PERSON_MIDDLE_NAME);
-                String lastName = rs.getString(C_PERSON_LAST_NAME);
-                String emailAddress = rs.getString(C_PERSON_EMAIL);
+                String firstName=rowMap.get(C_PERSON_FIRST_NAME);
+                String middleName=rowMap.get(C_PERSON_MIDDLE_NAME);
+                String lastName = rowMap.get(C_PERSON_LAST_NAME);
 
-                //set display name - we simply construct it here.
+                //set display name - we construct it here.
                 StringBuilder sb = new StringBuilder();
                 sb.append(lastName);
                 sb.append(", ");
@@ -240,51 +213,30 @@ public class GrantUpdater {
                 }
                 String displayName = sb.toString();
 
-                if(investigator.getFirstName()==null || !investigator.getFirstName().equals(firstName)) {
-                    investigator.setFirstName(firstName);
-                    mustUpdate=true;
-                }
-                if(investigator.getMiddleName()==null || !investigator.getMiddleName().equals(middleName)) {
-                    investigator.setMiddleName(middleName);
-                    mustUpdate=true;
-                }
-                if(investigator.getLastName()==null || !investigator.getLastName().equals(lastName)) {
-                    investigator.setLastName(lastName);
-                    mustUpdate=true;
-                }
-                if(investigator.getDisplayName()==null || !investigator.getDisplayName().equals(displayName)) {
-                    investigator.setDisplayName(displayName);
-                    mustUpdate=true;
-                }
-                if(investigator.getEmail()==null || !investigator.getEmail().equals(emailAddress)) {
-                    investigator.setEmail(emailAddress);
-                    mustUpdate = true;
-                }
-                if(investigator.getInstitutionalId()==null || !investigator.getInstitutionalId().equals(jhedId)) {
-                    investigator.setInstitutionalId(jhedId);
-                    mustUpdate = true;
-                }
-                if(mustUpdate) {
-                    fedoraClient.updateResource(investigator);
-                }
+                investigator.setFirstName(rowMap.get(firstName));
+                investigator.setMiddleName(rowMap.get(middleName));
+                investigator.setLastName(rowMap.get(lastName));
+                investigator.setDisplayName(displayName);
+                investigator.setEmail(rowMap.get(C_PERSON_EMAIL));
+                investigator.setInstitutionalId(C_PERSON_INSTITUTIONAL_ID);
+
                 personMap.put(jhedId, investigatorURI);
+                fedoraClient.updateResource(investigator);
             } else {//save the overhead of checking a redundant update
                 investigatorURI = personMap.get(jhedId);
             }
-            if (Objects.equals(rs.getString(C_ABBREVIATED_ROLE), "P")) {//it's the PI
+            if (rowMap.get(C_ABBREVIATED_ROLE).equals("P")) {//it's the PI
                 grant.setPi(investigatorURI);
-            } else {//it's a co PI
+            } else if (rowMap.get(C_ABBREVIATED_ROLE).equals("C")){//it's a co PI
                 grant.getCoPis().add(investigatorURI);
             }
 
             grantMap.put(localAwardId, grant);
 
             //see if this is the latest grant updated
-            String grantUpdateString = rs.getString(C_UPDATE_TIMESTAMP);
+            String grantUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
             latestUpdateString = latestUpdateString.length()==0 ? grantUpdateString : returnLaterUpdate(grantUpdateString, latestUpdateString);
 
-            //increment the number of records processed
-            i++;
         }
 
         //now put updated grant objects in fedora
@@ -293,7 +245,7 @@ public class GrantUpdater {
         }
 
         //success - we capture some information to report
-        report = format("%s grant records processed; most recent update in this batch has timestamp %s", String.valueOf(i), getLatestUpdate());
+        report = format("%s grant records processed; most recent update in this batch has timestamp %s", grantMap.size(), getLatestUpdate());
 
     }
 

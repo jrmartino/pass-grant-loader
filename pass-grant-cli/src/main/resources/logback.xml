@@ -18,7 +18,7 @@
 <configuration>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${COEUS_LOADER_HOME}/coeus_loader.log</file>
+        <file>${COEUS_HOME}/coeus_loader.log</file>
         <append>true</append>
         <encoder>
             <pattern>
