@@ -55,9 +55,6 @@ public class GrantUpdater {
     private int fundersCreated=0;
     private int personsCreated=0;
 
-
-
-
     public GrantUpdater(List<Map<String,String>> results) {
         this.results = results;
     }
@@ -86,6 +83,9 @@ public class GrantUpdater {
             String primaryFunderLocalId = rowMap.get(C_PRIMARY_FUNDER_LOCAL_ID);
             Grant grant;
 
+            //if this is the first record for this Grant, it will not be on the Map
+            //we process all data which is common to every record for this grant
+            //i.e., everything except the investigator(s)
             if(!grantMap.containsKey(localAwardId)) {
                 grant = new Grant();
                 grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
@@ -132,15 +132,14 @@ public class GrantUpdater {
                 }
 
                 grant.setCoPis(new ArrayList<>());//we will build this from scratch in either case
-                grantMap.put(localAwardId, grant);
+                grantMap.put(localAwardId, grant);//save the state of this Grant
             }
-
+            //now we process the Person (investigator)
             grant = grantMap.get(localAwardId);
             String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID);
             String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
 
             if (!personMap.containsKey(investigatorId)) {
-
                 String firstName = rowMap.get(C_PERSON_FIRST_NAME);
                 String middleName = rowMap.get(C_PERSON_MIDDLE_NAME);
                 String lastName = rowMap.get(C_PERSON_LAST_NAME);
@@ -167,13 +166,14 @@ public class GrantUpdater {
                 URI fedoraPersonURI = updatePersonInFedora(updatedPerson);
                 personMap.put(investigatorId, fedoraPersonURI);
             }
+            //now our Person URI is on the map - let's process:
             if (abbreviatedRole.equals("P")){
                 grant.setPi(personMap.get(investigatorId));
             } else if (abbreviatedRole.equals("C")) {
                 grant.getCoPis().add(personMap.get(investigatorId));
 
             }
-
+            //we are done with this record, let's save the state of this Grant
             grantMap.put(localAwardId, grant);
 
             //see if this is the latest grant updated
@@ -222,8 +222,9 @@ public class GrantUpdater {
                 storedFunder = PassEntityUtil.updateFunder(updatedFunder, storedFunder);
                 fedoraClient.updateResource(storedFunder);
                 fundersUpdated++;
-            }
-            } else {//don't have a stored Funder for this URI
+            }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
+             //this can happen if the Grant was updated in COEUS only with information we don't consume here
+        } else {//don't have a stored Funder for this URI - this one is new to Fedora
             fedoraFunderURI = fedoraClient.createResource(updatedFunder);
             fundersCreated++;
         }
@@ -246,8 +247,9 @@ public class GrantUpdater {
                 storedPerson = PassEntityUtil.updatePerson(updatedPerson, storedPerson);
                 fedoraClient.updateResource(storedPerson);
                 personsUpdated++;
-            }
-        } else {//don't have a stored Person for this URI
+            }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
+             //this can happen if the Grant was updated in COEUS only with information we don't consume here
+        } else {//don't have a stored Person for this URI - this one is new to Fedora
             fedoraPersonURI = fedoraClient.createResource(updatedPerson);
             personsCreated++;
         }
@@ -269,8 +271,9 @@ public class GrantUpdater {
                 storedGrant = PassEntityUtil.updateGrant(updatedGrant, storedGrant);
                 fedoraClient.updateResource(storedGrant);
                 grantsUpdated++;
-            }
-        } else {//don't have a stored Grant for this URI
+            }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
+             //this can happen if the Grant was updated in COEUS only with information we don't consume here
+        } else {//don't have a stored Grant for this URI - this one is new to Fedora
             fedoraClient.createResource(updatedGrant);
             grantsCreated++;
         }
