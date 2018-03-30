@@ -16,7 +16,6 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-import com.sun.javafx.runtime.SystemProperties;
 import org.apache.commons.codec.binary.Base64InputStream;
 
 import java.io.BufferedReader;
@@ -103,7 +102,7 @@ public class CoeusGrantLoaderApp {
         }
 
         //add new system properties if we have any
-        if(systemPropertiesFile.exists()){
+        if(systemPropertiesFile.exists() && systemPropertiesFile.canRead()){
            Properties sysProps = loadProperties(systemPropertiesFile);
            for(String key : systemProperties) {
                String value = sysProps.getProperty(key);
