@@ -28,8 +28,8 @@ import org.joda.time.DateTime;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -44,7 +44,7 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 public class GrantUpdater {
     private static Logger LOG = LoggerFactory.getLogger(GrantUpdater.class);
 
-    private List<Map<String,String>> results;
+    private Set<Map<String,String>> results;
     private String latestUpdateString = "";
     private String report = "";
     private FedoraPassClient fedoraClient = new FedoraPassClient();
@@ -54,8 +54,10 @@ public class GrantUpdater {
     private int grantsCreated=0;
     private int fundersCreated=0;
     private int personsCreated=0;
+    private int pisAdded=0;
+    private int coPisAdded=0;
 
-    public GrantUpdater(List<Map<String,String>> results) {
+    public GrantUpdater(Set<Map<String,String>> results) {
         this.results = results;
     }
 
@@ -139,39 +141,43 @@ public class GrantUpdater {
             String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID);
             String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
 
-            if (!personMap.containsKey(investigatorId)) {
-                String firstName = rowMap.get(C_PERSON_FIRST_NAME);
-                String middleName = rowMap.get(C_PERSON_MIDDLE_NAME);
-                String lastName = rowMap.get(C_PERSON_LAST_NAME);
+            if(abbreviatedRole == "C" || grant.getPi() == null) {
+                if (!personMap.containsKey(investigatorId)) {
+                    String firstName = rowMap.get(C_PERSON_FIRST_NAME);
+                    String middleName = rowMap.get(C_PERSON_MIDDLE_NAME);
+                    String lastName = rowMap.get(C_PERSON_LAST_NAME);
 
-                //set display name - we construct it here.
-                StringBuilder sb = new StringBuilder();
-                sb.append(lastName);
-                sb.append(", ");
-                sb.append(firstName);
-                if (middleName != null && middleName.length()>0){
-                    sb.append(" ");
-                    sb.append(middleName.charAt(0) );
+                    //set display name - we construct it here.
+                    StringBuilder sb = new StringBuilder();
+                    sb.append(lastName);
+                    sb.append(", ");
+                    sb.append(firstName);
+                    if (middleName != null && middleName.length() > 0) {
+                        sb.append(" ");
+                        sb.append(middleName.charAt(0));
+                    }
+                    String displayName = sb.toString();
+
+                    Person updatedPerson = new Person();
+                    updatedPerson.setFirstName(firstName);
+                    updatedPerson.setMiddleName(middleName);
+                    updatedPerson.setLastName(lastName);
+                    updatedPerson.setDisplayName(displayName);
+                    updatedPerson.setEmail(rowMap.get(C_PERSON_EMAIL));
+                    updatedPerson.setInstitutionalId(investigatorId);
+
+                    URI fedoraPersonURI = updatePersonInFedora(updatedPerson);
+                    personMap.put(investigatorId, fedoraPersonURI);
                 }
-                String displayName = sb.toString();
 
-                Person updatedPerson = new Person();
-                updatedPerson.setFirstName(firstName);
-                updatedPerson.setMiddleName(middleName);
-                updatedPerson.setLastName(lastName);
-                updatedPerson.setDisplayName(displayName);
-                updatedPerson.setEmail(rowMap.get(C_PERSON_EMAIL));
-                updatedPerson.setInstitutionalId(investigatorId);
-
-                URI fedoraPersonURI = updatePersonInFedora(updatedPerson);
-                personMap.put(investigatorId, fedoraPersonURI);
-            }
-            //now our Person URI is on the map - let's process:
-            if (abbreviatedRole.equals("P")){
-                grant.setPi(personMap.get(investigatorId));
-            } else if (abbreviatedRole.equals("C")) {
-                grant.getCoPis().add(personMap.get(investigatorId));
-
+                //now our Person URI is on the map - let's process:
+                if (abbreviatedRole.equals("P")) {
+                    grant.setPi(personMap.get(investigatorId));
+                    pisAdded++;
+                } else if (abbreviatedRole.equals("C") && !grant.getCoPis().contains(personMap.get(investigatorId))) {
+                    grant.getCoPis().add(personMap.get(investigatorId));
+                    coPisAdded++;
+                }
             }
             //we are done with this record, let's save the state of this Grant
             grantMap.put(localAwardId, grant);
@@ -184,6 +190,9 @@ public class GrantUpdater {
 
         //now put updated grant objects in fedora
         for(Grant grant : grantMap.values()){
+            if(grant.getPi()==null) {
+                System.out.println(grant.getAwardNumber());
+            }
             updateGrantInFedora(grant);
         }
 
@@ -193,11 +202,16 @@ public class GrantUpdater {
             sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
                     results.size(), getLatestUpdate()));
             sb.append("\n");
+            sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, grantMap.size()));
+            sb.append("\n");
+            sb.append("Fedora Activity");
+            sb.append("\n");
             sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
             sb.append("\n");
             sb.append(format("%s Persons were created; %s Persons were updated", personsCreated, personsUpdated));
             sb.append("\n");
             sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
+
             sb.append("\n");
             report = sb.toString();
 

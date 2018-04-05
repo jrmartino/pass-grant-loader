@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.GrantUpdater;
@@ -158,11 +159,11 @@ public class CoeusGrantLoaderApp {
         //now do things;
         CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
         String queryString = coeusConnector.buildQueryString(startDate);
-        List<Map<String,String>> resultsList;
+        Set<Map<String,String>> resultsSet;
         GrantUpdater grantUpdater;
         try {
-            resultsList = coeusConnector.retrieveCoeusUpdates(queryString);
-            grantUpdater = new GrantUpdater(resultsList);
+            resultsSet = coeusConnector.retrieveCoeusUpdates(queryString);
+            grantUpdater = new GrantUpdater(resultsSet);
             grantUpdater.updateGrants();
 
         } catch (ClassNotFoundException e) {

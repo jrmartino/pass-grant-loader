@@ -22,11 +22,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -69,9 +69,9 @@ public class CoeusConnector {
      * @param queryString the query string to the COEUS database needed to update the information
      * @return the {@code ResultSet} from the query
      */
-    public List<Map<String, String>> retrieveCoeusUpdates(String queryString) throws ClassNotFoundException, SQLException {
+    public Set<Map<String, String>> retrieveCoeusUpdates(String queryString) throws ClassNotFoundException, SQLException {
 
-        List<Map<String, String>> mapList = new ArrayList<>();
+        Set<Map<String, String>> mapSet = new HashSet<>();
 
         Class.forName("oracle.jdbc.driver.OracleDriver");
 
@@ -102,19 +102,22 @@ public class CoeusConnector {
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
                 rowMap.put(C_ABBREVIATED_ROLE, rs.getString(C_ABBREVIATED_ROLE));
                 LOG.debug("Record processed: " + rowMap.toString());
-                mapList.add(rowMap);
+                mapSet.add(rowMap);
             }
         }
-
-        LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
-
-        return mapList;
+        System.out.println(mapSet.size());
+        LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
+        return mapSet;
     }
 
     /**
      * Method for building the query string against the COEUS database. We draw from four views.
      * Dates are stored in the views as strings, except for the UPDATE_TIMESTAMP, which is a timestamp.
      * We will pull all records which have been updated since the last update timestamp - this value becomes out startDate.
+     *
+     * Because we are only interested in the latest update for any grant number, we restrict the search to the latest
+     * update timestamp for grants, even if these correspond to different institutional proposal numbers. This is because we
+     * only need the granularity of grant number for the purposes of publication submission.
      *
      * NB: the join of the PROP view with the PRSN view will result in one row in the ResultSet for each investigator
      * on the grant. if there are co-pis in addition to a pi, there will be multiple rows.
@@ -155,14 +158,23 @@ public class CoeusConnector {
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
         sb.append(String.join(", ",viewFields));
-        sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP A ");
-        sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL ");
-        sb.append("INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID ");
-        sb.append("LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE ");
-        sb.append("WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
+        sb.append(" FROM");
+        sb.append(" COEUS.JHU_FACULTY_FORCE_PROP A");
+        sb.append(" INNER JOIN ");
+        sb.append(" (SELECT GRANT_NUMBER, MAX(UPDATE_TIMESTAMP) AS MAX_UPDATE_TIMESTAMP");
+        sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP GROUP BY GRANT_NUMBER) LATEST");
+        sb.append(" ON A.UPDATE_TIMESTAMP = LATEST.MAX_UPDATE_TIMESTAMP");
+        sb.append(" AND A.GRANT_NUMBER = LATEST.GRANT_NUMBER");
+        sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL");
+        sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID");
+        sb.append(" LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE");
+        sb.append(" WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
         sb.append(startDate);
         sb.append("' ");
-        sb.append("AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated')");
+        sb.append("AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated') ");
+        sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C') ");
+        sb.append("AND A.GRANT_NUMBER IS NOT NULL");
+
 
         String queryString = sb.toString();
 

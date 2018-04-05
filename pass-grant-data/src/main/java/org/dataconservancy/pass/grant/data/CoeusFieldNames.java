@@ -24,7 +24,7 @@ class CoeusFieldNames {
     static final String C_GRANT_END_DATE = "AWARD_END";
 
     static final String C_DIRECT_FUNDER_LOCAL_ID = "SPOSNOR_CODE";// misspelling in COEUS view - if this gets corrected
-    //it will collide with C_PRIMMARY_SPONSOR_CODE below - this field will then have to be aliased in order to
+    //it will collide with C_PRIMARY_SPONSOR_CODE below - this field will then have to be aliased in order to
     //access it in the ResultSet
     static final String C_DIRECT_FUNDER_NAME = "SPONSOR";
     static final String C_PRIMARY_FUNDER_LOCAL_ID = "SPONSOR_CODE";
