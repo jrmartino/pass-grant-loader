@@ -44,7 +44,7 @@ public class EmailService {
 
     /**
      * The constructor
-     * @param mailProperties - the mail properties file
+     * @param mailProperties - the mail properties
      */
     EmailService(Properties mailProperties){
         this.mailProperties = mailProperties;

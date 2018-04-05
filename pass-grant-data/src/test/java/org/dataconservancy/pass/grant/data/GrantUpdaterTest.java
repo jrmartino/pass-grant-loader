@@ -44,4 +44,5 @@ public class GrantUpdaterTest {
 
         Assert.assertEquals(earlyDate, returnLaterUpdate(earlyDate, earlyDate));
     }
+
 }

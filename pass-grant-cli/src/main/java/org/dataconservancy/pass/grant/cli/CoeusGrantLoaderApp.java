@@ -21,15 +21,17 @@ import org.apache.commons.codec.binary.Base64InputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.GrantUpdater;
@@ -37,55 +39,38 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
+import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
- * This class does the orchestration for the pulling of COEUS grant data. The basic steeps are to read in all of the configuration
- * files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all of the grants updated since the
- * timestamp at the end of the updated timestamps file; execute the query against this database; use the {@code ResultSet} to populate
- * a list of {@code Grant}s in our java model; and finally to push this data into our Fedora instance via the java Fedora client.
+ * This class does the orchestration for the pulling of COEUS grant data. The basic steeps are to read in all of the
+ * configuration files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all
+ * of the grants updated since the timestamp at the end of the updated timestamps file; execute the query against this
+ * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s in our java
+ * model; and finally to push this data into our Fedora instance via the java Fedora client.
  *
- * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated fashion, so
- * care must be taken to log errors, report them to STDOUT, and also send email notifications.
+ * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated
+ * fashion, so care must be taken to log errors, report them to STDOUT, and also send email notifications.
  *
  * @author jrm@jhu.edu
  */
 public class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
-    private static String ERR_HOME_DIRECTORY_NOT_FOUND = "No home directory found for the application. Please specify a valid absolute path.";
-    private static String ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE = "Supplied home directory must be readable" +
-            " and writable by the user running this application.";
-    private static String ERR_REQUIRED_CONFIGURATION_FILE_MISSING = "Required file %s is missing in the specified home directory.";
-    private static String ERR_COULD_NOT_OPEN_CONFIGURATION_FILE = "Could not open configuration file";
-    private static String ERR_INVALID_COMMAND_LINE_TIMESTAMP = "An invalid timestamp was specified on the command line: %s. Please make sure it" +
-            "is of the form 'yyyy-mm-dd hh:mm:ss.m{mm}";
-    private static String ERR_INVALID_TIMESTAMP = "An invalid timestamp was found at the last line of the update timestamp file. Please make sure it" +
-            "is of the form 'yyyy-mm-dd hh:mm:ss.m{mm}";
-    private static String ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP = "The updated succeeded, but could not append last modified date %s to update timestamp file";
-    private static String ERR_SQL_EXCEPTION = "An SQL error occurred querying the COEUS database";
-    private static String ERR_ORACLE_DRIVER_NOT_FOUND = "Could not find the oracle db driver on classpath.";
 
-    private static String connectionPropertiesFileName= "connection.properties";
-    private static String mailPropertiesFileName = "mail.properties";
     private static String updateTimestampsFileName = "update_timestamps";
 
     private EmailService emailService;
 
     private File appHome;
     private String startDate;
-    private File connectionPropertiesFile;
-    private File mailPropertiesFile;
     private File updateTimestampsFile;
 
     /**
      * Constructor for this class
-     * @param coeusLoaderHome - the full path for the directory where configuration file, and the file containing all of the
-     *                        timestamps for updates which have previously been run.
-     *
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
      */
-    CoeusGrantLoaderApp(File coeusLoaderHome, String startDate) {
-        this.appHome = coeusLoaderHome;
+    CoeusGrantLoaderApp(String startDate) {
+        this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
         }
 
@@ -96,29 +81,72 @@ public class CoeusGrantLoaderApp {
      * @throws CoeusCliException if there was any error occurring during the grant loading or updating processes
      */
     void run() throws CoeusCliException {
-        connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
-        mailPropertiesFile = new File(appHome, mailPropertiesFileName);
+        String connectionPropertiesFileName = "connection.properties";
+        File connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
+        String mailPropertiesFileName = "mail.properties";
+        File mailPropertiesFile = new File(appHome, mailPropertiesFileName);
+        String systemPropertiesFileName = "system.properties";
+        File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
+        //let's be careful about overwriting system properties
+        String[] systemProperties  = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl"};
+
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
-        Map<String, String> connectionPropertiesMap;
+        Properties connectionProperties;
         Properties mailProperties;
 
-        //first check that we have the minimum required files
-        checkFilesAreOK(appHome);
+        //first check that we have the required files
+        if (!appHome.exists()) {
+            throw processException(ERR_HOME_DIRECTORY_NOT_FOUND, null);
+        }
+        if (!appHome.canRead() || !appHome.canWrite()) {
+            throw processException(ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE, null);
+        }
 
-        //now define our email service and build our database connection info
-        //from the properties files
+        //add new system properties if we have any
+        if(systemPropertiesFile.exists() && systemPropertiesFile.canRead()){
+           Properties sysProps = loadProperties(systemPropertiesFile);
+           for(String key : systemProperties) {
+               String value = sysProps.getProperty(key);
+               if (value != null){
+                   System.setProperty(key, value);
+               }
+           }
+        }
+
+
+        //create mail properties and instantiate email service
+        if (!mailPropertiesFile.exists()) {
+            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName), null);
+        }
         try {
-            connectionPropertiesMap = decodeProperties(connectionPropertiesFile);
-            mailProperties=loadProperties(mailPropertiesFile);
+            mailProperties = loadProperties(mailPropertiesFile);
             emailService = new EmailService(mailProperties);
         } catch (RuntimeException e) {
-            throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE,e);
+            throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+        }
+
+        //create connection properties - check for a user-space defined clear text file first
+        //if not found, use the base64 encoded file in the jar
+        if (!connectionPropertiesFile.exists()) {
+            try {
+                connectionProperties = decodeProperties(connectionPropertiesFileName);
+            } catch (CoeusCliException e) {
+                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
+            }
+        } else {
+            try {
+                connectionProperties = loadProperties(connectionPropertiesFile);
+            } catch (RuntimeException e) {
+                throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+            }
         }
 
         //establish the start dateTime - it is either given as an option, or it is
         //the last entry in the update_timestamps file
-        if(startDate.length()>0 && !verifyDateTimeFormat(startDate)) {//we have a startDate specified on the command line
-            throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
+        if (startDate.length() > 0) {
+            if (!verifyDateTimeFormat(startDate)) {
+                throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
+            }
         } else {
             startDate = getLatestTimestamp();
         }
@@ -129,14 +157,14 @@ public class CoeusGrantLoaderApp {
         }
 
         //now do things;
-        CoeusConnector coeusConnector = new CoeusConnector(connectionPropertiesMap);
+        CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
         String queryString = coeusConnector.buildQueryString(startDate);
-        ResultSet resultSet;
-        GrantUpdater modelBuilder;
+        Set<Map<String,String>> resultsSet;
+        GrantUpdater grantUpdater;
         try {
-            resultSet = coeusConnector.retrieveCoeusUpdates(queryString);
-            modelBuilder = new GrantUpdater(resultSet);
-            modelBuilder.updateGrants();
+            resultsSet = coeusConnector.retrieveCoeusUpdates(queryString);
+            grantUpdater = new GrantUpdater(resultsSet);
+            grantUpdater.updateGrants();
 
         } catch (ClassNotFoundException e) {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
@@ -146,56 +174,30 @@ public class CoeusGrantLoaderApp {
             throw processException ("Runtime Exception", e);
         }
 
-        //apparently the hard part has succeeded, let's write the timestamp to out update timestamps file
+        //apparently the hard part has succeeded, let's write the timestamp to our update timestamps file
         try{
-            appendLineToFile(updateTimestampsFile, modelBuilder.getLatestUpdate());
+            appendLineToFile(updateTimestampsFile,  grantUpdater.getLatestUpdate());
         } catch (IOException e) {
-            throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, modelBuilder.getLatestUpdate()), null);
+            throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP,  grantUpdater.getLatestUpdate()), null);
         }
 
         //now everything succeeded - log this result and send email
-        String message = modelBuilder.getReport();
+        String message =  grantUpdater.getReport();
         LOG.info(message);
         emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
-    }
 
-    /**
-     * This method checks to make sure we can access the necessary configuration files
-     *
-     * @param appHome - the full path to the directory containing the configuration files and update timestamps file
-     * @throws CoeusCliException if the configuration files are not present and accessible
-     */
-    private void checkFilesAreOK(File appHome) throws CoeusCliException {
-        //First make sure the specified home directory exists and is suitable
-        if (!appHome.exists()) {
-            throw processException(ERR_HOME_DIRECTORY_NOT_FOUND,null);
-            }
-        if (!appHome.canRead() || !appHome.canWrite()) {
-            throw processException(ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE,null);
-        }
-
-        // and also the required properties files
-        if (!connectionPropertiesFile.exists()) {
-            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName),null);
-        }
-        if (!mailPropertiesFile.exists()) {
-            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName),null);
-        }
     }
 
     /**
      * This method takes an encoded properties file and returns a map representing the encoded properties
-     * @param propertiesFile - the encoded properties file
-     * @return the map representing the properties in the encoded file
+     * @param propertiesFileName - the name of the encoded properties file
+     * @return the properties in the encoded file
      * @throws CoeusCliException if configuration files are not accessible
      */
-    private Map<String, String> decodeProperties(File propertiesFile) throws CoeusCliException {
+    private Properties decodeProperties(String propertiesFileName) throws CoeusCliException {
         Properties connectionProperties = new Properties();
-        String resource="";
-        try {
-            resource = propertiesFile.getCanonicalPath();
-            InputStream resourceStream = this.getClass().getResourceAsStream(resource);
-
+        String resource="/" + propertiesFileName;
+        try(InputStream resourceStream = this.getClass().getResourceAsStream(resource)) {
             if (resourceStream == null) {
                 throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource), null);
             }
@@ -203,14 +205,7 @@ public class CoeusGrantLoaderApp {
         } catch (IOException e) {
             throw processException(format(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, resource), null);
         }
-        @SuppressWarnings("unchecked")
-        Map<String, String> connectionMap =  (Map) connectionProperties;
-        //check types to be safe - if there's a problem, we will catch it here
-        for(String k : connectionMap.keySet());
-        for(String v : connectionMap.values());
-
-        return connectionMap;
-        //return ((Map<String, String>) (Map) connectionProperties);
+        return connectionProperties;
     }
 
     /**
@@ -221,14 +216,14 @@ public class CoeusGrantLoaderApp {
      */
     private Properties loadProperties(File propertiesFile) throws CoeusCliException {
         Properties properties = new Properties();
+        String resource;
         try{
-            String resource = propertiesFile.getCanonicalPath();
-            InputStream resourceStream = this.getClass().getResourceAsStream(resource);
-
-            if (resourceStream == null) {
-                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource), null);
-            }
-                properties.load(resourceStream);
+            resource = propertiesFile.getCanonicalPath();
+        } catch (IOException e) {
+            throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+        }
+        try(InputStream resourceStream = new FileInputStream(resource)){
+            properties.load(resourceStream);
         } catch (IOException e) {
             throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
         }
@@ -245,8 +240,7 @@ public class CoeusGrantLoaderApp {
         if (!updateTimestampsFile.exists()) {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, updateTimestampsFileName),null);
         } else {
-            try {
-                BufferedReader br = new BufferedReader(new FileReader(updateTimestampsFile));
+            try( BufferedReader br = new BufferedReader(new FileReader(updateTimestampsFile))) {
                 String readLine;
                 while ((readLine = br.readLine()) != null) {
                     lastLine=readLine;
@@ -284,16 +278,17 @@ public class CoeusGrantLoaderApp {
      * @return = the {@code CoeusCliException} wrapper
      */
     private CoeusCliException processException (String message, Exception e){
+        CoeusCliException clie = new CoeusCliException(message, e);
+
         String errorSubject = "COEUS Data Loader ERROR";
         if(e != null) {
-            LOG.error(message, e);
-            emailService.sendEmailMessage(errorSubject,message + " " + e.getMessage());
-            return new CoeusCliException(message, e);
+            LOG.error(message, clie);
+            emailService.sendEmailMessage(errorSubject, clie.getMessage());
         } else {
             LOG.error(message);
             emailService.sendEmailMessage(errorSubject, message);
-            return new CoeusCliException(message);
         }
+        return new CoeusCliException(message);
     }
 
 

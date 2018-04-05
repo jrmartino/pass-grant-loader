@@ -15,12 +15,10 @@
  */
 package org.dataconservancy.pass.grant.cli;
 
-import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import java.io.File;
 
 /**
  * This Class manages the command line interaction for the loading and updating processes
@@ -29,19 +27,7 @@ import java.io.File;
  */
 public class CoeusGrantLoaderCLI {
 
-    /**
-     * Arguments - just the absolute path to the "home" directory containing configuration files and the updated timestamps file
-     */
-    @Argument(required = true, index = 0, metaVar = "[Home Directory]", usage = "Absolute path of the directory which is " +
-            "readable and writable by the user executing this application, " +
-            "containing the encrypted properties file for the COEUS connection (\"connection.properties\") and " +
-            "the plain text smtp properties (\"mail.properties\"), " +
-            "and where the log file and the update_timestamps files will be written.")
-
-    public static File coeusLoaderHome = null;
-
-    /**
-     *
+    /*
      * General Options
      */
 
@@ -83,14 +69,14 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(coeusLoaderHome, startDate);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {
-            /**
+            /*
              * This is an error in command line args, just print out usage data
-             * and description of the error.
-             */
+             *and description of the error.
+             * */
             System.err.println(e.getMessage());
             parser.printUsage(System.err);
             System.err.println();
