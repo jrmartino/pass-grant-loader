@@ -1,6 +1,8 @@
 language: java
+
 sudo: true
-script:
+
+berore_install:
   - sudo service mysql stop
   - sudo service postgresql stop
   - sudo service acpid stop
@@ -12,9 +14,14 @@ script:
   - sudo service resolvconf stop
   - sudo service sshguard stop
   - sudo service ssh stop
-  - mvn clean verify
+  - sudo service rsyslog stop
+  - openssl aes-256-cbc -K $encrypted_a349a4fa8af7_key -iv $encrypted_a349a4fa8af7_iv -in settings.tar.enc -out settings.tar -d
+
 cache:
     directories:
       - $HOME/.m2
+
 after_failure:
    - cat jsonld-addon-integration/target/failsafe-reports/*.txt
+
+script: if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn -s ./settings.xml deploy -Dexternal -DtrimStackTrace=false ; else mvn verify -DtrimStackTrace=false ; fi

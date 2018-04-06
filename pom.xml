@@ -167,7 +167,7 @@
     <repositories>
         <repository>
             <id>dc.maven.releases</id>
-            <name>Data Conservancy Public Maven 2 Repository (releases)</name>
+            <name>Data Conservancy Public Maven Repository (releases)</name>
             <layout>default</layout>
             <url>http://maven.dataconservancy.org/public/releases/</url>
             <releases>
@@ -179,13 +179,26 @@
         </repository>
         <repository>
             <id>dc.maven.snapshots</id>
-            <name>Data Conservancy Public Maven 2 Repository (snapshots)</name>
+            <name>Data Conservancy Public Maven Repository (snapshots)</name>
             <layout>default</layout>
             <url>http://maven.dataconservancy.org/public/snapshots/</url>
             <releases>
                 <enabled>false</enabled>
-            </releases><snapshots>
-            <enabled>true</enabled>
-        </snapshots></repository>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>private.dataconservancy.org</id>
+            <name>Data Conservancy Private Maven Repository (releases)</name>
+            <url>http://maven.dataconservancy.org/private/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
     </repositories>
 </project>
