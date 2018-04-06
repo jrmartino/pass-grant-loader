@@ -39,7 +39,10 @@ public class CoeusGrantLoaderCLI {
     @Option(name = "-v", aliases = { "-version", "--version" }, usage = "print version information")
     private boolean version = false;
 
-    /** Requests the current version number of the cli application. */
+    @Option(name = "-e", aliases = {"-email", "--email"}, usage = "flag to use the internal email server for notification")
+    private static boolean email = false;
+
+    /** Specifies a start datetime timestamp for basing the database query */
     @Option(name = "-s", aliases = { "-startDateTime", "--startDateTime" }, usage = "DateTime to start the query against COEUS. This will cause " +
             "a return of all records updated since this DateTime. Syntax must be yyyy-mm-dd hh:mm:ss.m{mm}. This value will override the most recent " +
             "dateTime listed in the updates file.")
@@ -69,7 +72,7 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, email);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

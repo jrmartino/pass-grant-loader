@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTime;
 
@@ -46,8 +45,8 @@ public class GrantUpdater {
 
     private Set<Map<String,String>> results;
     private String latestUpdateString = "";
-    private String report = "";
     private FedoraPassClient fedoraClient = new FedoraPassClient();
+    private FedoraUpdateStatistics statistics = new FedoraUpdateStatistics();
     private int grantsUpdated=0;
     private int fundersUpdated=0;
     private int personsUpdated=0;
@@ -181,7 +180,6 @@ public class GrantUpdater {
             }
             //we are done with this record, let's save the state of this Grant
             grantMap.put(localAwardId, grant);
-
             //see if this is the latest grant updated
             String grantUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
             latestUpdateString = latestUpdateString.length()==0 ? grantUpdateString : returnLaterUpdate(grantUpdateString, latestUpdateString);
@@ -190,33 +188,24 @@ public class GrantUpdater {
 
         //now put updated grant objects in fedora
         for(Grant grant : grantMap.values()){
-            if(grant.getPi()==null) {
-                System.out.println(grant.getAwardNumber());
-            }
             updateGrantInFedora(grant);
         }
 
         //success - we capture some information to report
         if (grantMap.size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
-                    results.size(), getLatestUpdate()));
-            sb.append("\n");
-            sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, grantMap.size()));
-            sb.append("\n");
-            sb.append("Fedora Activity");
-            sb.append("\n");
-            sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
-            sb.append("\n");
-            sb.append(format("%s Persons were created; %s Persons were updated", personsCreated, personsUpdated));
-            sb.append("\n");
-            sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
-
-            sb.append("\n");
-            report = sb.toString();
+            statistics.setPisAdded(pisAdded);
+            statistics.setCoPisAdded(coPisAdded);
+            statistics.setFundersCreated(fundersCreated);
+            statistics.setFundersUpdated(fundersUpdated);
+            statistics.setGrantsCreated(grantsCreated);
+            statistics.setGrantsUpdated(grantsUpdated);
+            statistics.setPersonsCreated(personsCreated);
+            statistics.setPersonsUpdated(personsUpdated);;
+            statistics.setLatestUpdateString(latestUpdateString);
+            statistics.setReport(results.size(), grantMap.size());
 
         } else {
-            report = "No records were processed in this update";
+            System.out.println("No records were processed in this update");
         }
     }
 
@@ -319,7 +308,14 @@ public class GrantUpdater {
      * @return the report
      */
     public String getReport(){
-        return report;
+        return statistics.getReport();
     }
 
+    /**
+     * This returns the final statistics Object - useful in testing
+     * @return the statistics object
+     */
+    public FedoraUpdateStatistics getStatistics() {
+        return statistics;
+    }
 }

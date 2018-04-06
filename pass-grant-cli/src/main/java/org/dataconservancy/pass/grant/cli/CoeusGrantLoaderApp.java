@@ -64,14 +64,16 @@ public class CoeusGrantLoaderApp {
     private File appHome;
     private String startDate;
     private File updateTimestampsFile;
+    private boolean email;
 
     /**
      * Constructor for this class
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
      */
-    CoeusGrantLoaderApp(String startDate) {
+    CoeusGrantLoaderApp(String startDate, boolean email) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
+        this.email = email;
         }
 
     /**
@@ -88,7 +90,7 @@ public class CoeusGrantLoaderApp {
         String systemPropertiesFileName = "system.properties";
         File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
         //let's be careful about overwriting system properties
-        String[] systemProperties  = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl"};
+        String[] systemProperties = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl"};
 
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
@@ -103,26 +105,28 @@ public class CoeusGrantLoaderApp {
         }
 
         //add new system properties if we have any
-        if(systemPropertiesFile.exists() && systemPropertiesFile.canRead()){
-           Properties sysProps = loadProperties(systemPropertiesFile);
-           for(String key : systemProperties) {
-               String value = sysProps.getProperty(key);
-               if (value != null){
-                   System.setProperty(key, value);
-               }
-           }
+        if (systemPropertiesFile.exists() && systemPropertiesFile.canRead()) {
+            Properties sysProps = loadProperties(systemPropertiesFile);
+            for (String key : systemProperties) {
+                String value = sysProps.getProperty(key);
+                if (value != null) {
+                    System.setProperty(key, value);
+                }
+            }
         }
 
 
-        //create mail properties and instantiate email service
-        if (!mailPropertiesFile.exists()) {
-            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName), null);
-        }
-        try {
-            mailProperties = loadProperties(mailPropertiesFile);
-            emailService = new EmailService(mailProperties);
-        } catch (RuntimeException e) {
-            throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+        //create mail properties and instantiate email service if we are using the service
+        if (email) {
+            if (!mailPropertiesFile.exists()) {
+                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName), null);
+            }
+            try {
+                mailProperties = loadProperties(mailPropertiesFile);
+                emailService = new EmailService(mailProperties);
+            } catch (RuntimeException e) {
+                throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+            }
         }
 
         //create connection properties - check for a user-space defined clear text file first
@@ -181,11 +185,13 @@ public class CoeusGrantLoaderApp {
             throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP,  grantUpdater.getLatestUpdate()), null);
         }
 
-        //now everything succeeded - log this result and send email
+        //now everything succeeded - log this result and send email if enabled
         String message =  grantUpdater.getReport();
         LOG.info(message);
-        emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
-
+        System.out.println(message);
+        if(email) {
+            emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
+        }
     }
 
     /**
@@ -272,23 +278,32 @@ public class CoeusGrantLoaderApp {
 
     /**
      * This method logs the supplied message and exception, reports the {@code Exception} to STDOUT, and
-     * causes an email regarding this {@code Exception} to be sent to the address configured in the mail properties file
+     * optionally causes an email regarding this {@code Exception} to be sent to the address configured
+     * in the mail properties file
      * @param message - the error message
      * @param e - the Exception
      * @return = the {@code CoeusCliException} wrapper
      */
     private CoeusCliException processException (String message, Exception e){
-        CoeusCliException clie = new CoeusCliException(message, e);
+        CoeusCliException clie;
 
         String errorSubject = "COEUS Data Loader ERROR";
         if(e != null) {
-            LOG.error(message, clie);
-            emailService.sendEmailMessage(errorSubject, clie.getMessage());
+            clie = new CoeusCliException(message, e);
+            LOG.error(message, e);
+            e.printStackTrace();
+            if (email) {
+                emailService.sendEmailMessage(errorSubject, clie.getMessage());
+            }
         } else {
+            clie = new CoeusCliException(message);
             LOG.error(message);
-            emailService.sendEmailMessage(errorSubject, message);
+            System.err.println(message);
+            if(email) {
+                emailService.sendEmailMessage(errorSubject, message);
+            }
         }
-        return new CoeusCliException(message);
+        return clie;
     }
 
 
