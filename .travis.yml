@@ -1,8 +1,11 @@
 language: java
 
+jdk:
+  - oraclejdk8
+
 sudo: true
 
-berore_install:
+before_install:
   - sudo service mysql stop
   - sudo service postgresql stop
   - sudo service acpid stop
@@ -20,8 +23,5 @@ berore_install:
 cache:
     directories:
       - $HOME/.m2
-
-after_failure:
-   - cat jsonld-addon-integration/target/failsafe-reports/*.txt
 
 script: if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn -s ./settings.xml deploy -Dexternal -DtrimStackTrace=false ; else mvn verify -DtrimStackTrace=false ; fi
