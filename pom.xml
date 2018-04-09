@@ -30,8 +30,25 @@
         <module>pass-grant-integration</module>
     </modules>
 
+    <profiles>
+
+        <profile>
+            <id>external</id>
+            <activation>
+                <property>
+                    <name>external</name>
+                </property>
+            </activation>
+            <properties>
+                <scp.port>122</scp.port>
+            </properties>
+        </profile>
+
+    </profiles>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scp.port>22</scp.port>
         <args4j.version>2.33</args4j.version>
         <build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
@@ -45,6 +62,8 @@
         <maven-failsafe-plugin.version>2.21.0</maven-failsafe-plugin.version>
         <maven.shade.plugin.version>3.1.0</maven.shade.plugin.version>
         <maven.surefire.plugin.version>2.21.0</maven.surefire.plugin.version>
+        <maven.wagon.ssh.version>2.10</maven.wagon.ssh.version>
+        <maven.deploy.plugin.version>2.8.2</maven.deploy.plugin.version>
         <mockito.version>2.17.0</mockito.version>
         <ojdbc8.version>12.2.0.1</ojdbc8.version>
         <openpojo.version>0.8.10</openpojo.version>
@@ -54,6 +73,13 @@
     </properties>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.wagon</groupId>
+                <artifactId>wagon-ssh</artifactId>
+                <version>${maven.wagon.ssh.version}</version>
+            </extension>
+        </extensions>
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -95,8 +121,32 @@
                     <artifactId>maven-failsafe-plugin</artifactId>
                     <version>${maven-failsafe-plugin.version}</version>
                 </plugin>
+
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven.deploy.plugin.version}</version>
+                    <configuration>
+                        <retryFailedDeploymentCount>5</retryFailedDeploymentCount>
+                    </configuration>
+                    <!-- See https://jira.codehaus.org/browse/WAGON-393 -->
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.apache.maven.wagon</groupId>
+                            <artifactId>wagon-ssh</artifactId>
+                            <version>${maven.wagon.ssh.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+            </plugin>
+        </plugins>
+
     </build>
     <dependencyManagement>
         <dependencies>
@@ -166,7 +216,7 @@
     </dependencyManagement>
     <repositories>
         <repository>
-            <id>dc.maven.releases</id>
+            <id>dc.public.releases</id>
             <name>Data Conservancy Public Maven Repository (releases)</name>
             <layout>default</layout>
             <url>http://maven.dataconservancy.org/public/releases/</url>
@@ -178,7 +228,7 @@
             </snapshots>
         </repository>
         <repository>
-            <id>dc.maven.snapshots</id>
+            <id>dc.public.snapshots</id>
             <name>Data Conservancy Public Maven Repository (snapshots)</name>
             <layout>default</layout>
             <url>http://maven.dataconservancy.org/public/snapshots/</url>
@@ -192,7 +242,7 @@
         <repository>
             <id>dc.private.releases</id>
             <name>Data Conservancy Private Maven Repository (releases)</name>
-            <url>http://maven.dataconservancy.org/private/releases/</url>
+            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/releases/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -200,5 +250,34 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>dc.private.snapshots</id>
+            <name>Data Conservancy Private Maven Repository (snapshots)</name>
+            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
+
+    <distributionManagement>
+
+        <repository>
+            <id>dc.private.releases</id>
+            <name>Data Conservancy Private Maven Repository (releases)</name>
+            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/releases/</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>dc.private.snapshots</id>
+            <name>Data Conservancy Private Maven Repository (snapshots)</name>
+            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/snapshots/</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+
+    </distributionManagement>
+
 </project>
