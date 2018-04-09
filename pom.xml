@@ -190,7 +190,7 @@
             </snapshots>
         </repository>
         <repository>
-            <id>dc.maven.private.releases</id>
+            <id>dc.private.releases</id>
             <name>Data Conservancy Private Maven Repository (releases)</name>
             <url>http://maven.dataconservancy.org/private/releases/</url>
             <releases>
