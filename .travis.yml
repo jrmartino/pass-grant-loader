@@ -24,4 +24,5 @@ cache:
     directories:
       - $HOME/.m2
 
-script: if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn -s ./settings.xml deploy -Dexternal -DtrimStackTrace=false ; else mvn verify -Dexternal -DtrimStackTrace=false; fi
+script:
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn -s ./settings.xml deploy -Dexternal -DtrimStackTrace=false ; else mvn verify -Dexternal -DtrimStackTrace=false; fi
