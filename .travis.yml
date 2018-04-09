@@ -23,7 +23,6 @@ before_install:
   - sudo service ssh stop
   - sudo service rsyslog stop
   - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then openssl aes-256-cbc -K $encrypted_a349a4fa8af7_key -iv $encrypted_a349a4fa8af7_iv -in settings.tar.enc -out settings.tar -d && tar -xf settings.tar && cat known_hosts >> ~/.ssh/known_hosts; fi
-       
-install: mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -Dexternal
 
+install: true
 script: if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn -s ./settings.xml deploy -Dexternal -DtrimStackTrace=false ; else mvn verify -Dexternal -DtrimStackTrace=false; fi
