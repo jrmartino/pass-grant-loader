@@ -41,7 +41,8 @@ coeus.user =
 coeus.password =
 
 ### Mail server properties file (mail.properties)
-This file contains values for parameters needed to send mail out from the application.
+The use of the mail server is enabled by supplying the command line option -e.
+This configuration file contains values for parameters needed to send mail out from the application.
 These values suggest using a gmail server for example.
 
 mail.transport.protocol=SMTPS
@@ -88,6 +89,12 @@ when invoking the application to process all updates occurring after the specifi
 For example:
 
  java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -s "2018-03-29 14:30:00.0"
+ 
+We may add the command line option -e to enable the use of the email server to send email messages after
+each execution. This will report information on the successfult run of the pplication, or information
+on what went wrong in the case of an error. If this option is enabled, the email configuration file
+must be filled out accordingly.
+ 
 
 
 ## Implementation Details

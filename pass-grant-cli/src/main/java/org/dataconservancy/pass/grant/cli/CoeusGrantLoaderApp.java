@@ -28,11 +28,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.GrantUpdater;
 import org.slf4j.Logger;
@@ -43,7 +43,7 @@ import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
- * This class does the orchestration for the pulling of COEUS grant data. The basic steeps are to read in all of the
+ * This class does the orchestration for the pulling of COEUS grant data. The basic steps are to read in all of the
  * configuration files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all
  * of the grants updated since the timestamp at the end of the updated timestamps file; execute the query against this
  * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s in our java
@@ -69,6 +69,7 @@ public class CoeusGrantLoaderApp {
     /**
      * Constructor for this class
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
+     * @param email - a boolean which indicates whether or not to send email notification of the result of the current run
      */
     CoeusGrantLoaderApp(String startDate, boolean email) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
@@ -165,10 +166,11 @@ public class CoeusGrantLoaderApp {
         String queryString = coeusConnector.buildQueryString(startDate);
         Set<Map<String,String>> resultsSet;
         GrantUpdater grantUpdater;
+        FedoraPassClient fedoraPassClient = new FedoraPassClient();
         try {
             resultsSet = coeusConnector.retrieveCoeusUpdates(queryString);
-            grantUpdater = new GrantUpdater(resultsSet);
-            grantUpdater.updateGrants();
+            grantUpdater = new GrantUpdater(fedoraPassClient);
+            grantUpdater.updateGrants(resultsSet);
 
         } catch (ClassNotFoundException e) {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
@@ -305,6 +307,5 @@ public class CoeusGrantLoaderApp {
         }
         return clie;
     }
-
 
 }
