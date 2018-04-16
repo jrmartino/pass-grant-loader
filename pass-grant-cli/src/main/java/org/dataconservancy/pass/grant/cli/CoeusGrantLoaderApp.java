@@ -133,18 +133,14 @@ public class CoeusGrantLoaderApp {
         //create connection properties - check for a user-space defined clear text file first
         //if not found, use the base64 encoded file in the jar
         if (!connectionPropertiesFile.exists()) {
-            try {
-                connectionProperties = decodeProperties(connectionPropertiesFileName);
-            } catch (CoeusCliException e) {
-                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
-            }
-        } else {
-            try {
-                connectionProperties = loadProperties(connectionPropertiesFile);
+            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
+        }
+        try {
+            connectionProperties = loadProperties(connectionPropertiesFile);
             } catch (RuntimeException e) {
                 throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
             }
-        }
+
 
         //establish the start dateTime - it is either given as an option, or it is
         //the last entry in the update_timestamps file
@@ -194,26 +190,6 @@ public class CoeusGrantLoaderApp {
         if(email) {
             emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
         }
-    }
-
-    /**
-     * This method takes an encoded properties file and returns a map representing the encoded properties
-     * @param propertiesFileName - the name of the encoded properties file
-     * @return the properties in the encoded file
-     * @throws CoeusCliException if configuration files are not accessible
-     */
-    private Properties decodeProperties(String propertiesFileName) throws CoeusCliException {
-        Properties connectionProperties = new Properties();
-        String resource="/" + propertiesFileName;
-        try(InputStream resourceStream = this.getClass().getResourceAsStream(resource)) {
-            if (resourceStream == null) {
-                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource), null);
-            }
-            connectionProperties.load(new Base64InputStream(resourceStream));
-        } catch (IOException e) {
-            throw processException(format(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, resource), null);
-        }
-        return connectionProperties;
     }
 
     /**
