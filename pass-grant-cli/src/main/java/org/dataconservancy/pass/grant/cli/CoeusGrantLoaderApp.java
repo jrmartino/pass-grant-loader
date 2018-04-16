@@ -16,8 +16,6 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-import org.apache.commons.codec.binary.Base64InputStream;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -54,7 +52,7 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
  *
  * @author jrm@jhu.edu
  */
-public class CoeusGrantLoaderApp {
+class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
 
     private static String updateTimestampsFileName = "update_timestamps";
