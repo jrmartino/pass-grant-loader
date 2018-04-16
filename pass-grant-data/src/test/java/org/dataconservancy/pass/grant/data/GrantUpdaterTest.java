@@ -166,8 +166,8 @@ public class GrantUpdaterTest {
         Assert.assertEquals(primaryFunderUri, grantUpdater.getFunderMap().get(primaryFunderId));
         Assert.assertEquals(grant.getDirectFunder(),directFunderUri);
         Assert.assertEquals(grant.getPrimaryFunder(),primaryFunderUri);
-        Assert.assertEquals(piUri, grantUpdater.getPersonMap().get("ARECKON3"));
-        Assert.assertEquals(coPiUri, grantUpdater.getPersonMap().get("MLARTZ5"));
+        Assert.assertEquals(piUri, grantUpdater.getPersonMap().get("areckon3"));//store as lower case
+        Assert.assertEquals(coPiUri, grantUpdater.getPersonMap().get("mlartz5"));//store as lower case
 
         Assert.assertEquals(awardNumber, grant.getAwardNumber());
         Assert.assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());

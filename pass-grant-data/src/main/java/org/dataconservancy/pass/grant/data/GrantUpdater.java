@@ -144,7 +144,7 @@ public class GrantUpdater {
             }
             //now we process the Person (investigator)
             grant = grantMap.get(localAwardId);
-            String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID);
+            String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID).toLowerCase();//use lower case jhed ids
             String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
 
             if(abbreviatedRole.equals("C") || grant.getPi() == null) {
