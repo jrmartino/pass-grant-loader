@@ -22,7 +22,7 @@ before_install:
   - sudo service sshguard stop
   - sudo service ssh stop
   - sudo service rsyslog stop
-  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then openssl aes-256-cbc -K $encrypted_a349a4fa8af7_key -iv $encrypted_a349a4fa8af7_iv -in settings.tar.enc -out settings.tar -d && tar -xf settings.tar && cat known_hosts >> ~/.ssh/known_hosts; fi
+  - if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; openssl aes-256-cbc -K $encrypted_2dfd687e92c1_key -iv $encrypted_2dfd687e92c1_iv -in settings.tar.enc -out settings.tar -d && tar -xf settings.tar && cat known_hosts >> ~/.ssh/known_hosts; fi
 
 install: true
 script: if [ "$TRAVIS_PULL_REQUEST" == "false" ] ; then mvn -s ./settings.xml deploy -Dexternal -DtrimStackTrace=false ; else mvn verify -Dexternal -DtrimStackTrace=false; fi
