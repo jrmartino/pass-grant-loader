@@ -16,8 +16,6 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-import org.apache.commons.codec.binary.Base64InputStream;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,11 +26,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.GrantUpdater;
 import org.slf4j.Logger;
@@ -43,7 +41,7 @@ import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
- * This class does the orchestration for the pulling of COEUS grant data. The basic steeps are to read in all of the
+ * This class does the orchestration for the pulling of COEUS grant data. The basic steps are to read in all of the
  * configuration files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all
  * of the grants updated since the timestamp at the end of the updated timestamps file; execute the query against this
  * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s in our java
@@ -54,7 +52,7 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
  *
  * @author jrm@jhu.edu
  */
-public class CoeusGrantLoaderApp {
+class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
 
     private static String updateTimestampsFileName = "update_timestamps";
@@ -64,14 +62,17 @@ public class CoeusGrantLoaderApp {
     private File appHome;
     private String startDate;
     private File updateTimestampsFile;
+    private boolean email;
 
     /**
      * Constructor for this class
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
+     * @param email - a boolean which indicates whether or not to send email notification of the result of the current run
      */
-    CoeusGrantLoaderApp(String startDate) {
+    CoeusGrantLoaderApp(String startDate, boolean email) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
+        this.email = email;
         }
 
     /**
@@ -88,7 +89,7 @@ public class CoeusGrantLoaderApp {
         String systemPropertiesFileName = "system.properties";
         File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
         //let's be careful about overwriting system properties
-        String[] systemProperties  = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl"};
+        String[] systemProperties = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl"};
 
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
@@ -103,43 +104,41 @@ public class CoeusGrantLoaderApp {
         }
 
         //add new system properties if we have any
-        if(systemPropertiesFile.exists() && systemPropertiesFile.canRead()){
-           Properties sysProps = loadProperties(systemPropertiesFile);
-           for(String key : systemProperties) {
-               String value = sysProps.getProperty(key);
-               if (value != null){
-                   System.setProperty(key, value);
-               }
-           }
+        if (systemPropertiesFile.exists() && systemPropertiesFile.canRead()) {
+            Properties sysProps = loadProperties(systemPropertiesFile);
+            for (String key : systemProperties) {
+                String value = sysProps.getProperty(key);
+                if (value != null) {
+                    System.setProperty(key, value);
+                }
+            }
         }
 
 
-        //create mail properties and instantiate email service
-        if (!mailPropertiesFile.exists()) {
-            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName), null);
-        }
-        try {
-            mailProperties = loadProperties(mailPropertiesFile);
-            emailService = new EmailService(mailProperties);
-        } catch (RuntimeException e) {
-            throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+        //create mail properties and instantiate email service if we are using the service
+        if (email) {
+            if (!mailPropertiesFile.exists()) {
+                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, mailPropertiesFileName), null);
+            }
+            try {
+                mailProperties = loadProperties(mailPropertiesFile);
+                emailService = new EmailService(mailProperties);
+            } catch (RuntimeException e) {
+                throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+            }
         }
 
         //create connection properties - check for a user-space defined clear text file first
         //if not found, use the base64 encoded file in the jar
         if (!connectionPropertiesFile.exists()) {
-            try {
-                connectionProperties = decodeProperties(connectionPropertiesFileName);
-            } catch (CoeusCliException e) {
-                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
-            }
-        } else {
-            try {
-                connectionProperties = loadProperties(connectionPropertiesFile);
+            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
+        }
+        try {
+            connectionProperties = loadProperties(connectionPropertiesFile);
             } catch (RuntimeException e) {
                 throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
             }
-        }
+
 
         //establish the start dateTime - it is either given as an option, or it is
         //the last entry in the update_timestamps file
@@ -161,10 +160,11 @@ public class CoeusGrantLoaderApp {
         String queryString = coeusConnector.buildQueryString(startDate);
         Set<Map<String,String>> resultsSet;
         GrantUpdater grantUpdater;
+        FedoraPassClient fedoraPassClient = new FedoraPassClient();
         try {
             resultsSet = coeusConnector.retrieveCoeusUpdates(queryString);
-            grantUpdater = new GrantUpdater(resultsSet);
-            grantUpdater.updateGrants();
+            grantUpdater = new GrantUpdater(fedoraPassClient);
+            grantUpdater.updateGrants(resultsSet);
 
         } catch (ClassNotFoundException e) {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
@@ -181,31 +181,13 @@ public class CoeusGrantLoaderApp {
             throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP,  grantUpdater.getLatestUpdate()), null);
         }
 
-        //now everything succeeded - log this result and send email
+        //now everything succeeded - log this result and send email if enabled
         String message =  grantUpdater.getReport();
         LOG.info(message);
-        emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
-
-    }
-
-    /**
-     * This method takes an encoded properties file and returns a map representing the encoded properties
-     * @param propertiesFileName - the name of the encoded properties file
-     * @return the properties in the encoded file
-     * @throws CoeusCliException if configuration files are not accessible
-     */
-    private Properties decodeProperties(String propertiesFileName) throws CoeusCliException {
-        Properties connectionProperties = new Properties();
-        String resource="/" + propertiesFileName;
-        try(InputStream resourceStream = this.getClass().getResourceAsStream(resource)) {
-            if (resourceStream == null) {
-                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, resource), null);
-            }
-            connectionProperties.load(new Base64InputStream(resourceStream));
-        } catch (IOException e) {
-            throw processException(format(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, resource), null);
+        System.out.println(message);
+        if(email) {
+            emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
         }
-        return connectionProperties;
     }
 
     /**
@@ -272,24 +254,32 @@ public class CoeusGrantLoaderApp {
 
     /**
      * This method logs the supplied message and exception, reports the {@code Exception} to STDOUT, and
-     * causes an email regarding this {@code Exception} to be sent to the address configured in the mail properties file
+     * optionally causes an email regarding this {@code Exception} to be sent to the address configured
+     * in the mail properties file
      * @param message - the error message
      * @param e - the Exception
      * @return = the {@code CoeusCliException} wrapper
      */
     private CoeusCliException processException (String message, Exception e){
-        CoeusCliException clie = new CoeusCliException(message, e);
+        CoeusCliException clie;
 
         String errorSubject = "COEUS Data Loader ERROR";
         if(e != null) {
-            LOG.error(message, clie);
-            emailService.sendEmailMessage(errorSubject, clie.getMessage());
+            clie = new CoeusCliException(message, e);
+            LOG.error(message, e);
+            e.printStackTrace();
+            if (email) {
+                emailService.sendEmailMessage(errorSubject, clie.getMessage());
+            }
         } else {
+            clie = new CoeusCliException(message);
             LOG.error(message);
-            emailService.sendEmailMessage(errorSubject, message);
+            System.err.println(message);
+            if(email) {
+                emailService.sendEmailMessage(errorSubject, message);
+            }
         }
-        return new CoeusCliException(message);
+        return clie;
     }
-
 
 }

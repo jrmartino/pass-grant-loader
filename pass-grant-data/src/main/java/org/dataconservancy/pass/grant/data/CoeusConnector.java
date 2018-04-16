@@ -105,7 +105,6 @@ public class CoeusConnector {
                 mapSet.add(rowMap);
             }
         }
-        System.out.println(mapSet.size());
         LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
         return mapSet;
     }

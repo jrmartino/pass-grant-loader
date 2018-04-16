@@ -17,6 +17,7 @@
 package org.dataconservancy.pass.grant.data;
 
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +32,7 @@ public class DateTimeUtil {
      * @param sqlDateTime the timestamp string
      * @return the corresponding DataTime object
      */
-    static DateTime createJodaDateTime(String sqlDateTime) {
+    public static DateTime createJodaDateTime(String sqlDateTime) {
 
         if(sqlDateTime != null) {
             DateTime dateTime;
@@ -52,13 +53,13 @@ public class DateTimeUtil {
                 String[] secondParts = timeParts[2].split("\\.");
                 int second = Integer.parseInt(secondParts[0]);
                 int millisecond = Integer.parseInt(secondParts[1]);//seems to be always 0 in our data
-                dateTime = new DateTime(year, month, day, hour, minute, second, millisecond);
+                dateTime = new DateTime(year, month, day, hour, minute, second, millisecond, DateTimeZone.UTC);
             } else {//we have just a date - date format is mm/day/year
                 parts = sqlDateTime.split("/");
                 int month = Integer.parseInt(parts[0]);
                 int day = Integer.parseInt(parts[1]);
                 int year = Integer.parseInt(parts[2]);
-                dateTime = new DateTime(year, month, day, 0, 0);
+                dateTime = new DateTime(year, month, day, 0, 0, DateTimeZone.UTC);
             }
             return dateTime;
         } else {

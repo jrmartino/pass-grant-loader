@@ -30,7 +30,7 @@ import org.dataconservancy.pass.model.Person;
  *
  * @author jrm@jhu.edu
  */
-class PassEntityUtil {
+public class PassEntityUtil {
 
     /**
      * Compare two Funder objects
@@ -39,7 +39,7 @@ class PassEntityUtil {
      * @param stored the version of the Funder as read from Fedora
      * @return a boolean which asserts whether the two supplied Funders are "COEUS equal"
      */
-    static boolean coeusFundersEqual(Funder update, Funder stored) {
+    public static boolean coeusFundersEqual(Funder update, Funder stored) {
 
         if (update.getName() != null ? !update.getName().equals(stored.getName()) : stored.getName() != null) return false;
         if (update.getLocalId() != null ? !update.getLocalId().equals(stored.getLocalId()) : stored.getLocalId() != null) return false;
@@ -66,14 +66,13 @@ class PassEntityUtil {
      * @param stored the version of the Person as read from Fedora
      * @return a boolean which asserts whether the two supplied Persons are "COEUS equal"
      */
-    static boolean coeusPersonsEqual(Person update, Person stored) {
+    public static boolean coeusPersonsEqual(Person update, Person stored) {
         if (update.getFirstName() != null ? !update.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
         if (update.getDisplayName() != null ? !update.getDisplayName().equals(stored.getDisplayName()) : stored.getDisplayName() != null) return false;
         if (update.getEmail() != null ? !update.getEmail().equals(stored.getEmail()) : stored.getEmail() != null) return false;
         if (update.getInstitutionalId() != null ? !update.getInstitutionalId().equals(stored.getInstitutionalId()) : stored.getInstitutionalId() != null) return false;
-        //if (update.getOrcidId() != null ? !update.getOrcidId().equals(stored.getOrcidId()) : stored.getOrcidId() != null) return false;
         //if (update.getAffiliation() != null ? !update.getAffiliation().equals(stored.getAffiliation()) : stored.getAffiliation() != null) return false;
         return true;
     }
@@ -92,7 +91,6 @@ class PassEntityUtil {
         stored.setDisplayName(update.getDisplayName());
         stored.setEmail(update.getEmail());
         stored.setInstitutionalId(update.getInstitutionalId());
-        //stored.setOrcidId(update.getOrcidId());
         //stored.setAffiliation(update.getAffiliation());
         return stored;
     }
@@ -103,7 +101,7 @@ class PassEntityUtil {
      * @param stored the version of the Grant as read from Fedora
      * @return a boolean which asserts whether the two supplied Grants are "COEUS equal"
      */
-    static boolean coeusGrantsEqual(Grant update, Grant stored) {
+    public static boolean coeusGrantsEqual(Grant update, Grant stored) {
         if (update.getAwardNumber() != null ? !update.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return false;
         if (update.getAwardStatus() != null? !update.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return false;
         if (update.getLocalAwardId() != null? !update.getLocalAwardId().equals(stored.getLocalAwardId()) : stored.getLocalAwardId() != null) return false;

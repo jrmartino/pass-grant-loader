@@ -31,23 +31,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTime;
 
 /**
- * This class is responsible for taking the List of Maps derived from the ResultSet from the database query and
+ * This class is responsible for taking the Set of Maps derived from the ResultSet from the database query and
  * constructing a corresponding Collection of Grant objects, which it then sends to Fedora to update.
  *
  * @author jrm@jhu.edu
  */
-public class GrantUpdater {
-    private static Logger LOG = LoggerFactory.getLogger(GrantUpdater.class);
 
-    private Set<Map<String,String>> results;
+public class GrantUpdater {
+
+    private static Logger LOG = LoggerFactory.getLogger(GrantUpdater.class);
     private String latestUpdateString = "";
-    private String report = "";
-    private FedoraPassClient fedoraClient = new FedoraPassClient();
+
+    private FedoraPassClient fedoraClient;
+    private FedoraUpdateStatistics statistics = new FedoraUpdateStatistics();
     private int grantsUpdated=0;
     private int fundersUpdated=0;
     private int personsUpdated=0;
@@ -57,8 +57,19 @@ public class GrantUpdater {
     private int pisAdded=0;
     private int coPisAdded=0;
 
-    public GrantUpdater(Set<Map<String,String>> results) {
-        this.results = results;
+    //used in test classes
+    private Map<URI, Grant> grantUriMap = new HashMap<>();
+
+    //used in unit test
+    //some entities may be referenced many times during an update, but just need to be updated the first time
+    //they are encountered. these include Persons and Funders. we save the overhead of redundant updates
+    //of these by looking them up here; if they are on the Map, they have already been processed
+    //
+    private Map<String, URI> funderMap = new HashMap<>();
+    private Map<String, URI> personMap = new HashMap<>();
+
+    public GrantUpdater(FedoraPassClient fedoraPassClient) {
+        this.fedoraClient = fedoraPassClient;
     }
 
     /**
@@ -66,17 +77,12 @@ public class GrantUpdater {
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
      */
-    public void updateGrants() {
+    public void updateGrants(Set<Map<String,String>> results) {
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
         Map<String, Grant> grantMap = new HashMap<>();
 
-        //some entities may be referenced many times during an update, but just need to be updated the first time
-        //they are encountered. these include Persons and Funders. we save the overhead of redundant updates
-        //of these by looking them up here; if they are on the Map, they have already been processed
-        Map<String, URI> funderMap = new HashMap<>();
-        Map<String, URI> personMap = new HashMap<>();
         LOG.info("Processing result set with " + results.size() + " rows");
 
         for(Map<String,String> rowMap : results){
@@ -138,10 +144,10 @@ public class GrantUpdater {
             }
             //now we process the Person (investigator)
             grant = grantMap.get(localAwardId);
-            String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID);
+            String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID).toLowerCase();//use lower case jhed ids
             String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
 
-            if(abbreviatedRole == "C" || grant.getPi() == null) {
+            if(abbreviatedRole.equals("C") || grant.getPi() == null) {
                 if (!personMap.containsKey(investigatorId)) {
                     String firstName = rowMap.get(C_PERSON_FIRST_NAME);
                     String middleName = rowMap.get(C_PERSON_MIDDLE_NAME);
@@ -181,7 +187,6 @@ public class GrantUpdater {
             }
             //we are done with this record, let's save the state of this Grant
             grantMap.put(localAwardId, grant);
-
             //see if this is the latest grant updated
             String grantUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
             latestUpdateString = latestUpdateString.length()==0 ? grantUpdateString : returnLaterUpdate(grantUpdateString, latestUpdateString);
@@ -190,33 +195,24 @@ public class GrantUpdater {
 
         //now put updated grant objects in fedora
         for(Grant grant : grantMap.values()){
-            if(grant.getPi()==null) {
-                System.out.println(grant.getAwardNumber());
-            }
-            updateGrantInFedora(grant);
+            grantUriMap.put(updateGrantInFedora(grant), grant);
         }
 
         //success - we capture some information to report
         if (grantMap.size() > 0) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
-                    results.size(), getLatestUpdate()));
-            sb.append("\n");
-            sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, grantMap.size()));
-            sb.append("\n");
-            sb.append("Fedora Activity");
-            sb.append("\n");
-            sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
-            sb.append("\n");
-            sb.append(format("%s Persons were created; %s Persons were updated", personsCreated, personsUpdated));
-            sb.append("\n");
-            sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
-
-            sb.append("\n");
-            report = sb.toString();
+            statistics.setPisAdded(pisAdded);
+            statistics.setCoPisAdded(coPisAdded);
+            statistics.setFundersCreated(fundersCreated);
+            statistics.setFundersUpdated(fundersUpdated);
+            statistics.setGrantsCreated(grantsCreated);
+            statistics.setGrantsUpdated(grantsUpdated);
+            statistics.setPersonsCreated(personsCreated);
+            statistics.setPersonsUpdated(personsUpdated);
+            statistics.setLatestUpdateString(latestUpdateString);
+            statistics.setReport(results.size(), grantMap.size());
 
         } else {
-            report = "No records were processed in this update";
+            System.out.println("No records were processed in this update");
         }
     }
 
@@ -276,7 +272,7 @@ public class GrantUpdater {
      *
      * @param updatedGrant the new Grant object populated from COEUS
      */
-    private void updateGrantInFedora(Grant updatedGrant) {
+    private URI updateGrantInFedora(Grant updatedGrant) {
         Grant storedGrant;
         URI fedoraGrantURI = fedoraClient.findByAttribute(Grant.class, "localAwardId", updatedGrant.getLocalAwardId());
         if (fedoraGrantURI != null ) {
@@ -288,9 +284,10 @@ public class GrantUpdater {
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Fedora
-            fedoraClient.createResource(updatedGrant);
+            fedoraGrantURI = fedoraClient.createResource(updatedGrant);
             grantsCreated++;
         }
+        return fedoraGrantURI;
     }
 
     /**
@@ -319,7 +316,35 @@ public class GrantUpdater {
      * @return the report
      */
     public String getReport(){
-        return report;
+        return statistics.getReport();
+    }
+
+    /**
+     * This returns the final statistics Object - useful in testing
+     * @return the statistics object
+     */
+    public FedoraUpdateStatistics getStatistics() {
+        return statistics;
+    }
+
+
+    public Map<URI, Grant> getGrantUriMap() {
+        return grantUriMap;
+    }
+
+    //this is used by an integration test
+    public FedoraPassClient getFedoraClient() {
+        return fedoraClient;
+    }
+
+
+    public Map<String, URI> getFunderMap() {
+        return funderMap;
+    }
+
+    //used in unit test
+    public Map<String, URI> getPersonMap() {
+        return personMap;
     }
 
 }
