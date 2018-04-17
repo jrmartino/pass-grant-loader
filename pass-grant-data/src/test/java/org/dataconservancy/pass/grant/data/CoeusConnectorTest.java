@@ -68,7 +68,7 @@ public class CoeusConnectorTest {
 
 
         CoeusConnector connector = new CoeusConnector(null);
-        Assert.assertEquals(expectedQueryString, connector.buildQueryString("2018-13-14 06:00:00.0"));
+        Assert.assertEquals(expectedQueryString, connector.buildGrantQueryString("2018-13-14 06:00:00.0"));
 
     }
 

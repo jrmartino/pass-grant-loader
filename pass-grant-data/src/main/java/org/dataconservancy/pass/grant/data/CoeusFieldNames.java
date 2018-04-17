@@ -36,6 +36,7 @@ public class CoeusFieldNames {
     public static final String C_PERSON_LAST_NAME = "LAST_NAME";
     public static final String C_PERSON_EMAIL = "EMAIL_ADDRESS";
     public static final String C_PERSON_INSTITUTIONAL_ID = "JHED_ID";
+    public static final String C_PERSON_EMPLOYEE_ID = "EMPLOYEE_ID";
     //public static final String C_PERSON_AFFILIATION = "";
     //public static final String C_PERSON_ORCID_ID = "";
 

@@ -72,6 +72,15 @@ public class GrantUpdater {
         this.fedoraClient = fedoraPassClient;
     }
 
+    public void updateFedora(Set<Map<String, String>> results, String mode) {
+        if (mode.equals("grant")) {
+            updateGrants(results);
+        }
+        if (mode.equals("person")) {
+            updatePersons(results);
+        }
+    }
+
     /**
      * Build a Collection of Grants from a ResultSet, then update the grants in Fedora
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
@@ -144,12 +153,14 @@ public class GrantUpdater {
             }
             //now we process the Person (investigator)
             grant = grantMap.get(localAwardId);
-            String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID).toLowerCase();//use lower case jhed ids
+            //String investigatorId = rowMap.get(C_PERSON_INSTITUTIONAL_ID).toLowerCase();//use lower case jhed ids
+            String employeeId = rowMap.get(C_PERSON_EMPLOYEE_ID);
             String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
 
             if(abbreviatedRole.equals("C") || grant.getPi() == null) {
-                if (!personMap.containsKey(investigatorId)) {
-                    String firstName = rowMap.get(C_PERSON_FIRST_NAME);
+                if (!personMap.containsKey(employeeId)) {
+                    Person updatedPerson = buildPerson(rowMap);
+                 /*   String firstName = rowMap.get(C_PERSON_FIRST_NAME);
                     String middleName = rowMap.get(C_PERSON_MIDDLE_NAME);
                     String lastName = rowMap.get(C_PERSON_LAST_NAME);
 
@@ -170,18 +181,19 @@ public class GrantUpdater {
                     updatedPerson.setLastName(lastName);
                     updatedPerson.setDisplayName(displayName);
                     updatedPerson.setEmail(rowMap.get(C_PERSON_EMAIL));
-                    updatedPerson.setInstitutionalId(investigatorId);
-
+                    updatedPerson.setInstitutionalId(rowMap.get(C_PERSON_INSTITUTIONAL_ID).toLowerCase());
+                    //updatedPerson.setEmployeeId(rowMap.get(C_PERSON_EMPLOYEE_ID));
+*/
                     URI fedoraPersonURI = updatePersonInFedora(updatedPerson);
-                    personMap.put(investigatorId, fedoraPersonURI);
+                    personMap.put(employeeId, fedoraPersonURI);
                 }
 
                 //now our Person URI is on the map - let's process:
                 if (abbreviatedRole.equals("P")) {
-                    grant.setPi(personMap.get(investigatorId));
+                    grant.setPi(personMap.get(employeeId));
                     pisAdded++;
-                } else if (abbreviatedRole.equals("C") && !grant.getCoPis().contains(personMap.get(investigatorId))) {
-                    grant.getCoPis().add(personMap.get(investigatorId));
+                } else if (abbreviatedRole.equals("C") && !grant.getCoPis().contains(personMap.get(employeeId))) {
+                    grant.getCoPis().add(personMap.get(employeeId));
                     coPisAdded++;
                 }
             }
@@ -214,6 +226,41 @@ public class GrantUpdater {
         } else {
             System.out.println("No records were processed in this update");
         }
+    }
+
+    private void updatePersons(Set<Map<String, String>> results) {
+        for(Map<String,String> rowMap : results) {
+            Person updatedPerson = buildPerson(rowMap);
+            updatePersonInFedora(updatedPerson);
+        }
+
+    }
+
+    private Person buildPerson(Map<String, String> rowMap) {
+        String firstName = rowMap.get(C_PERSON_FIRST_NAME);
+        String middleName = rowMap.get(C_PERSON_MIDDLE_NAME);
+        String lastName = rowMap.get(C_PERSON_LAST_NAME);
+
+        //set display name - we construct it here.
+        StringBuilder sb = new StringBuilder();
+        sb.append(lastName);
+        sb.append(", ");
+        sb.append(firstName);
+        if (middleName != null && middleName.length() > 0) {
+            sb.append(" ");
+            sb.append(middleName.charAt(0));
+        }
+        String displayName = sb.toString();
+
+        Person person = new Person();
+        person.setFirstName(firstName);
+        person.setMiddleName(middleName);
+        person.setLastName(lastName);
+        person.setDisplayName(displayName);
+        person.setEmail(rowMap.get(C_PERSON_EMAIL));
+        person.setInstitutionalId(rowMap.get(C_PERSON_INSTITUTIONAL_ID).toLowerCase());
+        //person.setEmployeeId(rowMap.get(C_PERSON_EMPLOYEE_ID));
+        return person;
     }
 
     /**
@@ -250,7 +297,7 @@ public class GrantUpdater {
      */
     private URI updatePersonInFedora(Person updatedPerson) {
         Person storedPerson;
-        URI fedoraPersonURI = fedoraClient.findByAttribute(Person.class, "institutionalId", updatedPerson.getInstitutionalId());
+        URI fedoraPersonURI = fedoraClient.findByAttribute(Person.class, "employeeId", updatedPerson.getEmployeeId());
         if (fedoraPersonURI != null ) {
             storedPerson = fedoraClient.readResource(fedoraPersonURI, Person.class);
             if (!PassEntityUtil.coeusPersonsEqual(updatedPerson, storedPerson)) {

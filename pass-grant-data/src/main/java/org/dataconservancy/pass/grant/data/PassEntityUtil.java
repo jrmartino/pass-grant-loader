@@ -73,6 +73,7 @@ public class PassEntityUtil {
         if (update.getDisplayName() != null ? !update.getDisplayName().equals(stored.getDisplayName()) : stored.getDisplayName() != null) return false;
         if (update.getEmail() != null ? !update.getEmail().equals(stored.getEmail()) : stored.getEmail() != null) return false;
         if (update.getInstitutionalId() != null ? !update.getInstitutionalId().equals(stored.getInstitutionalId()) : stored.getInstitutionalId() != null) return false;
+        //if (update.getEmployeeId() != null ? !update.getEmployeeId().equals(stored.getEmployeeId()) : stored.getEmployeeId() != null) return false;
         //if (update.getAffiliation() != null ? !update.getAffiliation().equals(stored.getAffiliation()) : stored.getAffiliation() != null) return false;
         return true;
     }
@@ -91,6 +92,7 @@ public class PassEntityUtil {
         stored.setDisplayName(update.getDisplayName());
         stored.setEmail(update.getEmail());
         stored.setInstitutionalId(update.getInstitutionalId());
+        //stored.setEmployeeId(update.getEmployeeId));
         //stored.setAffiliation(update.getAffiliation());
         return stored;
     }

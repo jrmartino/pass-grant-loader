@@ -55,7 +55,6 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
 class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
 
-    private static String updateTimestampsFileName = "update_timestamps";
 
     private EmailService emailService;
 
@@ -63,16 +62,20 @@ class CoeusGrantLoaderApp {
     private String startDate;
     private File updateTimestampsFile;
     private boolean email;
+    private String mode;
+
+    private String updateTimestampsFileName = mode + "_update_timestamps";
 
     /**
      * Constructor for this class
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
      * @param email - a boolean which indicates whether or not to send email notification of the result of the current run
      */
-    CoeusGrantLoaderApp(String startDate, boolean email) {
+    CoeusGrantLoaderApp(String startDate, boolean email, String mode) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
         this.email = email;
+        this.mode = mode;
         }
 
     /**
@@ -94,6 +97,11 @@ class CoeusGrantLoaderApp {
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
         Properties mailProperties;
+
+        //check that we have a good value for mode
+        if (!mode.equals("grant") && !mode.equals("person")) {
+            throw processException(format(ERR_MODE_NOT_VALID,mode), null);
+        }
 
         //first check that we have the required files
         if (!appHome.exists()) {
@@ -157,14 +165,14 @@ class CoeusGrantLoaderApp {
 
         //now do things;
         CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
-        String queryString = coeusConnector.buildQueryString(startDate);
+        String queryString = coeusConnector.buildGrantQueryString(startDate);
         Set<Map<String,String>> resultsSet;
         GrantUpdater grantUpdater;
         FedoraPassClient fedoraPassClient = new FedoraPassClient();
         try {
-            resultsSet = coeusConnector.retrieveCoeusUpdates(queryString);
+            resultsSet = coeusConnector.retrieveUpdates(queryString, mode);
             grantUpdater = new GrantUpdater(fedoraPassClient);
-            grantUpdater.updateGrants(resultsSet);
+            grantUpdater.updateFedora(resultsSet, mode);
 
         } catch (ClassNotFoundException e) {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);

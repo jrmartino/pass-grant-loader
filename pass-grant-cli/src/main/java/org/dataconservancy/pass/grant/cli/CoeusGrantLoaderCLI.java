@@ -39,8 +39,11 @@ public class CoeusGrantLoaderCLI {
     @Option(name = "-v", aliases = { "-version", "--version" }, usage = "print version information")
     private boolean version = false;
 
-    @Option(name = "-e", aliases = {"-email", "--email"}, usage = "flag to use the internal email server for notification")
+    @Option(name = "-e", aliases = { "-email", "--email" }, usage = "flag to use the internal email server for notification")
     private static boolean email = false;
+
+    @Option(name = "-m", aliases = { "-mode", "--mode" }, usage = "option to set the query mode to grant (default) or person")
+    private static String mode = "grant";
 
     /** Specifies a start datetime timestamp for basing the database query */
     @Option(name = "-s", aliases = { "-startDateTime", "--startDateTime" }, usage = "DateTime to start the query against COEUS. This will cause " +
@@ -72,7 +75,7 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, email);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, email, mode);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

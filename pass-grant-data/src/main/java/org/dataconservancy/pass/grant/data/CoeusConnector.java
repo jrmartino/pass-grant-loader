@@ -63,13 +63,21 @@ public class CoeusConnector {
         }
     }
 
+    public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException {
+        if (mode.equals("person")) {
+            return retrievePersonUpdates(queryString);
+        } else {
+            return retrieveGrantUpdates(queryString);
+        }
+    }
+
     /**
      * This method returns a {@code ResultSet} for a query for a specific set of fields in several views in COEUS.
      *
      * @param queryString the query string to the COEUS database needed to update the information
      * @return the {@code ResultSet} from the query
      */
-    public Set<Map<String, String>> retrieveCoeusUpdates(String queryString) throws ClassNotFoundException, SQLException {
+    private Set<Map<String, String>> retrieveGrantUpdates(String queryString) throws ClassNotFoundException, SQLException {
 
         Set<Map<String, String>> mapSet = new HashSet<>();
 
@@ -109,6 +117,34 @@ public class CoeusConnector {
         return mapSet;
     }
 
+    private Set<Map<String, String>> retrievePersonUpdates(String queryString) throws ClassNotFoundException, SQLException {
+
+        Set<Map<String, String>> mapSet = new HashSet<>();
+
+        Class.forName("oracle.jdbc.driver.OracleDriver");
+
+        try (
+                Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(queryString)
+        ) {
+            while (rs.next()) {
+                Map<String, String> rowMap = new HashMap<>();
+                rowMap.put(C_PERSON_FIRST_NAME, rs.getString(C_PERSON_FIRST_NAME));
+                rowMap.put(C_PERSON_MIDDLE_NAME, rs.getString(C_PERSON_MIDDLE_NAME));
+                rowMap.put(C_PERSON_LAST_NAME, rs.getString(C_PERSON_LAST_NAME));
+                rowMap.put(C_PERSON_EMAIL, rs.getString(C_PERSON_EMAIL));
+                rowMap.put(C_PERSON_INSTITUTIONAL_ID, rs.getString(C_PERSON_INSTITUTIONAL_ID));
+                rowMap.put(C_PERSON_EMPLOYEE_ID, rs.getString(C_PERSON_EMPLOYEE_ID));
+                rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
+                LOG.debug("Record processed: " + rowMap.toString());
+                mapSet.add(rowMap);
+            }
+        }
+        LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
+        return mapSet;
+    }
+
     /**
      * Method for building the query string against the COEUS database. We draw from four views.
      * Dates are stored in the views as strings, except for the UPDATE_TIMESTAMP, which is a timestamp.
@@ -129,30 +165,30 @@ public class CoeusConnector {
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    public String buildQueryString(String startDate){
+    public String buildGrantQueryString(String startDate){
 
         String[] viewFields = {
-                "A." + C_GRANT_AWARD_NUMBER,
-                "A." + C_GRANT_AWARD_STATUS,
-                "A." + C_GRANT_LOCAL_AWARD_ID,
-                "A." + C_GRANT_PROJECT_NAME,
-                "A." + C_GRANT_AWARD_DATE,
-                "A." + C_GRANT_START_DATE,
-                "A." + C_GRANT_END_DATE,
-                "A." + C_DIRECT_FUNDER_NAME,
-                "A." + C_DIRECT_FUNDER_LOCAL_ID, //"SPOSNOR_CODE"
-                "A." + C_UPDATE_TIMESTAMP,
+            "A." + C_GRANT_AWARD_NUMBER,
+            "A." + C_GRANT_AWARD_STATUS,
+            "A." + C_GRANT_LOCAL_AWARD_ID,
+            "A." + C_GRANT_PROJECT_NAME,
+            "A." + C_GRANT_AWARD_DATE,
+            "A." + C_GRANT_START_DATE,
+            "A." + C_GRANT_END_DATE,
+            "A." + C_DIRECT_FUNDER_NAME,
+            "A." + C_DIRECT_FUNDER_LOCAL_ID, //"SPOSNOR_CODE"
+            "A." + C_UPDATE_TIMESTAMP,
 
-                "B." + C_ABBREVIATED_ROLE,
+            "B." + C_ABBREVIATED_ROLE,
 
-                "C." + C_PERSON_FIRST_NAME,
-                "C." + C_PERSON_MIDDLE_NAME,
-                "C." + C_PERSON_LAST_NAME,
-                "C." + C_PERSON_EMAIL,
-                "C." + C_PERSON_INSTITUTIONAL_ID,
+            "C." + C_PERSON_FIRST_NAME,
+            "C." + C_PERSON_MIDDLE_NAME,
+            "C." + C_PERSON_LAST_NAME,
+            "C." + C_PERSON_EMAIL,
+            "C." + C_PERSON_INSTITUTIONAL_ID,
 
-                "D." + C_PRIMARY_FUNDER_NAME,
-                "D." + C_PRIMARY_FUNDER_LOCAL_ID };
+            "D." + C_PRIMARY_FUNDER_NAME,
+            "D." + C_PRIMARY_FUNDER_LOCAL_ID };
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -174,6 +210,31 @@ public class CoeusConnector {
         sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C') ");
         sb.append("AND A.GRANT_NUMBER IS NOT NULL");
 
+
+        String queryString = sb.toString();
+
+        LOG.debug("Query string is: " + queryString);
+        return queryString;
+    }
+
+    public String buildPersonQueryString(String startDate) {
+        String viewFields [] = {
+            C_PERSON_FIRST_NAME,
+            C_PERSON_MIDDLE_NAME,
+            C_PERSON_LAST_NAME,
+            C_PERSON_EMAIL,
+            C_PERSON_INSTITUTIONAL_ID,
+            C_PERSON_EMPLOYEE_ID,
+            C_UPDATE_TIMESTAMP };
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(String.join(", ",viewFields));
+        sb.append(" FROM");
+        sb.append(" COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL");
+        sb.append(" WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
+        sb.append(startDate);
+        sb.append("'");
 
         String queryString = sb.toString();
 
