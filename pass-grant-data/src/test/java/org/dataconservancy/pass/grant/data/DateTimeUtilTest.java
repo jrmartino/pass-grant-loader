@@ -91,7 +91,7 @@ public class DateTimeUtilTest {
     public void testCreateJodaDateTime() {
         String timestamp = "2018-01-30 23:59:58.0";
         DateTime dateTime = DateTimeUtil.createJodaDateTime(timestamp);
-        Assert.assertTrue(dateTime != null);
+        Assert.assertNotNull(dateTime);
 
         Assert.assertEquals(2018, dateTime.getYear());
         Assert.assertEquals(1, dateTime.getMonthOfYear());

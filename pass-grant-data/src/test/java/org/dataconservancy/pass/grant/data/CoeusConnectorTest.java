@@ -18,7 +18,6 @@ package org.dataconservancy.pass.grant.data;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import sun.text.resources.es.CollationData_es;
 
 /**
  * Test class for the COEUS connector
@@ -27,7 +26,7 @@ import sun.text.resources.es.CollationData_es;
  */
 public class CoeusConnectorTest {
 
-    CoeusConnector connector;
+    private CoeusConnector connector;
 
     @Before
     public void setup(){

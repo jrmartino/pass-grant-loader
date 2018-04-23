@@ -39,7 +39,7 @@ public class PassEntityUtil {
      * @param stored the version of the Funder as read from Fedora
      * @return a boolean which asserts whether the two supplied Funders are "COEUS equal"
      */
-    public static boolean coeusFundersEqual(Funder update, Funder stored) {
+    static boolean coeusFundersEqual(Funder update, Funder stored) {
 
         if (update.getName() != null ? !update.getName().equals(stored.getName()) : stored.getName() != null) return false;
         if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
@@ -66,7 +66,7 @@ public class PassEntityUtil {
      * @param stored the version of the User as read from Fedora
      * @return a boolean which asserts whether the two supplied Users are "COEUS equal"
      */
-    public static boolean coeusUsersEqual(User update, User stored) {
+    static boolean coeusUsersEqual(User update, User stored) {
         if (update.getFirstName() != null ? !update.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
@@ -74,7 +74,6 @@ public class PassEntityUtil {
         if (update.getEmail() != null ? !update.getEmail().equals(stored.getEmail()) : stored.getEmail() != null) return false;
         if (update.getInstitutionalId() != null ? !update.getInstitutionalId().equals(stored.getInstitutionalId()) : stored.getInstitutionalId() != null) return false;
         if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-        if (update.getRoles() != null ? !stored.getRoles().contains(User.Role.SUBMITTER):stored.getRoles() != null) return false;
         //if (update.getAffiliation() != null ? !update.getAffiliation().equals(stored.getAffiliation()) : stored.getAffiliation() != null) return false;
         return true;
     }

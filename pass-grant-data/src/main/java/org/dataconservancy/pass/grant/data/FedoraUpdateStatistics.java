@@ -36,11 +36,11 @@ public class FedoraUpdateStatistics {
 
     private String type;
 
-    public String getReport() {
+    String getReport() {
         return report;
     }
 
-    public void setReport(int resultSetSize, int size ) {
+    void setReport(int resultSetSize, int size) {
         StringBuilder sb = new StringBuilder();
 
         if (type.equals("grant")) {
@@ -73,7 +73,7 @@ public class FedoraUpdateStatistics {
         return grantsUpdated;
     }
 
-    public void setGrantsUpdated(int grantsUpdated) {
+    void setGrantsUpdated(int grantsUpdated) {
         this.grantsUpdated = grantsUpdated;
     }
 
@@ -81,7 +81,7 @@ public class FedoraUpdateStatistics {
         return fundersUpdated;
     }
 
-    public void setFundersUpdated(int fundersUpdated) {
+    void setFundersUpdated(int fundersUpdated) {
         this.fundersUpdated = fundersUpdated;
     }
 
@@ -89,7 +89,7 @@ public class FedoraUpdateStatistics {
         return usersUpdated;
     }
 
-    public void setUsersUpdated(int usersUpdated) {
+    void setUsersUpdated(int usersUpdated) {
         this.usersUpdated = usersUpdated;
     }
 
@@ -97,7 +97,7 @@ public class FedoraUpdateStatistics {
         return grantsCreated;
     }
 
-    public void setGrantsCreated(int grantsCreated) {
+    void setGrantsCreated(int grantsCreated) {
         this.grantsCreated = grantsCreated;
     }
 
@@ -105,7 +105,7 @@ public class FedoraUpdateStatistics {
         return fundersCreated;
     }
 
-    public void setFundersCreated(int fundersCreated) {
+    void setFundersCreated(int fundersCreated) {
         this.fundersCreated = fundersCreated;
     }
 
@@ -113,7 +113,7 @@ public class FedoraUpdateStatistics {
         return usersCreated;
     }
 
-    public void setUsersCreated(int usersCreated) {
+    void setUsersCreated(int usersCreated) {
         this.usersCreated = usersCreated;
     }
 
@@ -121,7 +121,7 @@ public class FedoraUpdateStatistics {
         return pisAdded;
     }
 
-    public void setPisAdded(int pisAdded) {
+    void setPisAdded(int pisAdded) {
         this.pisAdded = pisAdded;
     }
 
@@ -129,7 +129,7 @@ public class FedoraUpdateStatistics {
         return coPisAdded;
     }
 
-    public void setCoPisAdded(int coPisAdded) {
+    void setCoPisAdded(int coPisAdded) {
         this.coPisAdded = coPisAdded;
     }
 
@@ -137,7 +137,7 @@ public class FedoraUpdateStatistics {
         return latestUpdateString;
     }
 
-    public void setLatestUpdateString(String latestUpdateString) {
+    void setLatestUpdateString(String latestUpdateString) {
         this.latestUpdateString = latestUpdateString;
     }
 
@@ -145,7 +145,7 @@ public class FedoraUpdateStatistics {
         return type;
     }
 
-    public void setType(String type) {
+    void setType(String type) {
         this.type = type;
     }
 

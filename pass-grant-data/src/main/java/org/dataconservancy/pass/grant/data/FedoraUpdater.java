@@ -318,11 +318,16 @@ public class FedoraUpdater {
             storedUser = fedoraClient.readResource(fedoraUserURI, User.class);
             if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)) {
                 storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
+                //post COEUS processing goes here
+                if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
+                    storedUser.getRoles().add(User.Role.SUBMITTER);
+                }
                 fedoraClient.updateResource(storedUser);
                 usersUpdated++;
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Fedora
+            updatedUser.getRoles().add(User.Role.SUBMITTER);
             fedoraUserURI = fedoraClient.createResource(updatedUser);
             usersCreated++;
         }

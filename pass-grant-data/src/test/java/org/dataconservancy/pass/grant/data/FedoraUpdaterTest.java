@@ -19,7 +19,6 @@ package org.dataconservancy.pass.grant.data;
 import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
-import org.dataconservancy.pass.model.PassEntity;
 import org.dataconservancy.pass.model.User;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,19 +50,14 @@ public class FedoraUpdaterTest {
     private FedoraPassClient fedoraClientMock;
 
     private URI grantUri;
-    private URI userUri1;
-    private URI useruri2;
-    private URI funderUri1;
-    private URI funderUri2;
 
-        
     @Before
     public void setup() {
         grantUri = URI.create("grantUri");
-        userUri1 = URI.create("piUri");
-        useruri2 = URI.create("coPiUri");
-        funderUri1 = URI.create("funderuri1");
-        funderUri2 = URI.create("funderur2");
+        URI userUri1 = URI.create("piUri");
+        URI useruri2 = URI.create("coPiUri");
+        URI funderUri1 = URI.create("funderuri1");
+        URI funderUri2 = URI.create("funderur2");
 
         when(fedoraClientMock.createResource(any(Grant.class))).thenReturn(grantUri);
         when(fedoraClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
