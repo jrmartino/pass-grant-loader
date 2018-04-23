@@ -162,30 +162,6 @@ public class FedoraUpdater {
             if(abbreviatedRole.equals("C") || grant.getPi() == null) {
                 if (!userMap.containsKey(employeeId)) {
                     User updatedUser = buildUser(rowMap);
-                 /*   String firstName = rowMap.get(C_USER_FIRST_NAME);
-                    String middleName = rowMap.get(C_USER_MIDDLE_NAME);
-                    String lastName = rowMap.get(C_USER_LAST_NAME);
-
-                    //set display name - we construct it here.
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(lastName);
-                    sb.append(", ");
-                    sb.append(firstName);
-                    if (middleName != null && middleName.length() > 0) {
-                        sb.append(" ");
-                        sb.append(middleName.charAt(0));
-                    }
-                    String displayName = sb.toString();
-
-                    User updatedUser = new User();
-                    updatedUser.setFirstName(firstName);
-                    updatedUser.setMiddleName(middleName);
-                    updatedUser.setLastName(lastName);
-                    updatedUser.setDisplayName(displayName);
-                    updatedUser.setEmail(rowMap.get(C_USER_EMAIL));
-                    updatedUser.setInstitutionalId(rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase());
-                    //updatedUser.setEmployeeId(rowMap.get(C_USER_EMPLOYEE_ID));
-*/
                     URI fedoraUserURI = updateUserInFedora(updatedUser);
                     userMap.put(employeeId, fedoraUserURI);
                 }
