@@ -303,7 +303,6 @@ public class FedoraUpdater {
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Fedora
-            updatedUser.getRoles().add(User.Role.SUBMITTER);
             fedoraUserURI = fedoraClient.createResource(updatedUser);
             usersCreated++;
         }
