@@ -18,40 +18,54 @@ package org.dataconservancy.pass.grant.data;
 
 import static java.lang.String.format;
 
+/**
+ * A utility class to collect and disseminate statistics related to an update
+ */
 public class FedoraUpdateStatistics {
 
     private int grantsUpdated = 0;
     private int fundersUpdated = 0;
-    private int personsUpdated = 0;
+    private int usersUpdated = 0;
     private int grantsCreated = 0;
     private int fundersCreated = 0;
-    private int personsCreated = 0;
+    private int usersCreated = 0;
     private int pisAdded = 0;
     private int coPisAdded = 0;
     private String latestUpdateString = "";
     private String report ="";
 
+    private String type;
+
     public String getReport() {
         return report;
     }
 
-    public void setReport(int resultSetSize, int grantMapSize ) {
+    public void setReport(int resultSetSize, int size ) {
         StringBuilder sb = new StringBuilder();
-        sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
-                resultSetSize, latestUpdateString));
-        sb.append("\n");
-        sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, grantMapSize));
-        sb.append("\n\n");
-        sb.append("Fedora Activity");
-        sb.append("\n\n");
-        sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
-        sb.append("\n");
-        sb.append(format("%s Persons were created; %s Persons were updated", personsCreated, personsUpdated));
-        sb.append("\n");
-        sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
 
-        sb.append("\n");
-        this.report = sb.toString();
+        if (type.equals("grant")) {
+            sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
+                    resultSetSize, latestUpdateString));
+            sb.append("\n");
+            sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, size));
+            sb.append("\n\n");
+            sb.append("Fedora Activity");
+            sb.append("\n\n");
+            sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
+            sb.append("\n");
+            sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
+            sb.append("\n");
+            sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
+
+            sb.append("\n");
+            this.report = sb.toString();
+        } else if (type.equals("user")) {
+            sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
+                    resultSetSize, latestUpdateString));
+            sb.append("Fedora Activity");
+            sb.append("\n\n");
+            sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
+        }
     }
 
 
@@ -71,12 +85,12 @@ public class FedoraUpdateStatistics {
         this.fundersUpdated = fundersUpdated;
     }
 
-    public int getPersonsUpdated() {
-        return personsUpdated;
+    public int getUsersUpdated() {
+        return usersUpdated;
     }
 
-    public void setPersonsUpdated(int personsUpdated) {
-        this.personsUpdated = personsUpdated;
+    public void setUsersUpdated(int usersUpdated) {
+        this.usersUpdated = usersUpdated;
     }
 
     public int getGrantsCreated() {
@@ -95,12 +109,12 @@ public class FedoraUpdateStatistics {
         this.fundersCreated = fundersCreated;
     }
 
-    public int getPersonsCreated() {
-        return personsCreated;
+    public int getUsersCreated() {
+        return usersCreated;
     }
 
-    public void setPersonsCreated(int personsCreated) {
-        this.personsCreated = personsCreated;
+    public void setUsersCreated(int usersCreated) {
+        this.usersCreated = usersCreated;
     }
 
     public int getPisAdded() {
@@ -126,5 +140,14 @@ public class FedoraUpdateStatistics {
     public void setLatestUpdateString(String latestUpdateString) {
         this.latestUpdateString = latestUpdateString;
     }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
 }
 
