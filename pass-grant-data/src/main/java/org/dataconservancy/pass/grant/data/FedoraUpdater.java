@@ -227,23 +227,11 @@ public class FedoraUpdater {
         String middleName = rowMap.get(C_USER_MIDDLE_NAME);
         String lastName = rowMap.get(C_USER_LAST_NAME);
 
-        //set display name - we construct it here.
-        StringBuilder sb = new StringBuilder();
-        sb.append(lastName);
-        sb.append(", ");
-        sb.append(firstName);
-        if (middleName != null && middleName.length() > 0) {
-            sb.append(" ");
-            sb.append(middleName.charAt(0));
-        }
-        String displayName = sb.toString();
-
         User user = new User();
         user.setFirstName(firstName);
         user.setMiddleName(middleName);
-
         user.setLastName(lastName);
-        user.setDisplayName(displayName);
+        user.setDisplayName(String.join(" ", firstName, lastName));
         user.setEmail(rowMap.get(C_USER_EMAIL));
         user.setInstitutionalId(rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase());
         user.setLocalKey(rowMap.get(C_USER_LOCAL_KEY));
