@@ -155,9 +155,7 @@ public class FedoraUpdaterTest {
         Map<URI, Grant> grantMap = fedoraUpdater.getGrantUriMap();
         Assert.assertEquals(1, grantMap.size());
         Grant grant = grantMap.get(grantUri);
-        //Assert.assertEquals(piUri, grant.getPi());
         Assert.assertEquals(1, grant.getCoPis().size());
-        //Assert.assertEquals(coPiUri, grant.getCoPis().get(0));
         Assert.assertEquals(2, fedoraUpdater.getFunderMap().size());
         Assert.assertEquals(grant.getDirectFunder(), fedoraUpdater.getFunderMap().get(directFunderId));
         Assert.assertEquals(grant.getPrimaryFunder(), fedoraUpdater.getFunderMap().get(primaryFunderId));
