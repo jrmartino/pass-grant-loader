@@ -153,7 +153,7 @@
         <dependency>
             <groupId>org.dataconservancy.pass</groupId>
             <artifactId>pass-grant-data</artifactId>
-            <version>${parent.version}</version>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
