@@ -16,7 +16,7 @@
 
 package org.dataconservancy.pass.grant.data;
 
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 public class FedoraUpdaterTest {
 
     @Mock
-    private FedoraPassClient fedoraClientMock;
+    private PassClient passClientMock;
 
     private URI grantUri;
 
@@ -59,9 +59,9 @@ public class FedoraUpdaterTest {
         URI funderUri1 = URI.create("funderuri1");
         URI funderUri2 = URI.create("funderur2");
 
-        when(fedoraClientMock.createResource(any(Grant.class))).thenReturn(grantUri);
-        when(fedoraClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
-        when(fedoraClientMock.createResource(any(User.class))).thenReturn(userUri1, useruri2);
+        when(passClientMock.createResource(any(Grant.class))).thenReturn(grantUri);
+        when(passClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
+        when(passClientMock.createResource(any(User.class))).thenReturn(userUri1, useruri2);
     }
     /**
      * Test static timestamp utility method to verify it returns the later of two supplied timestamps
@@ -149,7 +149,7 @@ public class FedoraUpdaterTest {
 
         resultSet.add(rowMap);
 
-        FedoraUpdater fedoraUpdater = new FedoraUpdater(fedoraClientMock);
+        FedoraUpdater fedoraUpdater = new FedoraUpdater(passClientMock);
         fedoraUpdater.updateFedora(resultSet, "grant");
 
         Map<URI, Grant> grantMap = fedoraUpdater.getGrantUriMap();

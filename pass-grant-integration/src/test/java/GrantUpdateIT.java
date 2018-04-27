@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.FedoraUpdateStatistics;
 import org.dataconservancy.pass.grant.data.FedoraUpdater;
 import org.dataconservancy.pass.grant.data.PassEntityUtil;
@@ -72,7 +73,8 @@ public class GrantUpdateIT {
     @Test
     public void depositGrantsIT() {
 
-        FedoraUpdater fedoraUpdater = new FedoraUpdater(new FedoraPassClient());
+        PassClient passClient = PassClientFactory.getPassClient();
+        FedoraUpdater fedoraUpdater = new FedoraUpdater(passClient);
         fedoraUpdater.updateFedora(resultSet, "grant");
         FedoraUpdateStatistics statistics = fedoraUpdater.getStatistics();
 
@@ -90,7 +92,7 @@ public class GrantUpdateIT {
 
         for (URI grantUri : fedoraUpdater.getGrantUriMap().keySet()) {
             Grant grant = fedoraUpdater.getGrantUriMap().get(grantUri);
-            Grant fedoraGrant = fedoraUpdater.getFedoraClient().readResource(grantUri, Grant.class);
+            Grant fedoraGrant = fedoraUpdater.getPassClient().readResource(grantUri, Grant.class);
             Assert.assertTrue(PassEntityUtil.coeusGrantsEqual(grant, fedoraGrant));
         }
 
