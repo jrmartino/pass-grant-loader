@@ -63,13 +63,21 @@ public class CoeusConnector {
         }
     }
 
+    public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException {
+        if (mode.equals("user")) {
+            return retrieveUserUpdates(queryString);
+        } else {
+            return retrieveGrantUpdates(queryString);
+        }
+    }
+
     /**
      * This method returns a {@code ResultSet} for a query for a specific set of fields in several views in COEUS.
      *
      * @param queryString the query string to the COEUS database needed to update the information
      * @return the {@code ResultSet} from the query
      */
-    public Set<Map<String, String>> retrieveCoeusUpdates(String queryString) throws ClassNotFoundException, SQLException {
+    private Set<Map<String, String>> retrieveGrantUpdates(String queryString) throws ClassNotFoundException, SQLException {
 
         Set<Map<String, String>> mapSet = new HashSet<>();
 
@@ -85,20 +93,20 @@ public class CoeusConnector {
 
                 rowMap.put(C_GRANT_AWARD_NUMBER, rs.getString(C_GRANT_AWARD_NUMBER));
                 rowMap.put(C_GRANT_AWARD_STATUS, rs.getString(C_GRANT_AWARD_STATUS));
-                rowMap.put(C_GRANT_LOCAL_AWARD_ID, rs.getString(C_GRANT_LOCAL_AWARD_ID));
+                rowMap.put(C_GRANT_LOCAL_KEY, rs.getString(C_GRANT_LOCAL_KEY));
                 rowMap.put(C_GRANT_PROJECT_NAME, rs.getString(C_GRANT_PROJECT_NAME));
                 rowMap.put(C_GRANT_AWARD_DATE, rs.getString(C_GRANT_AWARD_DATE));
                 rowMap.put(C_GRANT_START_DATE, rs.getString(C_GRANT_START_DATE));
                 rowMap.put(C_GRANT_END_DATE, rs.getString(C_GRANT_END_DATE));
-                rowMap.put(C_DIRECT_FUNDER_LOCAL_ID, rs.getString(C_DIRECT_FUNDER_LOCAL_ID));
+                rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, rs.getString(C_DIRECT_FUNDER_LOCAL_KEY));
                 rowMap.put(C_DIRECT_FUNDER_NAME, rs.getString(C_DIRECT_FUNDER_NAME));
-                rowMap.put(C_PRIMARY_FUNDER_LOCAL_ID, rs.getString(C_PRIMARY_FUNDER_LOCAL_ID));
+                rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
                 rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
-                rowMap.put(C_PERSON_FIRST_NAME, rs.getString(C_PERSON_FIRST_NAME));
-                rowMap.put(C_PERSON_MIDDLE_NAME, rs.getString(C_PERSON_MIDDLE_NAME));
-                rowMap.put(C_PERSON_LAST_NAME, rs.getString(C_PERSON_LAST_NAME));
-                rowMap.put(C_PERSON_EMAIL, rs.getString(C_PERSON_EMAIL));
-                rowMap.put(C_PERSON_INSTITUTIONAL_ID, rs.getString(C_PERSON_INSTITUTIONAL_ID));
+                rowMap.put(C_USER_FIRST_NAME, rs.getString(C_USER_FIRST_NAME));
+                rowMap.put(C_USER_MIDDLE_NAME, rs.getString(C_USER_MIDDLE_NAME));
+                rowMap.put(C_USER_LAST_NAME, rs.getString(C_USER_LAST_NAME));
+                rowMap.put(C_USER_EMAIL, rs.getString(C_USER_EMAIL));
+                rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
                 rowMap.put(C_ABBREVIATED_ROLE, rs.getString(C_ABBREVIATED_ROLE));
                 LOG.debug("Record processed: " + rowMap.toString());
@@ -107,6 +115,42 @@ public class CoeusConnector {
         }
         LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
         return mapSet;
+    }
+
+    private Set<Map<String, String>> retrieveUserUpdates(String queryString) throws ClassNotFoundException, SQLException {
+
+        Set<Map<String, String>> mapSet = new HashSet<>();
+
+        Class.forName("oracle.jdbc.driver.OracleDriver");
+
+        try (
+                Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(queryString)
+        ) {
+            while (rs.next()) {
+                Map<String, String> rowMap = new HashMap<>();
+                rowMap.put(C_USER_FIRST_NAME, rs.getString(C_USER_FIRST_NAME));
+                rowMap.put(C_USER_MIDDLE_NAME, rs.getString(C_USER_MIDDLE_NAME));
+                rowMap.put(C_USER_LAST_NAME, rs.getString(C_USER_LAST_NAME));
+                rowMap.put(C_USER_EMAIL, rs.getString(C_USER_EMAIL));
+                rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
+                rowMap.put(C_USER_LOCAL_KEY, rs.getString(C_USER_LOCAL_KEY));
+                rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
+                LOG.debug("Record processed: " + rowMap.toString());
+                mapSet.add(rowMap);
+            }
+        }
+        LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
+        return mapSet;
+    }
+
+    public String buildQueryString(String startDate, String mode) {
+        if (mode.equals("user")) {
+            return buildUserQueryString(startDate);
+        } else {
+            return buildGrantQueryString(startDate);
+        }
     }
 
     /**
@@ -129,30 +173,31 @@ public class CoeusConnector {
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    public String buildQueryString(String startDate){
+    public String buildGrantQueryString(String startDate){
 
         String[] viewFields = {
-                "A." + C_GRANT_AWARD_NUMBER,
-                "A." + C_GRANT_AWARD_STATUS,
-                "A." + C_GRANT_LOCAL_AWARD_ID,
-                "A." + C_GRANT_PROJECT_NAME,
-                "A." + C_GRANT_AWARD_DATE,
-                "A." + C_GRANT_START_DATE,
-                "A." + C_GRANT_END_DATE,
-                "A." + C_DIRECT_FUNDER_NAME,
-                "A." + C_DIRECT_FUNDER_LOCAL_ID, //"SPOSNOR_CODE"
-                "A." + C_UPDATE_TIMESTAMP,
+            "A." + C_GRANT_AWARD_NUMBER,
+            "A." + C_GRANT_AWARD_STATUS,
+            "A." + C_GRANT_LOCAL_KEY,
+            "A." + C_GRANT_PROJECT_NAME,
+            "A." + C_GRANT_AWARD_DATE,
+            "A." + C_GRANT_START_DATE,
+            "A." + C_GRANT_END_DATE,
+            "A." + C_DIRECT_FUNDER_NAME,
+            "A." + C_DIRECT_FUNDER_LOCAL_KEY, //"SPOSNOR_CODE"
+            "A." + C_UPDATE_TIMESTAMP,
 
-                "B." + C_ABBREVIATED_ROLE,
+            "B." + C_ABBREVIATED_ROLE,
 
-                "C." + C_PERSON_FIRST_NAME,
-                "C." + C_PERSON_MIDDLE_NAME,
-                "C." + C_PERSON_LAST_NAME,
-                "C." + C_PERSON_EMAIL,
-                "C." + C_PERSON_INSTITUTIONAL_ID,
+            "C." + C_USER_FIRST_NAME,
+            "C." + C_USER_MIDDLE_NAME,
+            "C." + C_USER_LAST_NAME,
+            "C." + C_USER_EMAIL,
+            "C." + C_USER_INSTITUTIONAL_ID,
+            "C." + C_USER_LOCAL_KEY,
 
-                "D." + C_PRIMARY_FUNDER_NAME,
-                "D." + C_PRIMARY_FUNDER_LOCAL_ID };
+            "D." + C_PRIMARY_FUNDER_NAME,
+            "D." + C_PRIMARY_FUNDER_LOCAL_KEY };
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -165,7 +210,7 @@ public class CoeusConnector {
         sb.append(" ON A.UPDATE_TIMESTAMP = LATEST.MAX_UPDATE_TIMESTAMP");
         sb.append(" AND A.GRANT_NUMBER = LATEST.GRANT_NUMBER");
         sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL");
-        sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.JHED_ID = C.JHED_ID");
+        sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.EMPLOYEE_ID = C.EMPLOYEE_ID");
         sb.append(" LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE");
         sb.append(" WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
         sb.append(startDate);
@@ -174,6 +219,31 @@ public class CoeusConnector {
         sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C') ");
         sb.append("AND A.GRANT_NUMBER IS NOT NULL");
 
+
+        String queryString = sb.toString();
+
+        LOG.debug("Query string is: " + queryString);
+        return queryString;
+    }
+
+    public String buildUserQueryString(String startDate) {
+        String viewFields [] = {
+            C_USER_FIRST_NAME,
+            C_USER_MIDDLE_NAME,
+            C_USER_LAST_NAME,
+            C_USER_EMAIL,
+            C_USER_INSTITUTIONAL_ID,
+            C_USER_LOCAL_KEY,
+            C_UPDATE_TIMESTAMP };
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(String.join(", ",viewFields));
+        sb.append(" FROM");
+        sb.append(" COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL");
+        sb.append(" WHERE UPDATE_TIMESTAMP > TIMESTAMP '");
+        sb.append(startDate);
+        sb.append("'");
 
         String queryString = sb.toString();
 

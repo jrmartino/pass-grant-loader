@@ -16,7 +16,7 @@
 
 import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.grant.data.FedoraUpdateStatistics;
-import org.dataconservancy.pass.grant.data.GrantUpdater;
+import org.dataconservancy.pass.grant.data.FedoraUpdater;
 import org.dataconservancy.pass.grant.data.PassEntityUtil;
 import org.dataconservancy.pass.model.Grant;
 
@@ -44,22 +44,23 @@ public class GrantUpdateIT {
             Map<String, String> rowMap = new HashMap<>();
             rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + Integer.toString(i));
             rowMap.put(C_GRANT_AWARD_STATUS, "Active");
-            rowMap.put(C_GRANT_LOCAL_AWARD_ID, C_GRANT_LOCAL_AWARD_ID + Integer.toString(i));
+            rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + Integer.toString(i));
             rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + Integer.toString(i));
             rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
             rowMap.put(C_GRANT_START_DATE, "01/01/2001");
             rowMap.put(C_GRANT_END_DATE, "01/01/2002");
 
-            rowMap.put(C_DIRECT_FUNDER_LOCAL_ID, C_DIRECT_FUNDER_LOCAL_ID + Integer.toString(i));
+            rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
             rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + Integer.toString(i));
-            rowMap.put(C_PRIMARY_FUNDER_LOCAL_ID, C_PRIMARY_FUNDER_LOCAL_ID + Integer.toString(i));
+            rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
             rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + Integer.toString(i));
 
-            rowMap.put(C_PERSON_FIRST_NAME, C_PERSON_FIRST_NAME + Integer.toString(i));
-            rowMap.put(C_PERSON_MIDDLE_NAME, C_PERSON_MIDDLE_NAME + Integer.toString(i));
-            rowMap.put(C_PERSON_LAST_NAME, C_PERSON_LAST_NAME + Integer.toString(i));
-            rowMap.put(C_PERSON_EMAIL, C_PERSON_EMAIL + Integer.toString(i));
-            rowMap.put(C_PERSON_INSTITUTIONAL_ID, C_PERSON_INSTITUTIONAL_ID + Integer.toString(i));
+            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
+            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
+            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
+            rowMap.put(C_USER_LOCAL_KEY, C_USER_LOCAL_KEY + Integer.toString(i));
 
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(i) + ":00:00.0");
             rowMap.put(C_ABBREVIATED_ROLE, (i%2==0?"P":"C"));
@@ -71,23 +72,25 @@ public class GrantUpdateIT {
     @Test
     public void depositGrantsIT() {
 
-        GrantUpdater grantUpdater = new GrantUpdater(new FedoraPassClient());
-        grantUpdater.updateGrants(resultSet);
-        FedoraUpdateStatistics statistics = grantUpdater.getStatistics();
+        FedoraUpdater fedoraUpdater = new FedoraUpdater(new FedoraPassClient());
+        fedoraUpdater.updateFedora(resultSet, "grant");
+        FedoraUpdateStatistics statistics = fedoraUpdater.getStatistics();
 
-        Assert.assertEquals(statistics.getPisAdded(),5);
-        Assert.assertEquals(statistics.getCoPisAdded(), 5);
-        Assert.assertEquals(statistics.getFundersCreated(), 20);
-        Assert.assertEquals(statistics.getFundersUpdated(),0);
-        Assert.assertEquals(statistics.getGrantsCreated(),10 );
-        Assert.assertEquals(statistics.getGrantsUpdated(), 0);
-        Assert.assertEquals(statistics.getLatestUpdateString(),"2018-01-01 09:00:00.0");
-        Assert.assertEquals(statistics.getPersonsCreated(),10);
-        Assert.assertEquals(statistics.getPersonsUpdated(),0);
+        Assert.assertEquals(5,statistics.getPisAdded());
+        Assert.assertEquals(5,statistics.getCoPisAdded());
+        Assert.assertEquals(20, statistics.getFundersCreated());
+        Assert.assertEquals(0, statistics.getFundersUpdated());
+        Assert.assertEquals(10, statistics.getGrantsCreated());
+        Assert.assertEquals(0,statistics.getGrantsUpdated());
+        Assert.assertEquals("2018-01-01 09:00:00.0", statistics.getLatestUpdateString());
+        Assert.assertEquals(10, statistics.getUsersCreated());
+        Assert.assertEquals(0, statistics.getUsersUpdated());
 
-        for (URI grantUri : grantUpdater.getGrantUriMap().keySet()) {
-            Grant grant = grantUpdater.getGrantUriMap().get(grantUri);
-            Grant fedoraGrant = grantUpdater.getFedoraClient().readResource(grantUri, Grant.class);
+        Assert.assertEquals(10, fedoraUpdater.getGrantUriMap().size());
+
+        for (URI grantUri : fedoraUpdater.getGrantUriMap().keySet()) {
+            Grant grant = fedoraUpdater.getGrantUriMap().get(grantUri);
+            Grant fedoraGrant = fedoraUpdater.getFedoraClient().readResource(grantUri, Grant.class);
             Assert.assertTrue(PassEntityUtil.coeusGrantsEqual(grant, fedoraGrant));
         }
 

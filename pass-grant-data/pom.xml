@@ -31,12 +31,10 @@
         <dependency>
             <groupId>org.dataconservancy.pass</groupId>
             <artifactId>pass-fedora-client</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.dataconservancy.pass</groupId>
             <artifactId>pass-model</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.oracle</groupId>

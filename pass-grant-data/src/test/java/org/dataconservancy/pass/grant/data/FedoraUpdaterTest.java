@@ -19,7 +19,7 @@ package org.dataconservancy.pass.grant.data;
 import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
-import org.dataconservancy.pass.model.Person;
+import org.dataconservancy.pass.model.User;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
-import static org.dataconservancy.pass.grant.data.GrantUpdater.returnLaterUpdate;
+import static org.dataconservancy.pass.grant.data.FedoraUpdater.returnLaterUpdate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -44,29 +44,24 @@ import static org.mockito.Mockito.when;
  * @author jrm@jhu.edu
  */
 @RunWith(MockitoJUnitRunner.class)
-public class GrantUpdaterTest {
+public class FedoraUpdaterTest {
 
     @Mock
     private FedoraPassClient fedoraClientMock;
 
     private URI grantUri;
-    private URI piUri;
-    private URI coPiUri;
-    private URI directFunderUri;
-    private URI primaryFunderUri;
 
-        
     @Before
     public void setup() {
         grantUri = URI.create("grantUri");
-        piUri = URI.create("piUri");
-        coPiUri = URI.create("coPiUri");
-        directFunderUri = URI.create("directFunderUri");
-        primaryFunderUri = URI.create("primaryFunderUri");
+        URI userUri1 = URI.create("piUri");
+        URI useruri2 = URI.create("coPiUri");
+        URI funderUri1 = URI.create("funderuri1");
+        URI funderUri2 = URI.create("funderur2");
 
         when(fedoraClientMock.createResource(any(Grant.class))).thenReturn(grantUri);
-        when(fedoraClientMock.createResource(any(Funder.class))).thenReturn(directFunderUri, primaryFunderUri);
-        when(fedoraClientMock.createResource(any(Person.class))).thenReturn(piUri, coPiUri);
+        when(fedoraClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
+        when(fedoraClientMock.createResource(any(User.class))).thenReturn(userUri1, useruri2);
     }
     /**
      * Test static timestamp utility method to verify it returns the later of two supplied timestamps
@@ -92,7 +87,7 @@ public class GrantUpdaterTest {
 
         String awardNumber = "12345678";
         String awardStatus = "Active";
-        String localAwardId = "Active";
+        String localKey = "8675309";
         String projectName =  "Moo Project";
         String awardDate = "01/01/2000";
         String startDate = "01/01/2001";
@@ -105,22 +100,23 @@ public class GrantUpdaterTest {
         Map<String, String> rowMap = new HashMap<>();
         rowMap.put(C_GRANT_AWARD_NUMBER, awardNumber);
         rowMap.put(C_GRANT_AWARD_STATUS, awardStatus);
-        rowMap.put(C_GRANT_LOCAL_AWARD_ID, localAwardId);
+        rowMap.put(C_GRANT_LOCAL_KEY, localKey);
         rowMap.put(C_GRANT_PROJECT_NAME, projectName);
         rowMap.put(C_GRANT_AWARD_DATE, awardDate);
         rowMap.put(C_GRANT_START_DATE, startDate);
         rowMap.put(C_GRANT_END_DATE,endDate);
 
-        rowMap.put(C_DIRECT_FUNDER_LOCAL_ID, directFunderId);
+        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, directFunderId);
         rowMap.put(C_DIRECT_FUNDER_NAME, directFunderName);
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_ID, primaryFunderId);
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, primaryFunderId);
         rowMap.put(C_PRIMARY_FUNDER_NAME, primaryFunderName);
 
-        rowMap.put(C_PERSON_FIRST_NAME, "Amanda");
-        rowMap.put(C_PERSON_MIDDLE_NAME, "Beatrice");
-        rowMap.put(C_PERSON_LAST_NAME, "Reckondwith");
-        rowMap.put(C_PERSON_EMAIL, "areckon3@jhu.edu");
-        rowMap.put(C_PERSON_INSTITUTIONAL_ID, "ARECKON3");
+        rowMap.put(C_USER_FIRST_NAME, "Amanda");
+        rowMap.put(C_USER_MIDDLE_NAME, "Beatrice");
+        rowMap.put(C_USER_LAST_NAME, "Reckondwith");
+        rowMap.put(C_USER_EMAIL, "areckon3@jhu.edu");
+        rowMap.put(C_USER_INSTITUTIONAL_ID, "ARECKON3");
+        rowMap.put(C_USER_LOCAL_KEY, "0000333");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "P");
@@ -130,48 +126,45 @@ public class GrantUpdaterTest {
         rowMap = new HashMap<>();
         rowMap.put(C_GRANT_AWARD_NUMBER, awardNumber);
         rowMap.put(C_GRANT_AWARD_STATUS, awardStatus);
-        rowMap.put(C_GRANT_LOCAL_AWARD_ID, localAwardId);
+        rowMap.put(C_GRANT_LOCAL_KEY, localKey);
         rowMap.put(C_GRANT_PROJECT_NAME, projectName);
         rowMap.put(C_GRANT_AWARD_DATE, awardDate);
         rowMap.put(C_GRANT_START_DATE, startDate);
         rowMap.put(C_GRANT_END_DATE, endDate);
 
-        rowMap.put(C_DIRECT_FUNDER_LOCAL_ID, directFunderId);
+        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, directFunderId);
         rowMap.put(C_DIRECT_FUNDER_NAME, directFunderName);
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_ID, primaryFunderId);
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, primaryFunderId);
         rowMap.put(C_PRIMARY_FUNDER_NAME, primaryFunderName);
 
-        rowMap.put(C_PERSON_FIRST_NAME, "Marsha");
-        rowMap.put(C_PERSON_MIDDLE_NAME, null);
-        rowMap.put(C_PERSON_LAST_NAME, "Lartz");
-        rowMap.put(C_PERSON_EMAIL, "alartz3@jhu.edu");
-        rowMap.put(C_PERSON_INSTITUTIONAL_ID, "MLARTZ5");
+        rowMap.put(C_USER_FIRST_NAME, "Marsha");
+        rowMap.put(C_USER_MIDDLE_NAME, null);
+        rowMap.put(C_USER_LAST_NAME, "Lartz");
+        rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
+        rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
+        rowMap.put(C_USER_LOCAL_KEY,"0000222");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "C");
 
         resultSet.add(rowMap);
 
-        GrantUpdater grantUpdater = new GrantUpdater(fedoraClientMock);
-        grantUpdater.updateGrants(resultSet);
+        FedoraUpdater fedoraUpdater = new FedoraUpdater(fedoraClientMock);
+        fedoraUpdater.updateFedora(resultSet, "grant");
 
-        Map<URI, Grant> grantMap = grantUpdater.getGrantUriMap();
+        Map<URI, Grant> grantMap = fedoraUpdater.getGrantUriMap();
         Assert.assertEquals(1, grantMap.size());
         Grant grant = grantMap.get(grantUri);
-        Assert.assertEquals(piUri, grant.getPi());
         Assert.assertEquals(1, grant.getCoPis().size());
-        Assert.assertEquals(coPiUri, grant.getCoPis().get(0));
-        Assert.assertEquals(2, grantUpdater.getFunderMap().size());
-        Assert.assertEquals(directFunderUri, grantUpdater.getFunderMap().get(directFunderId));
-        Assert.assertEquals(primaryFunderUri, grantUpdater.getFunderMap().get(primaryFunderId));
-        Assert.assertEquals(grant.getDirectFunder(),directFunderUri);
-        Assert.assertEquals(grant.getPrimaryFunder(),primaryFunderUri);
-        Assert.assertEquals(piUri, grantUpdater.getPersonMap().get("areckon3"));//store as lower case
-        Assert.assertEquals(coPiUri, grantUpdater.getPersonMap().get("mlartz5"));//store as lower case
+        Assert.assertEquals(2, fedoraUpdater.getFunderMap().size());
+        Assert.assertEquals(grant.getDirectFunder(), fedoraUpdater.getFunderMap().get(directFunderId));
+        Assert.assertEquals(grant.getPrimaryFunder(), fedoraUpdater.getFunderMap().get(primaryFunderId));
+        Assert.assertEquals(grant.getPi(), fedoraUpdater.getUserMap().get("0000333"));
+        Assert.assertEquals(grant.getCoPis().get(0), fedoraUpdater.getUserMap().get("0000222"));
 
         Assert.assertEquals(awardNumber, grant.getAwardNumber());
         Assert.assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());
-        Assert.assertEquals(localAwardId, grant.getLocalAwardId());
+        Assert.assertEquals(localKey, grant.getLocalKey());
         Assert.assertEquals(DateTimeUtil.createJodaDateTime(awardDate), grant.getAwardDate());
         Assert.assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
         Assert.assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());

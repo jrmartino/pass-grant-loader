@@ -32,7 +32,7 @@ import java.util.Set;
 
 import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
-import org.dataconservancy.pass.grant.data.GrantUpdater;
+import org.dataconservancy.pass.grant.data.FedoraUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +41,10 @@ import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
- * This class does the orchestration for the pulling of COEUS grant data. The basic steps are to read in all of the
+ * This class does the orchestration for the pulling of COEUS grant and user data. The basic steps are to read in all of the
  * configuration files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all
- * of the grants updated since the timestamp at the end of the updated timestamps file; execute the query against this
- * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s in our java
+ * of the grants or users updated since the timestamp at the end of the updated timestamps file; execute the query against this
+ * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s or {@code User}s in our java
  * model; and finally to push this data into our Fedora instance via the java Fedora client.
  *
  * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated
@@ -55,7 +55,6 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
 class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
 
-    private static String updateTimestampsFileName = "update_timestamps";
 
     private EmailService emailService;
 
@@ -63,16 +62,21 @@ class CoeusGrantLoaderApp {
     private String startDate;
     private File updateTimestampsFile;
     private boolean email;
+    private String mode;
+
+    private String updateTimestampsFileName;
 
     /**
      * Constructor for this class
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
      * @param email - a boolean which indicates whether or not to send email notification of the result of the current run
      */
-    CoeusGrantLoaderApp(String startDate, boolean email) {
+    CoeusGrantLoaderApp(String startDate, boolean email, String mode) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
         this.email = email;
+        this.mode = mode;
+        this.updateTimestampsFileName = mode + "_update_timestamps";
         }
 
     /**
@@ -94,6 +98,11 @@ class CoeusGrantLoaderApp {
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
         Properties mailProperties;
+
+        //check that we have a good value for mode
+        if (!mode.equals("grant") && !mode.equals("user")) {
+            throw processException(format(ERR_MODE_NOT_VALID,mode), null);
+        }
 
         //first check that we have the required files
         if (!appHome.exists()) {
@@ -157,14 +166,14 @@ class CoeusGrantLoaderApp {
 
         //now do things;
         CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
-        String queryString = coeusConnector.buildQueryString(startDate);
+        String queryString = coeusConnector.buildQueryString(startDate, mode);
         Set<Map<String,String>> resultsSet;
-        GrantUpdater grantUpdater;
+        FedoraUpdater fedoraUpdater;
         FedoraPassClient fedoraPassClient = new FedoraPassClient();
         try {
-            resultsSet = coeusConnector.retrieveCoeusUpdates(queryString);
-            grantUpdater = new GrantUpdater(fedoraPassClient);
-            grantUpdater.updateGrants(resultsSet);
+            resultsSet = coeusConnector.retrieveUpdates(queryString, mode);
+            fedoraUpdater = new FedoraUpdater(fedoraPassClient);
+            fedoraUpdater.updateFedora(resultsSet, mode);
 
         } catch (ClassNotFoundException e) {
             throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
@@ -176,13 +185,13 @@ class CoeusGrantLoaderApp {
 
         //apparently the hard part has succeeded, let's write the timestamp to our update timestamps file
         try{
-            appendLineToFile(updateTimestampsFile,  grantUpdater.getLatestUpdate());
+            appendLineToFile(updateTimestampsFile,  fedoraUpdater.getLatestUpdate());
         } catch (IOException e) {
-            throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP,  grantUpdater.getLatestUpdate()), null);
+            throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP,  fedoraUpdater.getLatestUpdate()), null);
         }
 
         //now everything succeeded - log this result and send email if enabled
-        String message =  grantUpdater.getReport();
+        String message =  fedoraUpdater.getReport();
         LOG.info(message);
         System.out.println(message);
         if(email) {

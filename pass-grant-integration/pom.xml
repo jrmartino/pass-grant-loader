@@ -26,7 +26,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>pass-grant-integration</artifactId>
-
     <profiles>
         <profile>
             <id>standard</id>
@@ -35,23 +34,20 @@
                 <FCREPO_JMX_PORT>1099</FCREPO_JMX_PORT>
             </properties>
         </profile>
+        <!-- Add this back in to use the local context at src/test/resources/docker/mnt/context.jsonld
         <profile>
-            <id>local-context</id>
-            <activation>
-
-                <!-- TODO: This is a workaround until the online context is updated,
-                  published, and dockerized -->
-                <property>
-                    <name>!online</name>
-                </property>
-            </activation>
-            <properties>
-                <!-- Uses the local context at src/test/resources/docker/mnt/context.jsonld -->
-                <COMPACTION_PRELOAD_FILE_PASS_STATIC>/mnt/context.jsonld</COMPACTION_PRELOAD_FILE_PASS_STATIC>
-            </properties>
+          <id>local-context</id>
+          <activation>
+            <property>
+              <name>!online</name>
+            </property>
+          </activation>
+          <properties>
+            <COMPACTION_PRELOAD_FILE_PASS_STATIC>/mnt/context.jsonld</COMPACTION_PRELOAD_FILE_PASS_STATIC>
+          </properties>
         </profile>
+        -->
     </profiles>
-
     <properties>
         <FCREPO_HOST>localhost</FCREPO_HOST>
     </properties>
@@ -153,22 +149,16 @@
     </build>
 
     <dependencies>
-     <!--   <dependency>
-            <groupId>org.dataconservancy.pass</groupId>
-            <artifactId>pass-model</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
--->
+
         <dependency>
             <groupId>org.dataconservancy.pass</groupId>
-            <artifactId>pass-model-nihms</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <artifactId>pass-grant-data</artifactId>
+            <version>${project.parent.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.dataconservancy.pass</groupId>
             <artifactId>pass-fedora-client</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -199,11 +189,6 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.dataconservancy.pass</groupId>
-            <artifactId>pass-grant-data</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
     </dependencies>
