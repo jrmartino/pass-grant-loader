@@ -16,10 +16,10 @@
 
 package org.dataconservancy.pass.grant.data;
 
+import org.dataconservancy.pass.client.PassClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
@@ -46,7 +46,7 @@ public class FedoraUpdater {
     private static Logger LOG = LoggerFactory.getLogger(FedoraUpdater.class);
     private String latestUpdateString = "";
 
-    private FedoraPassClient fedoraClient;
+    private PassClient passClient;
     private FedoraUpdateStatistics statistics = new FedoraUpdateStatistics();
     private int grantsUpdated=0;
     private int fundersUpdated=0;
@@ -68,8 +68,8 @@ public class FedoraUpdater {
     private Map<String, URI> funderMap = new HashMap<>();
     private Map<String, URI> userMap = new HashMap<>();
 
-    public FedoraUpdater(FedoraPassClient fedoraPassClient) {
-        this.fedoraClient = fedoraPassClient;
+    public FedoraUpdater(PassClient passClient) {
+        this.passClient = passClient;
     }
 
     public void updateFedora(Set<Map<String, String>> results, String mode) {
@@ -248,17 +248,17 @@ public class FedoraUpdater {
      */
     private URI updateFunderInFedora(Funder updatedFunder) {
         Funder storedFunder;
-        URI fedoraFunderURI = fedoraClient.findByAttribute(Funder.class, "localKey", updatedFunder.getLocalKey());
+        URI fedoraFunderURI = passClient.findByAttribute(Funder.class, "localKey", updatedFunder.getLocalKey());
         if (fedoraFunderURI != null ) {
-            storedFunder = fedoraClient.readResource(fedoraFunderURI, Funder.class);
+            storedFunder = passClient.readResource(fedoraFunderURI, Funder.class);
             if (!PassEntityUtil.coeusFundersEqual(updatedFunder, storedFunder)) {
                 storedFunder = PassEntityUtil.updateFunder(updatedFunder, storedFunder);
-                fedoraClient.updateResource(storedFunder);
+                passClient.updateResource(storedFunder);
                 fundersUpdated++;
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Funder for this URI - this one is new to Fedora
-            fedoraFunderURI = fedoraClient.createResource(updatedFunder);
+            fedoraFunderURI = passClient.createResource(updatedFunder);
             fundersCreated++;
         }
         return fedoraFunderURI;
@@ -275,23 +275,23 @@ public class FedoraUpdater {
         User storedUser;
         //we may have Users in Fedora who are not in the COEUS system yet, and so we haven't had access to their employee id.
         // we fall back to jhed id for finding these users - update them here when they appear in COEUS
-        URI fedoraUserURI = fedoraClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey()) != null?
-                fedoraClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey()):
-                fedoraClient.findByAttribute(User.class, "institutionalId", updatedUser.getInstitutionalId());
+        URI fedoraUserURI = passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey()) != null?
+                passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey()):
+                passClient.findByAttribute(User.class, "institutionalId", updatedUser.getInstitutionalId());
         if (fedoraUserURI != null ) {
-            storedUser = fedoraClient.readResource(fedoraUserURI, User.class);
+            storedUser = passClient.readResource(fedoraUserURI, User.class);
             if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)) {
                 storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
                     storedUser.getRoles().add(User.Role.SUBMITTER);
                 }
-                fedoraClient.updateResource(storedUser);
+                passClient.updateResource(storedUser);
                 usersUpdated++;
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Fedora
-            fedoraUserURI = fedoraClient.createResource(updatedUser);
+            fedoraUserURI = passClient.createResource(updatedUser);
             usersCreated++;
         }
         return fedoraUserURI;
@@ -305,17 +305,17 @@ public class FedoraUpdater {
      */
     private URI updateGrantInFedora(Grant updatedGrant) {
         Grant storedGrant;
-        URI fedoraGrantURI = fedoraClient.findByAttribute(Grant.class, "localKey", updatedGrant.getLocalKey());
+        URI fedoraGrantURI = passClient.findByAttribute(Grant.class, "localKey", updatedGrant.getLocalKey());
         if (fedoraGrantURI != null ) {
-            storedGrant = fedoraClient.readResource(fedoraGrantURI, Grant.class);
+            storedGrant = passClient.readResource(fedoraGrantURI, Grant.class);
             if (!PassEntityUtil.coeusGrantsEqual(updatedGrant, storedGrant)) {
                 storedGrant = PassEntityUtil.updateGrant(updatedGrant, storedGrant);
-                fedoraClient.updateResource(storedGrant);
+                passClient.updateResource(storedGrant);
                 grantsUpdated++;
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Fedora
-            fedoraGrantURI = fedoraClient.createResource(updatedGrant);
+            fedoraGrantURI = passClient.createResource(updatedGrant);
             grantsCreated++;
         }
         return fedoraGrantURI;
@@ -364,8 +364,8 @@ public class FedoraUpdater {
     }
 
     //this is used by an integration test
-    public FedoraPassClient getFedoraClient() {
-        return fedoraClient;
+    public PassClient getPassClient() {
+        return passClient;
     }
 
 

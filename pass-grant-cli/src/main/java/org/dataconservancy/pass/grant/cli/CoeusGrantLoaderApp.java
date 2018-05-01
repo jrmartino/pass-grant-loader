@@ -30,7 +30,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.dataconservancy.pass.client.fedora.FedoraPassClient;
+import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.FedoraUpdater;
 import org.slf4j.Logger;
@@ -169,10 +170,11 @@ class CoeusGrantLoaderApp {
         String queryString = coeusConnector.buildQueryString(startDate, mode);
         Set<Map<String,String>> resultsSet;
         FedoraUpdater fedoraUpdater;
-        FedoraPassClient fedoraPassClient = new FedoraPassClient();
+        PassClient passClient = PassClientFactory.getPassClient();
+
         try {
             resultsSet = coeusConnector.retrieveUpdates(queryString, mode);
-            fedoraUpdater = new FedoraUpdater(fedoraPassClient);
+            fedoraUpdater = new FedoraUpdater(passClient);
             fedoraUpdater.updateFedora(resultsSet, mode);
 
         } catch (ClassNotFoundException e) {
