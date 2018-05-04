@@ -138,8 +138,7 @@ class CoeusGrantLoaderApp {
             }
         }
 
-        //create connection properties - check for a user-space defined clear text file first
-        //if not found, use the base64 encoded file in the jar
+        //create connection properties - check for a user-space defined clear text file
         if (!connectionPropertiesFile.exists()) {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
         }

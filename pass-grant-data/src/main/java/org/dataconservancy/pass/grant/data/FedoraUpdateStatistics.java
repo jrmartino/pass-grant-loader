@@ -68,69 +68,81 @@ public class FedoraUpdateStatistics {
         }
     }
 
+    public void reset() {
+        grantsUpdated = 0;
+        fundersUpdated = 0;
+        usersUpdated = 0;
+        grantsCreated = 0;
+        fundersCreated = 0;
+        usersCreated = 0;
+        pisAdded = 0;
+        coPisAdded = 0;
+        latestUpdateString = "";
+        report ="";
+    }
 
     public int getGrantsUpdated() {
         return grantsUpdated;
     }
 
-    void setGrantsUpdated(int grantsUpdated) {
-        this.grantsUpdated = grantsUpdated;
+    void addGrantsUpdated() {
+        grantsUpdated++;
     }
 
     public int getFundersUpdated() {
         return fundersUpdated;
     }
 
-    void setFundersUpdated(int fundersUpdated) {
-        this.fundersUpdated = fundersUpdated;
+    void addFundersUpdated() {
+        fundersUpdated++;
     }
 
     public int getUsersUpdated() {
         return usersUpdated;
     }
 
-    void setUsersUpdated(int usersUpdated) {
-        this.usersUpdated = usersUpdated;
+    void addUsersUpdated() {
+        usersUpdated++;
     }
 
     public int getGrantsCreated() {
         return grantsCreated;
     }
 
-    void setGrantsCreated(int grantsCreated) {
-        this.grantsCreated = grantsCreated;
+    void addGrantsCreated() {
+        grantsCreated++;
     }
 
     public int getFundersCreated() {
         return fundersCreated;
     }
 
-    void setFundersCreated(int fundersCreated) {
-        this.fundersCreated = fundersCreated;
+    void addFundersCreated(){
+        fundersCreated++;
     }
 
     public int getUsersCreated() {
         return usersCreated;
     }
 
-    void setUsersCreated(int usersCreated) {
-        this.usersCreated = usersCreated;
+    void addUsersCreated(){
+        usersCreated++;
     }
 
     public int getPisAdded() {
         return pisAdded;
     }
 
-    void setPisAdded(int pisAdded) {
-        this.pisAdded = pisAdded;
+    void addPi() {
+        pisAdded++;
     }
 
     public int getCoPisAdded() {
         return coPisAdded;
     }
 
-    void setCoPisAdded(int coPisAdded) {
-        this.coPisAdded = coPisAdded;
+    void addCoPi() {
+        coPisAdded++;
     }
 
     public String getLatestUpdateString() {

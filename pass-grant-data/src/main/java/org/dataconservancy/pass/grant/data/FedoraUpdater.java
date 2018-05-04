@@ -48,14 +48,6 @@ public class FedoraUpdater {
 
     private PassClient passClient;
     private FedoraUpdateStatistics statistics = new FedoraUpdateStatistics();
-    private int grantsUpdated=0;
-    private int fundersUpdated=0;
-    private int usersUpdated =0;
-    private int grantsCreated=0;
-    private int fundersCreated=0;
-    private int usersCreated=0;
-    private int pisAdded=0;
-    private int coPisAdded=0;
 
     //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
@@ -73,6 +65,9 @@ public class FedoraUpdater {
     }
 
     public void updateFedora(Set<Map<String, String>> results, String mode) {
+        userMap.clear();
+        funderMap.clear();
+        statistics.reset();
         statistics.setType(mode);
         if (mode.equals("grant")) {
             updateGrants(results);
@@ -169,10 +164,10 @@ public class FedoraUpdater {
                 //now our User URI is on the map - let's process:
                 if (abbreviatedRole.equals("P")) {
                     grant.setPi(userMap.get(employeeId));
-                    pisAdded++;
+                    statistics.addPi();
                 } else if (abbreviatedRole.equals("C") && !grant.getCoPis().contains(userMap.get(employeeId))) {
                     grant.getCoPis().add(userMap.get(employeeId));
-                    coPisAdded++;
+                    statistics.addCoPi();
                 }
             }
             //we are done with this record, let's save the state of this Grant
@@ -190,14 +185,6 @@ public class FedoraUpdater {
 
         //success - we capture some information to report
         if (grantMap.size() > 0) {
-            statistics.setPisAdded(pisAdded);
-            statistics.setCoPisAdded(coPisAdded);
-            statistics.setFundersCreated(fundersCreated);
-            statistics.setFundersUpdated(fundersUpdated);
-            statistics.setGrantsCreated(grantsCreated);
-            statistics.setGrantsUpdated(grantsUpdated);
-            statistics.setUsersCreated(usersCreated);
-            statistics.setUsersUpdated(usersUpdated);
             statistics.setLatestUpdateString(latestUpdateString);
             statistics.setReport(results.size(), grantMap.size());
         } else {
@@ -212,8 +199,6 @@ public class FedoraUpdater {
         }
 
         if (results.size() > 0) {
-            statistics.setUsersCreated(usersCreated);
-            statistics.setUsersUpdated(usersUpdated);
             statistics.setLatestUpdateString(latestUpdateString);
             statistics.setReport(results.size(), results.size());
         } else {
@@ -254,12 +239,12 @@ public class FedoraUpdater {
             if (!PassEntityUtil.coeusFundersEqual(updatedFunder, storedFunder)) {
                 storedFunder = PassEntityUtil.updateFunder(updatedFunder, storedFunder);
                 passClient.updateResource(storedFunder);
-                fundersUpdated++;
+                statistics.addFundersUpdated();
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Funder for this URI - this one is new to Fedora
             fedoraFunderURI = passClient.createResource(updatedFunder);
-            fundersCreated++;
+            statistics.addFundersCreated();
         }
         return fedoraFunderURI;
     }
@@ -273,11 +258,7 @@ public class FedoraUpdater {
      */
     private URI updateUserInFedora(User updatedUser) {
         User storedUser;
-        //we may have Users in Fedora who are not in the COEUS system yet, and so we haven't had access to their employee id.
-        // we fall back to jhed id for finding these users - update them here when they appear in COEUS
-        URI fedoraUserURI = passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey()) != null?
-                passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey()):
-                passClient.findByAttribute(User.class, "institutionalId", updatedUser.getInstitutionalId());
+        URI fedoraUserURI = passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey());
         if (fedoraUserURI != null ) {
             storedUser = passClient.readResource(fedoraUserURI, User.class);
             if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)) {
@@ -287,12 +268,12 @@ public class FedoraUpdater {
                     storedUser.getRoles().add(User.Role.SUBMITTER);
                 }
                 passClient.updateResource(storedUser);
-                usersUpdated++;
+                statistics.addUsersUpdated();
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Fedora
             fedoraUserURI = passClient.createResource(updatedUser);
-            usersCreated++;
+            statistics.addUsersCreated();
         }
         return fedoraUserURI;
     }
@@ -311,12 +292,12 @@ public class FedoraUpdater {
             if (!PassEntityUtil.coeusGrantsEqual(updatedGrant, storedGrant)) {
                 storedGrant = PassEntityUtil.updateGrant(updatedGrant, storedGrant);
                 passClient.updateResource(storedGrant);
-                grantsUpdated++;
+                statistics.addGrantsUpdated();
             }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Fedora
             fedoraGrantURI = passClient.createResource(updatedGrant);
-            grantsCreated++;
+            statistics.addGrantsCreated();
         }
         return fedoraGrantURI;
     }
