@@ -68,7 +68,7 @@ public class PassUpdateStatistics {
         }
     }
 
-    public void reset() {
+    void reset() {
         grantsUpdated = 0;
         fundersUpdated = 0;
         usersUpdated = 0;
@@ -151,10 +151,6 @@ public class PassUpdateStatistics {
 
     void setLatestUpdateString(String latestUpdateString) {
         this.latestUpdateString = latestUpdateString;
-    }
-
-    public String getType() {
-        return type;
     }
 
     void setType(String type) {

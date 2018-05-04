@@ -82,7 +82,7 @@ public class PassUpdater {
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
      */
-    void updateGrants(Set<Map<String, String>> results) {
+    private void updateGrants(Set<Map<String, String>> results) {
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
@@ -349,14 +349,10 @@ public class PassUpdater {
         return passClient;
     }
 
-
-    public Map<String, URI> getFunderMap() {
-        return funderMap;
-    }
+    //used in unit test
+    Map<String, URI> getFunderMap() { return funderMap; }
 
     //used in unit test
-    public Map<String, URI> getUserMap() {
-        return userMap;
-    }
+    Map<String, URI> getUserMap() { return userMap; }
 
 }

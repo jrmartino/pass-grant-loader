@@ -10,10 +10,10 @@ is that the timestamp is read from the last line of a file which
 records all such timestamps after successfully completed runs. 
 Optionally, a timestamp may be supplied as the -s option on the command line.
 
-The ResultSet which is returned from COEUS is transformed into an intermediate List
-of data structures which contain the information we require to update our grants or users.
+The ResultSet which is returned from COEUS is transformed into an intermediate Set
+of data structures which contain the information we require to update our grants. funders and users.
 We finally use our java Pass client to merge this update information with existing
-information in Fedora to have the Fedora repository reflect the current information obtained
+information in PASS to have the PASS repository reflect the current information obtained
 in the update. Auxiliary objects belonging to the Grant (Users and Funders)
 will also receive updates when Grants are updated.
 
@@ -24,7 +24,7 @@ application from performing an update.
 ## Configuration
 The user running this application must supply a full path to a home
 or base directory for the application. This directory will contain any 
-configuration files, and will also contain the log file and the file containing the 
+configuration files, and will also contain the log file and the file(s) containing the
 update timestamps. Necessary configuration files are as follows.
 
 ### COEUS connection properties file (connection.properties)
@@ -62,8 +62,8 @@ mail.from=
 mail.to=
 
 ### Fedora configuration (system.properties)
-This file contains parameters which must be set as system properties so that  the java Fedora client 
-can configure itself to attach to the desired fedora instance. The base URL must contain
+This file contains parameters which must be set as system properties so that  the java PASS client
+can configure itself to attach to its storage - in our case, a Fedora instance. The base URL must contain
 the port number and path to the base container (for example, http://localhost:8080/fcrepo/rest/)
 
 pass.fedora.user=
@@ -112,7 +112,8 @@ are processed we know that each Grant object on the List is current, and so we u
 
 ### Users
 The User update is less complicated, since there are no fields which refer to other PASS objects. The operation is otherwise
-similar to the process for Grants.
+similar to the process for Grants. As it turns out, this mode of service is probably unnecessary, as we will be using Shibboleth
+as our authoritative user provider.
 
 
 

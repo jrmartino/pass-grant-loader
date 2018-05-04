@@ -29,6 +29,5 @@ class CoeusGrantLoaderErrors {
     static String ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP = "The updated succeeded, but could not append last modified date %s to update timestamp file";
     static String ERR_SQL_EXCEPTION = "An SQL error occurred querying the COEUS database";
     static String ERR_ORACLE_DRIVER_NOT_FOUND = "Could not find the oracle db driver on classpath.";
-    static String ERR_SYSTEM_PROPERTY = "Could not set value %s for system property %s";
     static String ERR_MODE_NOT_VALID = "%s is not a valid mopde - must be either \"grant\" or \"user\"";
 }
