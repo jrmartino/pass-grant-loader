@@ -25,6 +25,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
 import java.net.URI;
@@ -71,19 +72,19 @@ public class GrantUpdateIT {
     }
 
     @Test
-    public void depositGrantsIT() {
+    public void depositGrantsIT() throws InterruptedException {
 
         PassClient passClient = PassClientFactory.getPassClient();
         FedoraUpdater fedoraUpdater = new FedoraUpdater(passClient);
         fedoraUpdater.updateFedora(resultSet, "grant");
         FedoraUpdateStatistics statistics = fedoraUpdater.getStatistics();
 
-        Assert.assertEquals(5,statistics.getPisAdded());
-        Assert.assertEquals(5,statistics.getCoPisAdded());
+        Assert.assertEquals(5, statistics.getPisAdded());
+        Assert.assertEquals(5, statistics.getCoPisAdded());
         Assert.assertEquals(20, statistics.getFundersCreated());
         Assert.assertEquals(0, statistics.getFundersUpdated());
         Assert.assertEquals(10, statistics.getGrantsCreated());
-        Assert.assertEquals(0,statistics.getGrantsUpdated());
+        Assert.assertEquals(0, statistics.getGrantsUpdated());
         Assert.assertEquals("2018-01-01 09:00:00.0", statistics.getLatestUpdateString());
         Assert.assertEquals(10, statistics.getUsersCreated());
         Assert.assertEquals(0, statistics.getUsersUpdated());
@@ -95,6 +96,54 @@ public class GrantUpdateIT {
             Grant fedoraGrant = fedoraUpdater.getPassClient().readResource(grantUri, Grant.class);
             Assert.assertTrue(PassEntityUtil.coeusGrantsEqual(grant, fedoraGrant));
         }
+
+
+        sleep(12000);
+        //try depositing the exact same resultSet. nothing should happen in Fedora
+        fedoraUpdater.updateFedora(resultSet, "grant");
+
+        Assert.assertEquals(0, statistics.getFundersCreated());
+        Assert.assertEquals(0, statistics.getFundersUpdated());
+        Assert.assertEquals(0, statistics.getGrantsCreated());
+        Assert.assertEquals(0, statistics.getGrantsUpdated());
+        Assert.assertEquals(0, statistics.getUsersCreated());
+        Assert.assertEquals(0, statistics.getUsersUpdated());
+
+        //now let's monkey with a few things
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + Integer.toString(1));
+        rowMap.put(C_GRANT_AWARD_STATUS, "Active");
+        rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + Integer.toString(1));
+        rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + Integer.toString(1) + "MOOO");
+        rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
+        rowMap.put(C_GRANT_START_DATE, "01/01/2001");
+        rowMap.put(C_GRANT_END_DATE, "01/01/2002");
+
+        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(1));
+        rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + Integer.toString(1) + "MOOOOO");
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(1));
+        rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + Integer.toString(1));
+
+        rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(1));
+        rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(1) + "MOOOO");
+        rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(1));
+        rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(1));
+        rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(1));
+        rowMap.put(C_USER_LOCAL_KEY, C_USER_LOCAL_KEY + Integer.toString(1));
+
+        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
+        rowMap.put(C_ABBREVIATED_ROLE, ("C"));
+
+        resultSet.clear();
+        resultSet.add(rowMap);
+
+        fedoraUpdater.updateFedora(resultSet, "grant");
+        Assert.assertEquals(0, statistics.getFundersCreated());
+        Assert.assertEquals(1, statistics.getFundersUpdated());
+        Assert.assertEquals(0, statistics.getGrantsCreated());
+        Assert.assertEquals(1, statistics.getGrantsUpdated());
+        Assert.assertEquals(0, statistics.getUsersCreated());
+        Assert.assertEquals(1, statistics.getUsersUpdated());
 
 
     }
