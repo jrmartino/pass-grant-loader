@@ -36,18 +36,18 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 
 /**
  * This class is responsible for taking the Set of Maps derived from the ResultSet from the database query and
- * constructing a corresponding Collection of Grant or User objects, which it then sends to Fedora to update.
+ * constructing a corresponding Collection of Grant or User objects, which it then sends to PASS to update.
  *
  * @author jrm@jhu.edu
  */
 
-public class FedoraUpdater {
+public class PassUpdater {
 
-    private static Logger LOG = LoggerFactory.getLogger(FedoraUpdater.class);
+    private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
     private String latestUpdateString = "";
 
     private PassClient passClient;
-    private FedoraUpdateStatistics statistics = new FedoraUpdateStatistics();
+    private PassUpdateStatistics statistics = new PassUpdateStatistics();
 
     //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
@@ -60,11 +60,11 @@ public class FedoraUpdater {
     private Map<String, URI> funderMap = new HashMap<>();
     private Map<String, URI> userMap = new HashMap<>();
 
-    public FedoraUpdater(PassClient passClient) {
+    public PassUpdater(PassClient passClient) {
         this.passClient = passClient;
     }
 
-    public void updateFedora(Set<Map<String, String>> results, String mode) {
+    public void updatePass(Set<Map<String, String>> results, String mode) {
         userMap.clear();
         funderMap.clear();
         statistics.reset();
@@ -78,7 +78,7 @@ public class FedoraUpdater {
     }
 
     /**
-     * Build a Collection of Grants from a ResultSet, then update the grants in Fedora
+     * Build a Collection of Grants from a ResultSet, then update the grants in Pass
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
      */
@@ -120,16 +120,16 @@ public class FedoraUpdater {
                 grant.setEndDate(createJodaDateTime(rowMap.get(C_GRANT_END_DATE)));
 
                 //process direct funder, and primary funder if we have one
-                //update funder(s) in fedora as needed
+                //update funder(s) in Pass as needed
                 if (funderMap.containsKey(directFunderLocalKey)) {
                     grant.setDirectFunder(funderMap.get(directFunderLocalKey));
                 } else {
                     Funder updatedFunder = new Funder();
                     updatedFunder.setLocalKey(rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY));
                     updatedFunder.setName(rowMap.get(C_DIRECT_FUNDER_NAME));
-                    URI fedoraFunderURI =  updateFunderInFedora(updatedFunder);
-                    funderMap.put(directFunderLocalKey, fedoraFunderURI);
-                    grant.setDirectFunder(fedoraFunderURI);
+                    URI passFunderURI =  updateFunderInPass(updatedFunder);
+                    funderMap.put(directFunderLocalKey, passFunderURI);
+                    grant.setDirectFunder(passFunderURI);
                 }
 
                 if(primaryFunderLocalKey != null) {
@@ -139,9 +139,9 @@ public class FedoraUpdater {
                         Funder updatedFunder = new Funder();
                         updatedFunder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
                         updatedFunder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
-                        URI fedoraFunderURI =  updateFunderInFedora(updatedFunder);
-                        funderMap.put(primaryFunderLocalKey, fedoraFunderURI);
-                        grant.setPrimaryFunder(fedoraFunderURI);
+                        URI passFunderURI =  updateFunderInPass(updatedFunder);
+                        funderMap.put(primaryFunderLocalKey, passFunderURI);
+                        grant.setPrimaryFunder(passFunderURI);
                     }
                 }
 
@@ -157,8 +157,8 @@ public class FedoraUpdater {
             if(abbreviatedRole.equals("C") || grant.getPi() == null) {
                 if (!userMap.containsKey(employeeId)) {
                     User updatedUser = buildUser(rowMap);
-                    URI fedoraUserURI = updateUserInFedora(updatedUser);
-                    userMap.put(employeeId, fedoraUserURI);
+                    URI passUserURI = updateUserInPass(updatedUser);
+                    userMap.put(employeeId, passUserURI);
                 }
 
                 //now our User URI is on the map - let's process:
@@ -178,9 +178,9 @@ public class FedoraUpdater {
 
         }
 
-        //now put updated grant objects in fedora
+        //now put updated grant objects in pass
         for(Grant grant : grantMap.values()){
-            grantUriMap.put(updateGrantInFedora(grant), grant);
+            grantUriMap.put(updateGrantInPass(grant), grant);
         }
 
         //success - we capture some information to report
@@ -195,7 +195,7 @@ public class FedoraUpdater {
     private void updateUsers(Set<Map<String, String>> results) {
         for(Map<String,String> rowMap : results) {
             User updatedUser = buildUser(rowMap);
-            updateUserInFedora(updatedUser);
+            updateUserInPass(updatedUser);
         }
 
         if (results.size() > 0) {
@@ -226,41 +226,41 @@ public class FedoraUpdater {
 
     /**
      * Take a new Funder object populated as fully as possible from the COEUS pull, and use this
-     * new information to update an object for the same Funder in Fedora (if it exists)
+     * new information to update an object for the same Funder in Pass (if it exists)
      *
      * @param updatedFunder the new Funder object populated from COEUS
-     * @return the URI for the resource representing the updated Funder in Fedora
+     * @return the URI for the resource representing the updated Funder in Pass
      */
-    private URI updateFunderInFedora(Funder updatedFunder) {
+    private URI updateFunderInPass(Funder updatedFunder) {
         Funder storedFunder;
-        URI fedoraFunderURI = passClient.findByAttribute(Funder.class, "localKey", updatedFunder.getLocalKey());
-        if (fedoraFunderURI != null ) {
-            storedFunder = passClient.readResource(fedoraFunderURI, Funder.class);
+        URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", updatedFunder.getLocalKey());
+        if (passFunderURI != null ) {
+            storedFunder = passClient.readResource(passFunderURI, Funder.class);
             if (!PassEntityUtil.coeusFundersEqual(updatedFunder, storedFunder)) {
                 storedFunder = PassEntityUtil.updateFunder(updatedFunder, storedFunder);
                 passClient.updateResource(storedFunder);
                 statistics.addFundersUpdated();
-            }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
+            }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
-        } else {//don't have a stored Funder for this URI - this one is new to Fedora
-            fedoraFunderURI = passClient.createResource(updatedFunder);
+        } else {//don't have a stored Funder for this URI - this one is new to Pass
+            passFunderURI = passClient.createResource(updatedFunder);
             statistics.addFundersCreated();
         }
-        return fedoraFunderURI;
+        return passFunderURI;
     }
 
     /**
      * Take a new User object populated as fully as possible from the COEUS pull, and use this
-     * new information to update an object for the same User in Fedora (if it exists)
+     * new information to update an object for the same User in Pass (if it exists)
      *
      * @param updatedUser the new User object populated from COEUS
-     * @return the URI for the resource representing the updated User in Fedora
+     * @return the URI for the resource representing the updated User in Pass
      */
-    private URI updateUserInFedora(User updatedUser) {
+    private URI updateUserInPass(User updatedUser) {
         User storedUser;
-        URI fedoraUserURI = passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey());
-        if (fedoraUserURI != null ) {
-            storedUser = passClient.readResource(fedoraUserURI, User.class);
+        URI passUserURI = passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey());
+        if (passUserURI != null ) {
+            storedUser = passClient.readResource(passUserURI, User.class);
             if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)) {
                 storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
@@ -269,37 +269,37 @@ public class FedoraUpdater {
                 }
                 passClient.updateResource(storedUser);
                 statistics.addUsersUpdated();
-            }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
+            }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the User was updated in COEUS only with information we don't consume here
-        } else {//don't have a stored User for this URI - this one is new to Fedora
-            fedoraUserURI = passClient.createResource(updatedUser);
+        } else {//don't have a stored User for this URI - this one is new to Pass
+            passUserURI = passClient.createResource(updatedUser);
             statistics.addUsersCreated();
         }
-        return fedoraUserURI;
+        return passUserURI;
     }
 
     /**
      * Take a new Grant object populated as fully as possible from the COEUS pull, and use this
-     * new information to update an object for the same Grant in Fedora (if it exists)
+     * new information to update an object for the same Grant in Pass (if it exists)
      *
      * @param updatedGrant the new Grant object populated from COEUS
      */
-    private URI updateGrantInFedora(Grant updatedGrant) {
+    private URI updateGrantInPass(Grant updatedGrant) {
         Grant storedGrant;
-        URI fedoraGrantURI = passClient.findByAttribute(Grant.class, "localKey", updatedGrant.getLocalKey());
-        if (fedoraGrantURI != null ) {
-            storedGrant = passClient.readResource(fedoraGrantURI, Grant.class);
+        URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", updatedGrant.getLocalKey());
+        if (passGrantURI != null ) {
+            storedGrant = passClient.readResource(passGrantURI, Grant.class);
             if (!PassEntityUtil.coeusGrantsEqual(updatedGrant, storedGrant)) {
                 storedGrant = PassEntityUtil.updateGrant(updatedGrant, storedGrant);
                 passClient.updateResource(storedGrant);
                 statistics.addGrantsUpdated();
-            }//if the Fedora version is COEUS-equal to our version from the update, we don't have to do anything
+            }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
-        } else {//don't have a stored Grant for this URI - this one is new to Fedora
-            fedoraGrantURI = passClient.createResource(updatedGrant);
+        } else {//don't have a stored Grant for this URI - this one is new to Pass
+            passGrantURI = passClient.createResource(updatedGrant);
             statistics.addGrantsCreated();
         }
-        return fedoraGrantURI;
+        return passGrantURI;
     }
 
     /**
@@ -335,7 +335,7 @@ public class FedoraUpdater {
      * This returns the final statistics Object - useful in testing
      * @return the statistics object
      */
-    public FedoraUpdateStatistics getStatistics() {
+    public PassUpdateStatistics getStatistics() {
         return statistics;
     }
 

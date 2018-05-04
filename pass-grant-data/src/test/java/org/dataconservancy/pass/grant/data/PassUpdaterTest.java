@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
-import static org.dataconservancy.pass.grant.data.FedoraUpdater.returnLaterUpdate;
+import static org.dataconservancy.pass.grant.data.PassUpdater.returnLaterUpdate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -44,7 +44,7 @@ import static org.mockito.Mockito.when;
  * @author jrm@jhu.edu
  */
 @RunWith(MockitoJUnitRunner.class)
-public class FedoraUpdaterTest {
+public class PassUpdaterTest {
 
     @Mock
     private PassClient passClientMock;
@@ -149,18 +149,18 @@ public class FedoraUpdaterTest {
 
         resultSet.add(rowMap);
 
-        FedoraUpdater fedoraUpdater = new FedoraUpdater(passClientMock);
-        fedoraUpdater.updateFedora(resultSet, "grant");
+        PassUpdater passUpdater = new PassUpdater(passClientMock);
+        passUpdater.updatePass(resultSet, "grant");
 
-        Map<URI, Grant> grantMap = fedoraUpdater.getGrantUriMap();
+        Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
         Assert.assertEquals(1, grantMap.size());
         Grant grant = grantMap.get(grantUri);
         Assert.assertEquals(1, grant.getCoPis().size());
-        //Assert.assertEquals(2, fedoraUpdater.getFunderMap().size());
-        Assert.assertEquals(grant.getDirectFunder(), fedoraUpdater.getFunderMap().get(directFunderId));
-        Assert.assertEquals(grant.getPrimaryFunder(), fedoraUpdater.getFunderMap().get(primaryFunderId));
-        Assert.assertEquals(grant.getPi(), fedoraUpdater.getUserMap().get("0000333"));
-        Assert.assertEquals(grant.getCoPis().get(0), fedoraUpdater.getUserMap().get("0000222"));
+        //Assert.assertEquals(2, passUpdater.getFunderMap().size());
+        Assert.assertEquals(grant.getDirectFunder(), passUpdater.getFunderMap().get(directFunderId));
+        Assert.assertEquals(grant.getPrimaryFunder(), passUpdater.getFunderMap().get(primaryFunderId));
+        Assert.assertEquals(grant.getPi(), passUpdater.getUserMap().get("0000333"));
+        Assert.assertEquals(grant.getCoPis().get(0), passUpdater.getUserMap().get("0000222"));
 
         Assert.assertEquals(awardNumber, grant.getAwardNumber());
         Assert.assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());

@@ -26,7 +26,7 @@ import org.dataconservancy.pass.model.User;
  * data from COEUS, so that two objects are considered "COEUS equal" iff they agree on these fields.
  *
  * Another function performed by this utility class is to construct an updated version of an instance of one of these classes
- * by merging a (possibly) existing Fedora object with new information obtained from a COEUS data pull.
+ * by merging a (possibly) existing Pass object with new information obtained from a COEUS data pull.
  *
  * @author jrm@jhu.edu
  */
@@ -36,7 +36,7 @@ public class PassEntityUtil {
      * Compare two Funder objects
      *
      * @param update the version of the Funder as seen in the COEUS update pull
-     * @param stored the version of the Funder as read from Fedora
+     * @param stored the version of the Funder as read from Pass
      * @return a boolean which asserts whether the two supplied Funders are "COEUS equal"
      */
     static boolean coeusFundersEqual(Funder update, Funder stored) {
@@ -47,11 +47,11 @@ public class PassEntityUtil {
     }
 
     /**
-     * Update a Fedora Funder object with new information from COEUS
+     * Update a Pass Funder object with new information from COEUS
      *
      * @param update the version of the Funder as seen in the COEUS update pull
-     * @param stored the version of the Funder as read from Fedora
-     * @return the Funder object which represents the Fedora object, with any new information from COEUS merged in
+     * @param stored the version of the Funder as read from Pass
+     * @return the Funder object which represents the Pass object, with any new information from COEUS merged in
      */
     static Funder updateFunder (Funder update, Funder stored) {
         stored.setLocalKey(update.getLocalKey());
@@ -63,7 +63,7 @@ public class PassEntityUtil {
      * Compare two User objects
      *
      * @param update the version of the User as seen in the COEUS update pull
-     * @param stored the version of the User as read from Fedora
+     * @param stored the version of the User as read from Pass
      * @return a boolean which asserts whether the two supplied Users are "COEUS equal"
      */
     static boolean coeusUsersEqual(User update, User stored) {
@@ -79,12 +79,12 @@ public class PassEntityUtil {
     }
 
     /**
-     * Update a Fedora User object with new information from COEUS. WE check only thos fields for which COEUS is
+     * Update a Pass User object with new information from COEUS. WE check only thos fields for which COEUS is
      * authoritative. Other fields will be managed by other providers (Shibboleth for example).
      *
      * @param update the version of the User as seen in the COEUS update pull
-     * @param stored the version of the User as read from Fedora
-     * @return the User object which represents the Fedora object, with any new information from COEUS merged in
+     * @param stored the version of the User as read from Pass
+     * @return the User object which represents the Pass object, with any new information from COEUS merged in
      */
     static User updateUser (User update, User stored) {
         stored.setFirstName(update.getFirstName());
@@ -101,7 +101,7 @@ public class PassEntityUtil {
     /**
      * Compare two Grant objects. Note that the Lists of Co-Pis are essentially compared as Sets
      * @param update the version of the Grant as seen in the COEUS update pull
-     * @param stored the version of the Grant as read from Fedora
+     * @param stored the version of the Grant as read from Pass
      * @return a boolean which asserts whether the two supplied Grants are "COEUS equal"
      */
     public static boolean coeusGrantsEqual(Grant update, Grant stored) {
@@ -120,11 +120,11 @@ public class PassEntityUtil {
     }
 
     /**
-     * Update a Fedora Grant object with new information from COEUS
+     * Update a Pass Grant object with new information from COEUS
      *
      * @param update the version of the Grant as seen in the COEUS update pull
-     * @param stored the version of the Grant as read from Fedora
-     * @return the Grant object which represents the Fedora object, with any new information from COEUS merged in
+     * @param stored the version of the Grant as read from Pass
+     * @return the Grant object which represents the Pass object, with any new information from COEUS merged in
      */
     static Grant updateGrant(Grant update, Grant stored) {
         stored.setAwardNumber(update.getAwardNumber());

@@ -16,8 +16,8 @@
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
-import org.dataconservancy.pass.grant.data.FedoraUpdateStatistics;
-import org.dataconservancy.pass.grant.data.FedoraUpdater;
+import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
+import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.dataconservancy.pass.grant.data.PassEntityUtil;
 import org.dataconservancy.pass.model.Grant;
 
@@ -75,9 +75,9 @@ public class GrantUpdateIT {
     public void depositGrantsIT() throws InterruptedException {
 
         PassClient passClient = PassClientFactory.getPassClient();
-        FedoraUpdater fedoraUpdater = new FedoraUpdater(passClient);
-        fedoraUpdater.updateFedora(resultSet, "grant");
-        FedoraUpdateStatistics statistics = fedoraUpdater.getStatistics();
+        PassUpdater passUpdater = new PassUpdater(passClient);
+        passUpdater.updatePass(resultSet, "grant");
+        PassUpdateStatistics statistics = passUpdater.getStatistics();
 
         Assert.assertEquals(5, statistics.getPisAdded());
         Assert.assertEquals(5, statistics.getCoPisAdded());
@@ -89,18 +89,18 @@ public class GrantUpdateIT {
         Assert.assertEquals(10, statistics.getUsersCreated());
         Assert.assertEquals(0, statistics.getUsersUpdated());
 
-        Assert.assertEquals(10, fedoraUpdater.getGrantUriMap().size());
+        Assert.assertEquals(10, passUpdater.getGrantUriMap().size());
 
-        for (URI grantUri : fedoraUpdater.getGrantUriMap().keySet()) {
-            Grant grant = fedoraUpdater.getGrantUriMap().get(grantUri);
-            Grant fedoraGrant = fedoraUpdater.getPassClient().readResource(grantUri, Grant.class);
-            Assert.assertTrue(PassEntityUtil.coeusGrantsEqual(grant, fedoraGrant));
+        for (URI grantUri : passUpdater.getGrantUriMap().keySet()) {
+            Grant grant = passUpdater.getGrantUriMap().get(grantUri);
+            Grant PassGrant = passUpdater.getPassClient().readResource(grantUri, Grant.class);
+            Assert.assertTrue(PassEntityUtil.coeusGrantsEqual(grant, PassGrant));
         }
 
 
         sleep(12000);
-        //try depositing the exact same resultSet. nothing should happen in Fedora
-        fedoraUpdater.updateFedora(resultSet, "grant");
+        //try depositing the exact same resultSet. nothing should happen in Pass
+        passUpdater.updatePass(resultSet, "grant");
 
         Assert.assertEquals(0, statistics.getFundersCreated());
         Assert.assertEquals(0, statistics.getFundersUpdated());
@@ -137,7 +137,7 @@ public class GrantUpdateIT {
         resultSet.clear();
         resultSet.add(rowMap);
 
-        fedoraUpdater.updateFedora(resultSet, "grant");
+        passUpdater.updatePass(resultSet, "grant");
         Assert.assertEquals(0, statistics.getFundersCreated());
         Assert.assertEquals(1, statistics.getFundersUpdated());
         Assert.assertEquals(0, statistics.getGrantsCreated());

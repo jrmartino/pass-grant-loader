@@ -12,9 +12,9 @@ Optionally, a timestamp may be supplied as the -s option on the command line.
 
 The ResultSet which is returned from COEUS is transformed into an intermediate List
 of data structures which contain the information we require to update our grants or users.
-We finally use our java Fedora client to merge this update information with existing 
+We finally use our java Pass client to merge this update information with existing
 information in Fedora to have the Fedora repository reflect the current information obtained
-in the update. Auxilliary objects belongng to the Grant (Users and Funders)
+in the update. Auxiliary objects belonging to the Grant (Users and Funders)
 will also receive updates when Grants are updated.
 
 Because the application is intended to run unattended in slack hours, we
@@ -101,14 +101,14 @@ only by this application, as there may be some fields on these objects which are
 may be populated by other applications eventually (for example ORCID on User, Submissions on Grant, or Policy on Funder).
 
 ### Grants
-Our approach is that for each grant record, to see if Fedora knows about it yet, and if so, pull back the current version
+Our approach is that for each grant record, to see if Pass knows about it yet, and if so, pull back the current version
 of the grant. We then look at the hash map and overwrite any information on the existing object with the new 
 information. Fields which are themselves PASS objects are also updated. In order to keep processing as efficient
 as possible, we do track which PASS objects have been updated in the current session, as some of them may 
 appear many times (Funders or Persons for example). We update these only once in the session.
 
 After we have processed each record, we save the state of the Grant objects in a List. After all records 
-are processed we know that each Grant object on the List is current, and so we update these grants in Fedora.
+are processed we know that each Grant object on the List is current, and so we update these grants in Pass.
 
 ### Users
 The User update is less complicated, since there are no fields which refer to other PASS objects. The operation is otherwise
