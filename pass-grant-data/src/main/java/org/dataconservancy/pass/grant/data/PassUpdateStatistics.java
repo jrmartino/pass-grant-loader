@@ -21,7 +21,7 @@ import static java.lang.String.format;
 /**
  * A utility class to collect and disseminate statistics related to an update
  */
-public class FedoraUpdateStatistics {
+public class PassUpdateStatistics {
 
     private int grantsUpdated = 0;
     private int fundersUpdated = 0;
@@ -49,7 +49,7 @@ public class FedoraUpdateStatistics {
             sb.append("\n");
             sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, size));
             sb.append("\n\n");
-            sb.append("Fedora Activity");
+            sb.append("Pass Activity");
             sb.append("\n\n");
             sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
             sb.append("\n");
@@ -62,7 +62,7 @@ public class FedoraUpdateStatistics {
         } else if (type.equals("user")) {
             sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
                     resultSetSize, latestUpdateString));
-            sb.append("Fedora Activity");
+            sb.append("Pass Activity");
             sb.append("\n\n");
             sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
         }

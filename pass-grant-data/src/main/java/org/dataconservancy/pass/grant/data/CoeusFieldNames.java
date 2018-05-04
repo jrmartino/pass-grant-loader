@@ -9,7 +9,7 @@ package org.dataconservancy.pass.grant.data;
  *
 
  * these are consumed in the {@code CoeusConnector} class for the pull from COEUS, and in the {@code GrantUpdater} class
- * for the push into Fedora
+ * for the push into Pass
  *
  * @author jrm@jhu.edu
  */
