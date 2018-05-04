@@ -34,7 +34,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class GrantUpdateIT {
+/**
+ * An integration test class for the PassUpdater.
+ */
+public class PassUpdateIT {
 
     private Set<Map<String,String>> resultSet = new HashSet<>();
 
@@ -71,6 +74,13 @@ public class GrantUpdateIT {
         }
     }
 
+    /**
+     * The behavior of PassUpdate's updatePass() method is to compare the data coming in on the ResultSet with
+     * the existing data in Pass, and create objects if Pass does not yet have them, and update them if they exist in Pass but
+     * there are differences in the fields for which COEUS is the authoritative source.
+     *
+     * @throws InterruptedException - the exception
+     */
     @Test
     public void depositGrantsIT() throws InterruptedException {
 
@@ -109,7 +119,7 @@ public class GrantUpdateIT {
         Assert.assertEquals(0, statistics.getUsersCreated());
         Assert.assertEquals(0, statistics.getUsersUpdated());
 
-        //now let's monkey with a few things
+        //now let's monkey with a few things; we expect to update the changed objects
         Map<String, String> rowMap = new HashMap<>();
         rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + Integer.toString(1));
         rowMap.put(C_GRANT_AWARD_STATUS, "Active");

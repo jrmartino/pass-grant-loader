@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * An email service for reporting errors or results of running the {@code CoeusGrantLoaderApp}
  * @author jrm@jhu.edu
  */
-public class EmailService {
+class EmailService {
     private static Logger LOG = LoggerFactory.getLogger(EmailService.class);
     private Properties mailProperties;
 
@@ -55,10 +55,9 @@ public class EmailService {
      * @param subject the email subject
      * @param message the body of the email
      */
-    public void sendEmailMessage(String subject, String message){
+    void sendEmailMessage(String subject, String message){
 
         try {
-           // Session session = Session.getInstance(mailProperties, pwAuth);
             Session session = Session.getInstance(mailProperties,
                     new Authenticator() {
                         @Override

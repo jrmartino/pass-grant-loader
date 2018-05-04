@@ -173,7 +173,7 @@ public class CoeusConnector {
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    public String buildGrantQueryString(String startDate){
+    String buildGrantQueryString(String startDate){
 
         String[] viewFields = {
             "A." + C_GRANT_AWARD_NUMBER,
@@ -226,7 +226,7 @@ public class CoeusConnector {
         return queryString;
     }
 
-    public String buildUserQueryString(String startDate) {
+    String buildUserQueryString(String startDate) {
         String viewFields [] = {
             C_USER_FIRST_NAME,
             C_USER_MIDDLE_NAME,

@@ -60,7 +60,7 @@ public class PassEntityUtil {
     }
 
     /**
-     * Compare two User objects
+     * Compare two User objects. We only care about those fields for which COEUS is the authoritative source
      *
      * @param update the version of the User as seen in the COEUS update pull
      * @param stored the version of the User as read from Pass
@@ -70,16 +70,11 @@ public class PassEntityUtil {
         if (update.getFirstName() != null ? !update.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
-        //if (update.getDisplayName() != null ? !update.getDisplayName().equals(stored.getDisplayName()) : stored.getDisplayName() != null) return false;
-        //if (update.getEmail() != null ? !update.getEmail().equals(stored.getEmail()) : stored.getEmail() != null) return false;
-        //if (update.getInstitutionalId() != null ? !update.getInstitutionalId().equals(stored.getInstitutionalId()) : stored.getInstitutionalId() != null) return false;
-        //if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-        //if (update.getAffiliation() != null ? !update.getAffiliation().equals(stored.getAffiliation()) : stored.getAffiliation() != null) return false;
         return true;
     }
 
     /**
-     * Update a Pass User object with new information from COEUS. WE check only thos fields for which COEUS is
+     * Update a Pass User object with new information from COEUS. WE check only those fields for which COEUS is
      * authoritative. Other fields will be managed by other providers (Shibboleth for example).
      *
      * @param update the version of the User as seen in the COEUS update pull
@@ -90,11 +85,6 @@ public class PassEntityUtil {
         stored.setFirstName(update.getFirstName());
         stored.setMiddleName(update.getMiddleName());
         stored.setLastName(update.getLastName());
-        //stored.setDisplayName(update.getDisplayName());
-        //stored.setEmail(update.getEmail());
-        //stored.setInstitutionalId(update.getInstitutionalId());
-        //stored.setLocalKey(update.getLocalKey());
-        //stored.setAffiliation(update.getAffiliation());
         return stored;
     }
 
