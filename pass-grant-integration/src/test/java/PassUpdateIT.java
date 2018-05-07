@@ -16,11 +16,14 @@
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
+import org.dataconservancy.pass.grant.data.DateTimeUtil;
 import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.dataconservancy.pass.grant.data.PassEntityUtil;
+import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 
+import org.dataconservancy.pass.model.User;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -155,6 +158,78 @@ public class PassUpdateIT {
         Assert.assertEquals(0, statistics.getUsersCreated());
         Assert.assertEquals(1, statistics.getUsersUpdated());
 
+        sleep(12000);
 
+        for(int i = 0; i<10; i++) {
+            Grant grant = new Grant();
+            grant.setAwardNumber(C_GRANT_AWARD_NUMBER + Integer.toString(i));
+            grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
+            grant.setLocalKey(C_GRANT_LOCAL_KEY + Integer.toString(i));
+            grant.setProjectName(C_GRANT_PROJECT_NAME + Integer.toString(i));
+            grant.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
+            grant.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
+            grant.setEndDate(DateTimeUtil.createJodaDateTime("01/01/2002"));
+
+            URI passGrantUri = passClient.findByAttribute(Grant.class, "localKey", grant.getLocalKey());
+            Grant passGrant = passClient.readResource(passGrantUri, Grant.class);
+
+            Assert.assertEquals(grant.getAwardNumber(), passGrant.getAwardNumber());
+            Assert.assertEquals(grant.getAwardStatus(), passGrant.getAwardStatus());
+            Assert.assertEquals(grant.getLocalKey(), passGrant.getLocalKey());
+            if(i==1) {
+                Assert.assertEquals(grant.getProjectName()+"MOOO", passGrant.getProjectName());
+            } else {
+                Assert.assertEquals(grant.getProjectName(), passGrant.getProjectName());
+            }
+            Assert.assertEquals(grant.getAwardDate(),passGrant.getAwardDate());
+            Assert.assertEquals(grant.getStartDate(), passGrant.getStartDate());
+            Assert.assertEquals(grant.getEndDate(),passGrant.getEndDate());
+
+            //let's check funder stuff
+            Funder directFunder = new Funder();
+            directFunder.setLocalKey(C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
+            directFunder.setName(C_DIRECT_FUNDER_NAME + Integer.toString(i));
+
+            URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
+            Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
+            if(i==1) {
+                Assert.assertEquals(directFunder.getName()+ "MOOOOO", passDirectFunder.getName());
+                Assert.assertEquals(passDirectFunder.getId(), passGrant.getDirectFunder());
+            } else {
+                Assert.assertEquals(directFunder.getName(),passDirectFunder.getName());
+            }
+
+
+            Funder primaryFunder = new Funder();
+            primaryFunder.setLocalKey( C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
+            primaryFunder.setName( C_PRIMARY_FUNDER_NAME + Integer.toString(i));
+
+            URI primaryFunderUri = passClient.findByAttribute(Funder.class, "localKey", primaryFunder.getLocalKey());
+            Funder passPrimaryFunder = passClient.readResource(primaryFunderUri, Funder.class);
+            Assert.assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
+            Assert.assertEquals(passPrimaryFunder.getId(), passGrant.getPrimaryFunder());
+            Assert.assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
+
+            User user = new User();
+            user.setLocalKey(C_USER_LOCAL_KEY + Integer.toString(i));
+            user.setFirstName(C_USER_FIRST_NAME + Integer.toString(i));
+            user.setMiddleName(C_USER_MIDDLE_NAME + Integer.toString(i));
+            user.setLastName(C_USER_LAST_NAME + Integer.toString(i));
+            user.setEmail(C_USER_EMAIL + Integer.toString(i));
+            user.setInstitutionalId(C_USER_INSTITUTIONAL_ID.toLowerCase() + Integer.toString(i));
+
+            URI userUri = passClient.findByAttribute(User.class, "localKey", user.getLocalKey());
+            User passUser = passClient.readResource(userUri, User.class);
+            Assert.assertEquals(user.getFirstName(), passUser.getFirstName());
+            if (i==1) {
+                Assert.assertEquals(user.getMiddleName() + "MOOOO", passUser.getMiddleName());
+            } else {
+                Assert.assertEquals(user.getMiddleName(), passUser.getMiddleName());
+            }
+            Assert.assertEquals(user.getLastName(), passUser.getLastName());
+            Assert.assertEquals(user.getEmail(), passUser.getEmail());
+            Assert.assertEquals(user.getInstitutionalId(), passUser.getInstitutionalId());
+
+        }
     }
 }

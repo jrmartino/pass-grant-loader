@@ -76,13 +76,13 @@ pass.fedora.baseurl=
 The application is provided as an executable jar file. The absolute path for the base directory COEUS_HOME must be provided as a command line
 option to java in order to inject it into the java context. The command line looks like this
 
-java -DCOEUS_HOME=full-path-to-base-directory -jar full-path-to-jar-file 
+java -DCOEUS_HOME=full-path-to-base-directory -jar path-to-jar-file
 
 when we are taking the timestamp as the last line of the update timestamps file, or 
 
-java -DCOEUS_HOME=full-path-to-base-directory -jar full-path-to-jar-file- -s "yyyy-mm-dd hh:mm:ss.0"
+java -DCOEUS_HOME=full-path-to-base-directory -jar path-to-jar-file- -s "yyyy-mm-dd hh:mm:ss.0"
 
-when invoking the application to process all updates occurring after the specified timestamps.
+when invoking the application to process all grant updates occurring after the specified timestamps.
 
 For example:
 
@@ -111,6 +111,8 @@ After we have processed each record, we save the state of the Grant objects in a
 are processed we know that each Grant object on the List is current, and so we update these grants in Pass.
 
 ### Users
+There is a deprecated User update as well, which can be invoked by setting the mode option (-m=user). We include the documentation
+here only for the sake of completeness. This mode is deprecated because we are using Shibboleth as the main provider for User information.
 The User update is less complicated, since there are no fields which refer to other PASS objects. The operation is otherwise
 similar to the process for Grants. As it turns out, this mode of service is probably unnecessary, as we will be using Shibboleth
 as our authoritative user provider.
