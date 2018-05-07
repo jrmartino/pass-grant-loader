@@ -111,7 +111,7 @@ public class PassUpdateIT {
         }
 
 
-        sleep(12000);
+        sleep(15000);
         //try depositing the exact same resultSet. nothing should happen in Pass
         passUpdater.updatePass(resultSet, "grant");
 
@@ -158,7 +158,7 @@ public class PassUpdateIT {
         Assert.assertEquals(0, statistics.getUsersCreated());
         Assert.assertEquals(1, statistics.getUsersUpdated());
 
-        sleep(12000);
+        sleep(15000);
 
         for(int i = 0; i<10; i++) {
             Grant grant = new Grant();
@@ -199,7 +199,6 @@ public class PassUpdateIT {
                 Assert.assertEquals(directFunder.getName(),passDirectFunder.getName());
             }
 
-
             Funder primaryFunder = new Funder();
             primaryFunder.setLocalKey( C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
             primaryFunder.setName( C_PRIMARY_FUNDER_NAME + Integer.toString(i));
@@ -229,6 +228,14 @@ public class PassUpdateIT {
             Assert.assertEquals(user.getLastName(), passUser.getLastName());
             Assert.assertEquals(user.getEmail(), passUser.getEmail());
             Assert.assertEquals(user.getInstitutionalId(), passUser.getInstitutionalId());
+
+            if (i%2 == 0) {
+                Assert.assertNotNull(passGrant.getPi());
+                Assert.assertEquals(0, passGrant.getCoPis().size());
+            } else {
+                Assert.assertNull(passGrant.getPi());
+                Assert.assertEquals(1, passGrant.getCoPis().size());
+            }
 
         }
     }
