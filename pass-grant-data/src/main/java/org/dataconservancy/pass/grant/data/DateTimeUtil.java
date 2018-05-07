@@ -32,7 +32,7 @@ public class DateTimeUtil {
      * @param sqlDateTime the timestamp string
      * @return the corresponding DataTime object
      */
-    static DateTime createJodaDateTime(String sqlDateTime) {
+    public static DateTime createJodaDateTime(String sqlDateTime) {
 
         if(sqlDateTime != null) {
             DateTime dateTime;
