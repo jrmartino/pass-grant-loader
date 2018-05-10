@@ -71,8 +71,7 @@ public class PassUpdater {
         statistics.setType(mode);
         if (mode.equals("grant")) {
             updateGrants(results);
-        }
-        if (mode.equals("user")) {
+        } else if (mode.equals("user")) {
             updateUsers(results);
         }
     }
@@ -94,6 +93,7 @@ public class PassUpdater {
             String grantLocalKey = rowMap.get(C_GRANT_LOCAL_KEY);
             String directFunderLocalKey = rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY);
             String primaryFunderLocalKey = rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY);
+            primaryFunderLocalKey = (primaryFunderLocalKey == null? directFunderLocalKey: primaryFunderLocalKey);
             Grant grant;
 
             //if this is the first record for this Grant, it will not be on the Map
@@ -132,18 +132,17 @@ public class PassUpdater {
                     grant.setDirectFunder(passFunderURI);
                 }
 
-                if(primaryFunderLocalKey != null) {
-                    if(funderMap.containsKey(primaryFunderLocalKey)) {
-                        grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
-                    } else {
-                        Funder updatedFunder = new Funder();
-                        updatedFunder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
-                        updatedFunder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
-                        URI passFunderURI =  updateFunderInPass(updatedFunder);
-                        funderMap.put(primaryFunderLocalKey, passFunderURI);
-                        grant.setPrimaryFunder(passFunderURI);
-                    }
+                if(funderMap.containsKey(primaryFunderLocalKey)) {
+                    grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
+                } else {
+                    Funder updatedFunder = new Funder();
+                    updatedFunder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
+                    updatedFunder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
+                    URI passFunderURI =  updateFunderInPass(updatedFunder);
+                    funderMap.put(primaryFunderLocalKey, passFunderURI);
+                    grant.setPrimaryFunder(passFunderURI);
                 }
+
 
                 grant.setCoPis(new ArrayList<>());//we will build this from scratch in either case
                 grantMap.put(grantLocalKey, grant);//save the state of this Grant
@@ -208,17 +207,10 @@ public class PassUpdater {
     }
 
     private User buildUser(Map<String, String> rowMap) {
-        String firstName = rowMap.get(C_USER_FIRST_NAME);
-        String middleName = rowMap.get(C_USER_MIDDLE_NAME);
-        String lastName = rowMap.get(C_USER_LAST_NAME);
-
         User user = new User();
-        user.setFirstName(firstName);
-        user.setMiddleName(middleName);
-        user.setLastName(lastName);
-        user.setDisplayName(String.join(" ", firstName, lastName));
-        user.setEmail(rowMap.get(C_USER_EMAIL));
-        user.setInstitutionalId(rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase());
+        user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
+        user.setMiddleName(rowMap.get(C_USER_MIDDLE_NAME));
+        user.setLastName(rowMap.get(C_USER_LAST_NAME));
         user.setLocalKey(rowMap.get(C_USER_LOCAL_KEY));
         user.getRoles().add(User.Role.SUBMITTER);
         return user;
