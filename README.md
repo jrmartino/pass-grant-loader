@@ -61,9 +61,9 @@ mail.from=
 
 mail.to=
 
-### Fedora configuration (system.properties)
+### Fedora and Elasticsearch configuration (system.properties)
 This file contains parameters which must be set as system properties so that  the java PASS client
-can configure itself to attach to its storage - in our case, a Fedora instance. The base URL must contain
+can configure itself to attach to its storage and its search endpoint - in our case, a Fedora instance and an Elasticsearch instance. The base URL must contain
 the port number and path to the base container (for example, http://localhost:8080/fcrepo/rest/)
 
 pass.fedora.user=
@@ -71,6 +71,10 @@ pass.fedora.user=
 pass.fedora.password=
 
 pass.fedora.baseurl=
+
+pass.elasticsearch.url=
+
+pass.elasticsearch.limit=
 
 ## Invocation
 The application is provided as an executable jar file. The absolute path for the base directory COEUS_HOME must be provided as a command line
