@@ -94,7 +94,8 @@ class CoeusGrantLoaderApp {
         String systemPropertiesFileName = "system.properties";
         File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
         //let's be careful about overwriting system properties
-        String[] systemProperties = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl"};
+        String[] systemProperties = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl",
+        "pass.elasticsearch.url", "pass.elasticsearch.limit"};
 
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
