@@ -33,6 +33,7 @@ import java.util.Set;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
+import org.dataconservancy.pass.grant.data.DateTimeUtil;
 import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -186,12 +187,15 @@ class CoeusGrantLoaderApp {
         }
 
         //apparently the hard part has succeeded, let's write the timestamp to our update timestamps file
-        try{
-            appendLineToFile(updateTimestampsFile,  passUpdater.getLatestUpdate());
-        } catch (IOException e) {
-            throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP,  passUpdater.getLatestUpdate()), null);
+        String updateTimestamp = passUpdater.getLatestUpdate();
+        if (DateTimeUtil.verifyDateTimeFormat(updateTimestamp)) {
+            try {
+                appendLineToFile(updateTimestampsFile, passUpdater.getLatestUpdate());
+            } catch (IOException e) {
+                throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, passUpdater.getLatestUpdate()), null);
+            }
         }
-
+        
         //now everything succeeded - log this result and send email if enabled
         String message =  passUpdater.getReport();
         LOG.info(message);
