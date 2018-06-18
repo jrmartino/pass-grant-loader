@@ -59,12 +59,13 @@ public class CoeusConnectorTest {
                 " ON B.EMPLOYEE_ID = C.EMPLOYEE_ID" +
                 " LEFT JOIN COEUS.SWIFT_SPONSOR D" +
                 " ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE" +
-                " WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '2018-13-14 06:00:00.0'" +
-                " AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated')" +
-                " AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C')" +
+                " WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '2018-06-01 06:00:00.0'" +
+                " AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('01/01/2011', 'MM/DD/YYYY')" +
+                " AND A.PROPOSAL_STATUS = 'Funded'" +
+                " AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C' OR REGEXP_LIKE (UPPER(B.ROLE), '^CO ?-?INVESTIGATOR$'))" +
                 " AND A.GRANT_NUMBER IS NOT NULL";
 
-        Assert.assertEquals(expectedQueryString, connector.buildGrantQueryString("2018-13-14 06:00:00.0"));
+        Assert.assertEquals(expectedQueryString, connector.buildGrantQueryString("2018-06-01 06:00:00.0"));
 
     }
 

@@ -217,8 +217,9 @@ public class CoeusConnector {
         sb.append(" WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
         sb.append(startDate);
         sb.append("' ");
-        sb.append("AND (A.AWARD_STATUS = 'Active' OR A.AWARD_STATUS = 'Terminated') ");
-        sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C') ");
+        sb.append("AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('01/01/2011', 'MM/DD/YYYY') ");
+        sb.append("AND A.PROPOSAL_STATUS = 'Funded' ");
+        sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C' OR REGEXP_LIKE (UPPER(B.ROLE), '^CO ?-?INVESTIGATOR$')) ");
         sb.append("AND A.GRANT_NUMBER IS NOT NULL");
 
 

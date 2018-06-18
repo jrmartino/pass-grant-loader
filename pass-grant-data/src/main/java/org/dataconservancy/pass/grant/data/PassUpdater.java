@@ -102,15 +102,22 @@ public class PassUpdater {
             if(!grantMap.containsKey(grantLocalKey)) {
                 grant = new Grant();
                 grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
-                switch (rowMap.get(C_GRANT_AWARD_STATUS)) {
-                    case "Active":
-                        grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
-                        break;
-                    case "Pre-Award":
-                        grant.setAwardStatus(Grant.AwardStatus.PRE_AWARD);
-                        break;
-                    case "Terminated":
-                        grant.setAwardStatus(Grant.AwardStatus.TERMINATED);
+
+                String status = rowMap.get(C_GRANT_AWARD_STATUS);
+
+                if (status != null) {
+                    switch (status) {
+                        case "Active":
+                            grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
+                            break;
+                        case "Pre-Award":
+                            grant.setAwardStatus(Grant.AwardStatus.PRE_AWARD);
+                            break;
+                        case "Terminated":
+                            grant.setAwardStatus(Grant.AwardStatus.TERMINATED);
+                    }
+                } else {
+                    grant.setAwardStatus(null);
                 }
 
                 grant.setLocalKey(grantLocalKey);
@@ -153,7 +160,7 @@ public class PassUpdater {
             String employeeId = rowMap.get(C_USER_LOCAL_KEY);
             String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
 
-            if(abbreviatedRole.equals("C") || grant.getPi() == null) {
+            if(abbreviatedRole.equals("C") || abbreviatedRole.equals("K") || grant.getPi() == null) {
                 if (!userMap.containsKey(employeeId)) {
                     User updatedUser = buildUser(rowMap);
                     URI passUserURI = updateUserInPass(updatedUser);
@@ -164,7 +171,7 @@ public class PassUpdater {
                 if (abbreviatedRole.equals("P")) {
                     grant.setPi(userMap.get(employeeId));
                     statistics.addPi();
-                } else if (abbreviatedRole.equals("C") && !grant.getCoPis().contains(userMap.get(employeeId))) {
+                } else if ((abbreviatedRole.equals("C") || abbreviatedRole.equals("K")) && !grant.getCoPis().contains(userMap.get(employeeId))) {
                     grant.getCoPis().add(userMap.get(employeeId));
                     statistics.addCoPi();
                 }
