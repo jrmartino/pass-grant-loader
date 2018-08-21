@@ -34,6 +34,7 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
+import org.dataconservancy.pass.grant.data.DirectoryServiceUtil;
 import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,8 +57,6 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
  */
 class CoeusGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
-
-
     private EmailService emailService;
 
     private File appHome;
@@ -103,7 +102,7 @@ class CoeusGrantLoaderApp {
         Properties mailProperties;
 
         //check that we have a good value for mode
-        if (!mode.equals("grant") && !mode.equals("user")) {
+        if (!mode.equals("grant") && !mode.equals("user") && !mode.equals("fix-user")) {
             throw processException(format(ERR_MODE_NOT_VALID,mode), null);
         }
 
@@ -168,6 +167,7 @@ class CoeusGrantLoaderApp {
 
         //now do things;
         CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
+        DirectoryServiceUtil directoryServiceUtil = new DirectoryServiceUtil(connectionProperties);
         String queryString = coeusConnector.buildQueryString(startDate, mode);
         Set<Map<String,String>> resultsSet;
         PassUpdater passUpdater;
@@ -175,7 +175,7 @@ class CoeusGrantLoaderApp {
 
         try {
             resultsSet = coeusConnector.retrieveUpdates(queryString, mode);
-            passUpdater = new PassUpdater(passClient);
+            passUpdater = new PassUpdater(passClient, directoryServiceUtil);
             passUpdater.updatePass(resultsSet, mode);
 
         } catch (ClassNotFoundException e) {
@@ -184,6 +184,8 @@ class CoeusGrantLoaderApp {
             throw processException(ERR_SQL_EXCEPTION, e);
         } catch (RuntimeException e) {
             throw processException ("Runtime Exception", e);
+        } catch (IOException e ) {
+            throw processException (ERR_DIRECTORY_LOOKUP_ERROR, e);
         }
 
         //apparently the hard part has succeeded, let's write the timestamp to our update timestamps file

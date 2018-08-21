@@ -30,4 +30,5 @@ class CoeusGrantLoaderErrors {
     static String ERR_SQL_EXCEPTION = "An SQL error occurred querying the COEUS database";
     static String ERR_ORACLE_DRIVER_NOT_FOUND = "Could not find the oracle db driver on classpath.";
     static String ERR_MODE_NOT_VALID = "%s is not a valid mopde - must be either \"grant\" or \"user\"";
+    static String ERR_DIRECTORY_LOOKUP_ERROR = "Error looking up Hopkins ID from employee ID";
 }

@@ -27,16 +27,25 @@ or base directory for the application. This directory will contain any
 configuration files, and will also contain the log file and the file(s) containing the
 update timestamps. Necessary configuration files are as follows.
 
-### COEUS connection properties file (connection.properties)
+### Connection properties file (connection.properties)
 This file must contain the values for the URL, user, and password needed to
 attach to COEUS's Oracle database. The URL for a database used with the Oracle driver typically looks like 
 this: jdbc:oracle:thin:@host.name.institution:1521:service-name
+
+We also put the connection parameters for the directory lookup service which provides us a mapping between a user's
+employee id and their Hopkins ID. these values are the service's base URL, and the credentials needed to access the service
 
 coeus.url = 
 
 coeus.user = 
 
 coeus.password =
+
+directory.base.url =
+
+directory.client.id =
+
+directory.client.secret =
 
 ### Mail server properties file (mail.properties)
 The use of the mail server is enabled by supplying the command line option -e.

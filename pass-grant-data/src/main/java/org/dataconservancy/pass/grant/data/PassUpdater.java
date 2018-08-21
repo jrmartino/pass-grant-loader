@@ -25,10 +25,12 @@ import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 import org.joda.time.DateTime;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -43,11 +45,14 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 
 public class PassUpdater {
 
+
     private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
     private String latestUpdateString = "";
+    private String mode;
 
     private PassClient passClient;
     private PassUpdateStatistics statistics = new PassUpdateStatistics();
+    private DirectoryServiceUtil directoryServiceUtil;
 
     //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
@@ -60,18 +65,21 @@ public class PassUpdater {
     private Map<String, URI> funderMap = new HashMap<>();
     private Map<String, URI> userMap = new HashMap<>();
 
-    public PassUpdater(PassClient passClient) {
+    public PassUpdater(PassClient passClient, DirectoryServiceUtil directoryServiceUtil)
+    {
         this.passClient = passClient;
+        this.directoryServiceUtil = directoryServiceUtil;
     }
 
-    public void updatePass(Set<Map<String, String>> results, String mode) {
+    public void updatePass(Set<Map<String, String>> results, String mode) throws IOException {
+        this.mode = mode;
         userMap.clear();
         funderMap.clear();
         statistics.reset();
         statistics.setType(mode);
         if (mode.equals("grant")) {
             updateGrants(results);
-        } else if (mode.equals("user")) {
+        } else if (mode.equals("user") || mode.equals("fix-user")) {
             updateUsers(results);
         }
     }
@@ -81,7 +89,7 @@ public class PassUpdater {
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
      */
-    private void updateGrants(Set<Map<String, String>> results) {
+    private void updateGrants(Set<Map<String, String>> results) throws IOException {
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
@@ -157,7 +165,7 @@ public class PassUpdater {
 
             //now we process the User (investigator)
             grant = grantMap.get(grantLocalKey);
-            String employeeId = rowMap.get(C_USER_LOCAL_KEY);
+            String employeeId = rowMap.get(C_USER_EMPLOYEE_ID);
             String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
 
             if(abbreviatedRole.equals("C") || abbreviatedRole.equals("K") || grant.getPi() == null) {
@@ -198,7 +206,7 @@ public class PassUpdater {
         }
     }
 
-    private void updateUsers(Set<Map<String, String>> results) {
+    private void updateUsers(Set<Map<String, String>> results) throws IOException {
         for(Map<String,String> rowMap : results) {
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
@@ -218,7 +226,10 @@ public class PassUpdater {
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
         user.setMiddleName(rowMap.get(C_USER_MIDDLE_NAME));
         user.setLastName(rowMap.get(C_USER_LAST_NAME));
-        user.setLocalKey(rowMap.get(C_USER_LOCAL_KEY));
+        user.setDisplayName(user.getFirstName() + " " + user.getLastName());
+        user.setEmail(rowMap.get(C_USER_EMAIL));
+        user.setInstitutionalId(rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase());
+        user.setLocalKey(rowMap.get(C_USER_EMPLOYEE_ID));
         user.getRoles().add(User.Role.SUBMITTER);
         return user;
     }
@@ -255,12 +266,26 @@ public class PassUpdater {
      * @param updatedUser the new User object populated from COEUS
      * @return the URI for the resource representing the updated User in Pass
      */
-    private URI updateUserInPass(User updatedUser) {
+    private URI updateUserInPass(User updatedUser) throws IOException {
         User storedUser;
-        URI passUserURI = passClient.findByAttribute(User.class, "localKey", updatedUser.getLocalKey());
+        String employeeId = updatedUser.getLocalKey();
+        String hopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey()) + "@johnshopkins.edu";
+
+        //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
+        //we overwrite localKey to Hopkins ID @ institution
+        URI passUserURI = passClient.findByAttribute(User.class, "localKey", hopkinsId);
+        if (passUserURI == null) {
+            passUserURI = passClient.findByAttribute(User.class, "localKey", employeeId);
+        }
+        updatedUser.setLocalKey(hopkinsId);//we make sure we are using the hopkins id as the local key
+
         if (passUserURI != null ) {
             storedUser = passClient.readResource(passUserURI, User.class);
-            if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)) {
+            if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser) ||
+                    //populate these fields if the PASS version has a null value
+                    storedUser.getEmail() == null ||
+                    storedUser.getDisplayName() == null ||
+                    storedUser.getInstitutionalId() == null ){
                 storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
@@ -268,11 +293,13 @@ public class PassUpdater {
                 }
                 passClient.updateResource(storedUser);
                 statistics.addUsersUpdated();
-            }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
-             //this can happen if the User was updated in COEUS only with information we don't consume here
+            }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
+             //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Pass
-            passUserURI = passClient.createResource(updatedUser);
-            statistics.addUsersCreated();
+            if (mode != "fix-user") {//don't create a new user if we don't find one - this mode is for updating existing users only
+                passUserURI = passClient.createResource(updatedUser);
+                statistics.addUsersCreated();
+            }
         }
         return passUserURI;
     }
