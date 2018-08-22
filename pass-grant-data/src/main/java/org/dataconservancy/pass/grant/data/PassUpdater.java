@@ -48,6 +48,7 @@ public class PassUpdater {
 
     private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
     private String latestUpdateString = "";
+    public static String institutionalSuffix = "@johnshopkins.edu";
 
     private PassClient passClient;
     private PassUpdateStatistics statistics = new PassUpdateStatistics();
@@ -267,7 +268,7 @@ public class PassUpdater {
     private URI updateUserInPass(User updatedUser) throws IOException {
         User storedUser;
         String employeeId = updatedUser.getLocalKey();
-        String hopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey()) + "@johnshopkins.edu";
+        String hopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey()) + institutionalSuffix;
 
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
         //we overwrite localKey to Hopkins ID @ institution

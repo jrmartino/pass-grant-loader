@@ -34,6 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
+import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -261,7 +262,7 @@ public class PassUpdaterIT {
     }
 
     @Test
-    public void fixUsersIT() throws InterruptedException, IOException {
+    public void updateUsersIT() throws InterruptedException, IOException {
 
         User user10 = new User();
         user10.setLocalKey(C_USER_EMPLOYEE_ID + 10);
@@ -311,7 +312,7 @@ public class PassUpdaterIT {
         assertNotNull(updatedUser.getInstitutionalId());
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());
-        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user10.getLocalKey()) + "@johnshopkins.edu", updatedUser.getLocalKey());
+        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user10.getLocalKey()) + institutionalSuffix , updatedUser.getLocalKey());
 
     }
 }
