@@ -105,7 +105,7 @@ We may add the command line option -e to enable the use of the email server to s
 each execution. This will report information on the successful run of the application, or information
 on what went wrong in the case of an error. If this option is enabled, the email configuration file
 must be filled out accordingly. We also have a command line option -m to pass in the mode of operation -
- "grant", "user", or "fix-user" - depending on which mode we wish to operate in. If no mode is specified, we default to "grant"
+ "grant" or "user" - depending on which mode we wish to operate in. If no mode is specified, we default to "grant"
 
 ## Implementation Details
 The processing of the ResultSet is straightforward - we simply construct a set of hash maps which represent the
@@ -123,17 +123,11 @@ appear many times (Funders or Persons for example). We update these only once in
 After we have processed each record, we save the state of the Grant objects in a List. After all records 
 are processed we know that each Grant object on the List is current, and so we update these grants in Pass.
 
-### User Mode
-There is a User update as well, which can be invoked by setting the mode option (-m user). We include the documentation
-here only for the sake of completeness. The User update is less complicated than that for grants, since there are no
-fields which refer to other PASS objects. The operation is otherwise similar to the process for Grants. As it turns out, this mode of service is probably unnecessary, as we will be using Shibboleth
-as our authoritative user provider.
 
-###Fix-User Mode
-This mode (-m fix-user) is similar to the user mode, with one important difference - if a user record in COEUS is encountered,
-but is not present in the PASS system, then the user will not be created. This mode is intended only for updating existing user records
-in PASS, as a result of a correction or applying changing requirements to the existing PASS User records. For example, changing an identifier,
-adding more fields, might be situations where this mode might be used.
+###User Mode
+This mode (-m user) is similar to the user mode, with one important difference - if a user record in COEUS is encountered,
+but is not present in the PASS system, then the user will not be created. This mode can be used for correction, or for applying changed requirements to the existing PASS User records. For example, changing an identifier,
+adding more fields.
 
 
 

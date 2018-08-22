@@ -48,7 +48,6 @@ public class PassUpdater {
 
     private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
     private String latestUpdateString = "";
-    private String mode;
 
     private PassClient passClient;
     private PassUpdateStatistics statistics = new PassUpdateStatistics();
@@ -72,14 +71,13 @@ public class PassUpdater {
     }
 
     public void updatePass(Set<Map<String, String>> results, String mode) throws IOException {
-        this.mode = mode;
         userMap.clear();
         funderMap.clear();
         statistics.reset();
         statistics.setType(mode);
         if (mode.equals("grant")) {
             updateGrants(results);
-        } else if (mode.equals("user") || mode.equals("fix-user")) {
+        } else if (mode.equals("user")) {
             updateUsers(results);
         }
     }
@@ -296,10 +294,8 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Pass
-            if (mode != "fix-user") {//don't create a new user if we don't find one - this mode is for updating existing users only
                 passUserURI = passClient.createResource(updatedUser);
                 statistics.addUsersCreated();
-            }
         }
         return passUserURI;
     }

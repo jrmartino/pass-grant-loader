@@ -102,7 +102,7 @@ class CoeusGrantLoaderApp {
         Properties mailProperties;
 
         //check that we have a good value for mode
-        if (!mode.equals("grant") && !mode.equals("user") && !mode.equals("fix-user")) {
+        if (!mode.equals("grant") && !mode.equals("user")) {
             throw processException(format(ERR_MODE_NOT_VALID,mode), null);
         }
 
