@@ -306,6 +306,7 @@ public class PassUpdater {
      * new information to update an object for the same Grant in Pass (if it exists)
      *
      * @param updatedGrant the new Grant object populated from COEUS
+     * @return the PASS identifier for the Grant object
      */
     private URI updateGrantInPass(Grant updatedGrant) {
         Grant storedGrant;

@@ -59,7 +59,7 @@ public class PassUpdateStatistics {
 
             sb.append("\n");
             this.report = sb.toString();
-        } else if (type.equals("user") || type.equals("fix-user")) {
+        } else if (type.equals("user")) {
             sb.append(format("%s user records processed; the most recent update in this batch has timestamp %s",
                     resultSetSize, latestUpdateString));
             sb.append("Pass Activity");
