@@ -17,6 +17,7 @@
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
+import org.dataconservancy.pass.grant.data.DirectoryServiceUtil;
 import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.dataconservancy.pass.grant.data.PassEntityUtil;
@@ -27,10 +28,20 @@ import org.dataconservancy.pass.model.User;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
+import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,12 +51,17 @@ import java.util.Set;
 /**
  * An integration test class for the PassUpdater.
  */
-public class PassUpdateIT {
+@RunWith(MockitoJUnitRunner.class)
+public class PassUpdaterIT {
 
     private Set<Map<String,String>> resultSet = new HashSet<>();
 
+    @Mock
+    private DirectoryServiceUtil directoryServiceUtilMock;
+
+
     @Before
-    public void setup() {
+    public void setup() throws IOException {
 
         for (int i = 0; i < 10; i++) {
 
@@ -68,27 +84,30 @@ public class PassUpdateIT {
             rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
             rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
             rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
-            rowMap.put(C_USER_LOCAL_KEY, C_USER_LOCAL_KEY + Integer.toString(i));
+            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
 
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(i) + ":00:00.0");
             rowMap.put(C_ABBREVIATED_ROLE, (i%2==0?"P":"C"));
 
             resultSet.add(rowMap);
         }
+
+        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId(anyString())).thenAnswer(i -> i.getArguments()[0].toString().substring(6)); //needs to be unique
     }
 
     /**
      * The behavior of PassUpdate's updatePass() method is to compare the data coming in on the ResultSet with
      * the existing data in Pass, and create objects if Pass does not yet have them, and update them if they exist in Pass but
-     * there are differences in the fields for which COEUS is the authoritative source.
+     * there are differences in the fields for which COEUS is the authoritative source, or COEUS has a clue about other fields which are null
+     * on the PASS object.
      *
      * @throws InterruptedException - the exception
      */
     @Test
-    public void depositGrantsIT() throws InterruptedException {
+    public void depositGrantsIT() throws InterruptedException, IOException {
 
         PassClient passClient = PassClientFactory.getPassClient();
-        PassUpdater passUpdater = new PassUpdater(passClient);
+        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
         passUpdater.updatePass(resultSet, "grant");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
 
@@ -106,12 +125,11 @@ public class PassUpdateIT {
 
         for (URI grantUri : passUpdater.getGrantUriMap().keySet()) {
             Grant grant = passUpdater.getGrantUriMap().get(grantUri);
-            Grant PassGrant = passUpdater.getPassClient().readResource(grantUri, Grant.class);
-            Assert.assertTrue(PassEntityUtil.coeusGrantsEqual(grant, PassGrant));
+            Grant passGrant = passUpdater.getPassClient().readResource(grantUri, Grant.class);
+            Assert.assertTrue(PassEntityUtil.coeusGrantsEqual(grant, passGrant));
         }
 
-
-        sleep(30000);
+        sleep(20000);
         //try depositing the exact same resultSet. nothing should happen in Pass
         passUpdater.updatePass(resultSet, "grant");
 
@@ -142,7 +160,7 @@ public class PassUpdateIT {
         rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(1));
         rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(1));
         rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(1));
-        rowMap.put(C_USER_LOCAL_KEY, C_USER_LOCAL_KEY + Integer.toString(1));
+        rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(1));
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, ("C"));
@@ -158,7 +176,7 @@ public class PassUpdateIT {
         Assert.assertEquals(0, statistics.getUsersCreated());
         Assert.assertEquals(1, statistics.getUsersUpdated());
 
-        sleep(30000);
+        sleep(20000);
 
         for(int i = 0; i<10; i++) {
             Grant grant = new Grant();
@@ -210,12 +228,15 @@ public class PassUpdateIT {
             Assert.assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
 
             User user = new User();
-            user.setLocalKey(C_USER_LOCAL_KEY + Integer.toString(i));
+
+            //institutionalId was set to a different value from JHED ID by the grant loader
+            String newInstitutionalId = directoryServiceUtilMock.getHopkinsIdForEmployeeId(C_USER_EMPLOYEE_ID + Integer.toString(i)) + "@johnshopkins.edu";
+            user.setLocalKey(C_USER_EMPLOYEE_ID + Integer.toString(i));
             user.setFirstName(C_USER_FIRST_NAME + Integer.toString(i));
             user.setMiddleName(C_USER_MIDDLE_NAME + Integer.toString(i));
             user.setLastName(C_USER_LAST_NAME + Integer.toString(i));
-           // user.setEmail(C_USER_EMAIL + Integer.toString(i));
-           // user.setInstitutionalId(C_USER_INSTITUTIONAL_ID.toLowerCase() + Integer.toString(i));
+            user.setEmail(C_USER_EMAIL + Integer.toString(i));
+            user.setInstitutionalId(newInstitutionalId);
 
             URI userUri = passClient.findByAttribute(User.class, "localKey", user.getLocalKey());
             User passUser = passClient.readResource(userUri, User.class);
@@ -226,17 +247,127 @@ public class PassUpdateIT {
                 Assert.assertEquals(user.getMiddleName(), passUser.getMiddleName());
             }
             Assert.assertEquals(user.getLastName(), passUser.getLastName());
-           // Assert.assertEquals(user.getEmail(), passUser.getEmail());
-            //Assert.assertEquals(user.getInstitutionalId(), passUser.getInstitutionalId());
+            Assert.assertEquals(user.getEmail(), passUser.getEmail());
+            Assert.assertEquals(user.getInstitutionalId(), passUser.getInstitutionalId());
 
             if (i%2 == 0) {
-                Assert.assertNotNull(passGrant.getPi());
+                assertNotNull(passGrant.getPi());
                 Assert.assertEquals(0, passGrant.getCoPis().size());
             } else {
-                Assert.assertNull(passGrant.getPi());
+                assertNull(passGrant.getPi());
                 Assert.assertEquals(1, passGrant.getCoPis().size());
             }
 
         }
+    }
+
+    @Test
+    public void updateUsersIT() throws InterruptedException, IOException {
+
+        User user10 = new User();
+        user10.setLocalKey(C_USER_EMPLOYEE_ID + 10);
+        user10.setFirstName(C_USER_FIRST_NAME + 10);
+        user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
+        user10.setLastName(C_USER_LAST_NAME + 10);
+
+        PassClient passClient = PassClientFactory.getPassClient();
+        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
+
+        URI passUserURI = passUpdater.getPassClient().createResource(user10);
+
+        User passUser = passClient.readResource(passUserURI, User.class);
+        assertNull(passUser.getDisplayName());
+        assertNull(passUser.getInstitutionalId());
+        assertNull(passUser.getEmail());
+
+        sleep(20000);
+
+        Set<Map<String,String>> userResultSet = new HashSet<>();
+
+        for(int i=10; i<12; i++) {
+            Map<String, String> rowMap = new HashMap<>();
+
+            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
+            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
+            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
+            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
+            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
+            userResultSet.add(rowMap);
+        }
+
+
+        passUpdater.updatePass(userResultSet, "user");
+        PassUpdateStatistics statistics = passUpdater.getStatistics();
+
+        //now update from the set of two users - the second one is not in PASS, and should be created
+        //the first (user10) should be updated, with new fields added
+        Assert.assertEquals(1, statistics.getUsersCreated());
+        Assert.assertEquals(1, statistics.getUsersUpdated());
+
+        assertNotNull(passUserURI);
+        User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
+
+        assertNotNull(updatedUser.getInstitutionalId());
+        assertNotNull(updatedUser.getEmail());
+        assertNotNull(updatedUser.getDisplayName());
+        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user10.getLocalKey()) + institutionalSuffix, updatedUser.getInstitutionalId());
+
+    }
+
+    @Test
+    public void updateExistingUsersIT() throws InterruptedException, IOException {
+
+        User user12 = new User();
+        user12.setLocalKey(C_USER_EMPLOYEE_ID + 12);
+        user12.setFirstName(C_USER_FIRST_NAME + 12);
+        user12.setMiddleName(C_USER_MIDDLE_NAME + 12);
+        user12.setLastName(C_USER_LAST_NAME + 12);
+
+        PassClient passClient = PassClientFactory.getPassClient();
+        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
+
+        URI passUserURI = passUpdater.getPassClient().createResource(user12);
+
+        User passUser = passClient.readResource(passUserURI, User.class);
+        assertNull(passUser.getDisplayName());
+        assertNull(passUser.getInstitutionalId());
+        assertNull(passUser.getEmail());
+
+        sleep(20000);
+
+        Set<Map<String,String>> userResultSet = new HashSet<>();
+
+        for(int i=12; i<14; i++) {
+            Map<String, String> rowMap = new HashMap<>();
+
+            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
+            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
+            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
+            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
+            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
+            userResultSet.add(rowMap);
+        }
+
+
+        passUpdater.updatePass(userResultSet, "existing-user");
+        PassUpdateStatistics statistics = passUpdater.getStatistics();
+
+        //now update from the set of two users - the second one is not in PASS, and not be created
+        //the first (user10) should be updated, with new fields added
+        Assert.assertEquals(0, statistics.getUsersCreated());
+        Assert.assertEquals(1, statistics.getUsersUpdated());
+
+        assertNotNull(passUserURI);
+        User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
+
+        assertNotNull(updatedUser.getInstitutionalId());
+        assertNotNull(updatedUser.getEmail());
+        assertNotNull(updatedUser.getDisplayName());
+        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user12.getLocalKey()) + institutionalSuffix, updatedUser.getInstitutionalId());
+
     }
 }

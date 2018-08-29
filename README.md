@@ -27,16 +27,25 @@ or base directory for the application. This directory will contain any
 configuration files, and will also contain the log file and the file(s) containing the
 update timestamps. Necessary configuration files are as follows.
 
-### COEUS connection properties file (connection.properties)
+### Connection properties file (connection.properties)
 This file must contain the values for the URL, user, and password needed to
-attach to COEUS's Oracle database. The URL for a database used with the Oracle driver typically looks like 
-this: jdbc:oracle:thin:@host.name.institution:1521:service-name
+attach to COEUS's Oracle database, and the local directory lookup service. The URL for a database used with the Oracle
+driver typically looks like this: jdbc:oracle:thin:@host.name.institution:1521:service-name
+
+We also put the connection parameters for the directory lookup service which provides us a mapping between a user's
+employee id and their Hopkins ID. these values are the service's base URL, and the credentials needed to access the service
 
 coeus.url = 
 
 coeus.user = 
 
 coeus.password =
+
+directory.base.url =
+
+directory.client.id =
+
+directory.client.secret =
 
 ### Mail server properties file (mail.properties)
 The use of the mail server is enabled by supplying the command line option -e.
@@ -84,7 +93,7 @@ java -DCOEUS_HOME=full-path-to-base-directory -jar path-to-jar-file
 
 when we are taking the timestamp as the last line of the update timestamps file, or 
 
-java -DCOEUS_HOME=full-path-to-base-directory -jar path-to-jar-file- -s "yyyy-mm-dd hh:mm:ss.0"
+java -DCOEUS_HOME=full-path-to-base-directory -jar path-to-jar-file -s "yyyy-mm-dd hh:mm:ss.0"
 
 when invoking the application to process all grant updates occurring after the specified timestamps.
 
@@ -93,10 +102,10 @@ For example:
  java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -s "2018-03-29 14:30:00.0"
  
 We may add the command line option -e to enable the use of the email server to send email messages after
-each execution. This will report information on the successfult run of the pplication, or information
+each execution. This will report information on the successful run of the application, or information
 on what went wrong in the case of an error. If this option is enabled, the email configuration file
 must be filled out accordingly. We also have a command line option -m to pass in the mode of operation -
-either "grant" or "user" - depending on which mode we wish to operate in. If no mode is specified, we default to "grant"
+ "grant" or "user" - depending on which mode we wish to operate in. If no mode is specified, we default to "grant"
 
 ## Implementation Details
 The processing of the ResultSet is straightforward - we simply construct a set of hash maps which represent the
@@ -107,19 +116,18 @@ may be populated by other applications eventually (for example ORCID on User, Su
 ### Grants
 Our approach is that for each grant record, to see if Pass knows about it yet, and if so, pull back the current version
 of the grant. We then look at the hash map and overwrite any information on the existing object with the new 
-information. Fields which are themselves PASS objects are also updated. In order to keep processing as efficient
+information. Fields which are themselves ids representing PASS objects are also updated. In order to keep processing as efficient
 as possible, we do track which PASS objects have been updated in the current session, as some of them may 
 appear many times (Funders or Persons for example). We update these only once in the session.
 
 After we have processed each record, we save the state of the Grant objects in a List. After all records 
 are processed we know that each Grant object on the List is current, and so we update these grants in Pass.
 
-### Users
-There is a deprecated User update as well, which can be invoked by setting the mode option (-m=user). We include the documentation
-here only for the sake of completeness. This mode is deprecated because we are using Shibboleth as the main provider for User information.
-The User update is less complicated, since there are no fields which refer to other PASS objects. The operation is otherwise
-similar to the process for Grants. As it turns out, this mode of service is probably unnecessary, as we will be using Shibboleth
-as our authoritative user provider.
+
+###User Mode
+This mode (-m user) is similar to the user mode, with one important difference - if a user record in COEUS is encountered,
+but is not present in the PASS system, then the user will not be created. This mode can be used for correction, or for applying changed requirements to the existing PASS User records. For example, changing an identifier,
+adding more fields.
 
 
 

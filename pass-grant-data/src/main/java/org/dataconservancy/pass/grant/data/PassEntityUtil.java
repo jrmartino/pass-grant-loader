@@ -20,6 +20,8 @@ import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 
+import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
+
 /**
  * A utility class for handling Grants, Users or Funders. One function performed is comparison of two instances of
  * these PASS entity classes. These comparisons are reduced to only those fields which are updatable by
@@ -70,12 +72,16 @@ public class PassEntityUtil {
         if (update.getFirstName() != null ? !update.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
+        if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
+        //if (update.getInstitutionalId() != null ? !update.getInstitutionalId().equals(stored.getInstitutionalId()) : stored.getInstitutionalId() != null) return false;
         return true;
     }
 
     /**
-     * Update a Pass User object with new information from COEUS. WE check only those fields for which COEUS is
-     * authoritative. Other fields will be managed by other providers (Shibboleth for example).
+     * Update a Pass User object with new information from COEUS. We check only those fields for which COEUS is
+     * authoritative. Other fields will be managed by other providers (Shibboleth for example). The exceptions are
+     * the localKey, which this application and Shibboleth both rely on; and  email, which this application only populates
+     * if Shib hasn't done so already.
      *
      * @param update the version of the User as seen in the COEUS update pull
      * @param stored the version of the User as read from Pass
@@ -85,6 +91,17 @@ public class PassEntityUtil {
         stored.setFirstName(update.getFirstName());
         stored.setMiddleName(update.getMiddleName());
         stored.setLastName(update.getLastName());
+        stored.setLocalKey(update.getLocalKey());
+        if (stored.getInstitutionalId()== null || !stored.getInstitutionalId().endsWith(institutionalSuffix) &&
+                update.getInstitutionalId() != null) {//don't overwrite a HopkinsID
+            stored.setInstitutionalId(update.getInstitutionalId());
+        }
+        if((stored.getEmail() == null) && (update.getEmail() != null)) {
+            stored.setEmail(update.getEmail());
+        }
+        if((stored.getDisplayName() == null && update.getDisplayName() != null)) {
+            stored.setDisplayName(update.getDisplayName());
+        }
         return stored;
     }
 

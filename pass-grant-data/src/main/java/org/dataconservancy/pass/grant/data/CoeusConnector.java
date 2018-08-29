@@ -64,7 +64,7 @@ public class CoeusConnector {
     }
 
     public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException {
-        if (mode.equals("user")) {
+        if (mode.equals("user") || mode.equals("existing-user")) {
             return retrieveUserUpdates(queryString);
         } else {
             return retrieveGrantUpdates(queryString);
@@ -106,7 +106,7 @@ public class CoeusConnector {
                 rowMap.put(C_USER_MIDDLE_NAME, rs.getString(C_USER_MIDDLE_NAME));
                 rowMap.put(C_USER_LAST_NAME, rs.getString(C_USER_LAST_NAME));
                 rowMap.put(C_USER_EMAIL, rs.getString(C_USER_EMAIL));
-                rowMap.put(C_USER_LOCAL_KEY, rs.getString(C_USER_LOCAL_KEY));
+                rowMap.put(C_USER_EMPLOYEE_ID, rs.getString(C_USER_EMPLOYEE_ID));
                 rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
                 rowMap.put(C_ABBREVIATED_ROLE, rs.getString(C_ABBREVIATED_ROLE));
@@ -136,7 +136,7 @@ public class CoeusConnector {
                 rowMap.put(C_USER_LAST_NAME, rs.getString(C_USER_LAST_NAME));
                 rowMap.put(C_USER_EMAIL, rs.getString(C_USER_EMAIL));
                 rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
-                rowMap.put(C_USER_LOCAL_KEY, rs.getString(C_USER_LOCAL_KEY));
+                rowMap.put(C_USER_EMPLOYEE_ID, rs.getString(C_USER_EMPLOYEE_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
                 LOG.debug("Record processed: " + rowMap.toString());
                 mapSet.add(rowMap);
@@ -147,7 +147,7 @@ public class CoeusConnector {
     }
 
     public String buildQueryString(String startDate, String mode) {
-        if (mode.equals("user")) {
+        if (mode.equals("user") || mode.equals("existing-user")) {
             return buildUserQueryString(startDate);
         } else {
             return buildGrantQueryString(startDate);
@@ -189,7 +189,7 @@ public class CoeusConnector {
             "A." + C_UPDATE_TIMESTAMP,
 
             "B." + C_ABBREVIATED_ROLE,
-                "B." + C_USER_LOCAL_KEY,
+                "B." + C_USER_EMPLOYEE_ID,
 
             "C." + C_USER_FIRST_NAME,
             "C." + C_USER_MIDDLE_NAME,
@@ -236,7 +236,7 @@ public class CoeusConnector {
             C_USER_LAST_NAME,
             C_USER_EMAIL,
             C_USER_INSTITUTIONAL_ID,
-            C_USER_LOCAL_KEY,
+                C_USER_EMPLOYEE_ID,
             C_UPDATE_TIMESTAMP };
 
         StringBuilder sb = new StringBuilder();

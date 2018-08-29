@@ -27,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,10 +50,13 @@ public class PassUpdaterTest {
     @Mock
     private PassClient passClientMock;
 
+    @Mock
+    private DirectoryServiceUtil directoryServiceUtilMock;
+
     private URI grantUri;
 
     @Before
-    public void setup() {
+    public void setup() throws IOException{
         grantUri = URI.create("grantUri");
         URI userUri1 = URI.create("piUri");
         URI useruri2 = URI.create("coPiUri");
@@ -62,6 +66,9 @@ public class PassUpdaterTest {
         when(passClientMock.createResource(any(Grant.class))).thenReturn(grantUri);
         when(passClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
         when(passClientMock.createResource(any(User.class))).thenReturn(userUri1, useruri2);
+
+        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000222")).thenReturn("A1A1A1");
+        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000333")).thenReturn("B2B2B2");
     }
     /**
      * Test static timestamp utility method to verify it returns the later of two supplied timestamps
@@ -81,7 +88,7 @@ public class PassUpdaterTest {
     }
 
     @Test
-    public void testGrantBuilding() {
+    public void testGrantBuilding() throws IOException {
 
         Set<Map<String, String>> resultSet = new HashSet<>();
 
@@ -116,7 +123,7 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_LAST_NAME, "Reckondwith");
         rowMap.put(C_USER_EMAIL, "areckon3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "ARECKON3");
-        rowMap.put(C_USER_LOCAL_KEY, "0000333");
+        rowMap.put(C_USER_EMPLOYEE_ID, "0000333");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "P");
@@ -142,14 +149,14 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_LAST_NAME, "Lartz");
         rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
-        rowMap.put(C_USER_LOCAL_KEY,"0000222");
+        rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "C");
 
         resultSet.add(rowMap);
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock);
+        PassUpdater passUpdater = new PassUpdater(passClientMock, directoryServiceUtilMock);
         passUpdater.updatePass(resultSet, "grant");
 
         Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
