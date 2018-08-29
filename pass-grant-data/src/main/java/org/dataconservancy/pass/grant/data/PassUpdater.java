@@ -65,6 +65,8 @@ public class PassUpdater {
     private Map<String, URI> funderMap = new HashMap<>();
     private Map<String, URI> userMap = new HashMap<>();
 
+    private String mode;
+
     public PassUpdater(PassClient passClient, DirectoryServiceUtil directoryServiceUtil)
     {
         this.passClient = passClient;
@@ -72,13 +74,14 @@ public class PassUpdater {
     }
 
     public void updatePass(Set<Map<String, String>> results, String mode) throws IOException {
+        this.mode = mode;
         userMap.clear();
         funderMap.clear();
         statistics.reset();
         statistics.setType(mode);
         if (mode.equals("grant")) {
             updateGrants(results);
-        } else if (mode.equals("user")) {
+        } else if (mode.equals("user") || mode.equals("existing-user")) {
             updateUsers(results);
         }
     }
@@ -220,14 +223,15 @@ public class PassUpdater {
 
     }
 
-    private User buildUser(Map<String, String> rowMap) {
+    private User buildUser(Map<String, String> rowMap) throws IOException {
+
         User user = new User();
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
         user.setMiddleName(rowMap.get(C_USER_MIDDLE_NAME));
         user.setLastName(rowMap.get(C_USER_LAST_NAME));
-        user.setDisplayName(user.getFirstName() + " " + user.getLastName());
+        user.setDisplayName(rowMap.get(C_USER_FIRST_NAME) + " " + rowMap.get(C_USER_LAST_NAME));
         user.setEmail(rowMap.get(C_USER_EMAIL));
-        user.setInstitutionalId(rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase());
+        user.setInstitutionalId(rowMap.get(C_USER_INSTITUTIONAL_ID));
         user.setLocalKey(rowMap.get(C_USER_EMPLOYEE_ID));
         user.getRoles().add(User.Role.SUBMITTER);
         return user;
@@ -267,24 +271,44 @@ public class PassUpdater {
      */
     private URI updateUserInPass(User updatedUser) throws IOException {
         User storedUser;
-        String employeeId = updatedUser.getLocalKey();
-        String hopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey()) + institutionalSuffix;
+        String employeeId = updatedUser.getLocalKey() != null ? updatedUser.getLocalKey() : null;
+        String jhedId = updatedUser.getInstitutionalId() != null ? updatedUser.getInstitutionalId().toLowerCase(): null;
+        String hopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey());
+        String institutionalId = null;
+
+        if (hopkinsId != null) {
+            hopkinsId  = hopkinsId + institutionalSuffix;
+            institutionalId = hopkinsId;
+        }
+
+        if (institutionalId == null) {//no Hopkins ID turned up in directory lookup
+            institutionalId = jhedId;
+        }
+
+        updatedUser.setInstitutionalId(institutionalId);
 
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
-        //we overwrite localKey to Hopkins ID @ institution
-        URI passUserURI = passClient.findByAttribute(User.class, "localKey", hopkinsId);
-        if (passUserURI == null) {
-            passUserURI = passClient.findByAttribute(User.class, "localKey", employeeId);
+        //last attempt is the JHED ID
+        URI passUserURI = null;
+
+        if (hopkinsId != null) {
+            passUserURI = passClient.findByAttribute(User.class, "institutionalId", hopkinsId);
         }
-        updatedUser.setLocalKey(hopkinsId);//we make sure we are using the hopkins id as the local key
+        if (passUserURI == null && employeeId != null) {
+                passUserURI = passClient.findByAttribute(User.class, "localKey", employeeId);
+        }
+        if (passUserURI == null && jhedId != null) {
+            passUserURI = passClient.findByAttribute(User.class, "institutionalId", jhedId);
+        }
 
         if (passUserURI != null ) {
             storedUser = passClient.readResource(passUserURI, User.class);
             if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser) ||
-                    //populate these fields if the PASS version has a null value
+                    //adjust these fields if neccessary these fields if the PASS version has a null value
                     storedUser.getEmail() == null ||
                     storedUser.getDisplayName() == null ||
-                    storedUser.getInstitutionalId() == null ){
+                    storedUser.getInstitutionalId() == null ||
+                    !storedUser.getInstitutionalId().endsWith(institutionalSuffix)){
                 storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
@@ -295,8 +319,10 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Pass
+            if (!mode.equals("existing-user")) {
                 passUserURI = passClient.createResource(updatedUser);
                 statistics.addUsersCreated();
+            }
         }
         return passUserURI;
     }

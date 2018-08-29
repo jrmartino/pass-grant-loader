@@ -16,10 +16,11 @@
 
 package org.dataconservancy.pass.grant.data;
 
-import com.vividsolutions.jts.util.Assert;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
+
+import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
 
 /**
  * A utility class for handling Grants, Users or Funders. One function performed is comparison of two instances of
@@ -72,6 +73,7 @@ public class PassEntityUtil {
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
         if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
+        //if (update.getInstitutionalId() != null ? !update.getInstitutionalId().equals(stored.getInstitutionalId()) : stored.getInstitutionalId() != null) return false;
         return true;
     }
 
@@ -89,16 +91,17 @@ public class PassEntityUtil {
         stored.setFirstName(update.getFirstName());
         stored.setMiddleName(update.getMiddleName());
         stored.setLastName(update.getLastName());
+        stored.setLocalKey(update.getLocalKey());
+        if (stored.getInstitutionalId()== null || !stored.getInstitutionalId().endsWith(institutionalSuffix) &&
+                update.getInstitutionalId() != null) {//don't overwrite a HopkinsID
+            stored.setInstitutionalId(update.getInstitutionalId());
+        }
         if((stored.getEmail() == null) && (update.getEmail() != null)) {
             stored.setEmail(update.getEmail());
-        }
-        if((stored.getInstitutionalId() == null && update.getInstitutionalId() !=null)) {
-            stored.setInstitutionalId(update.getInstitutionalId());
         }
         if((stored.getDisplayName() == null && update.getDisplayName() != null)) {
             stored.setDisplayName(update.getDisplayName());
         }
-        stored.setLocalKey(update.getLocalKey());//this will be the hopkinsId
         return stored;
     }
 
