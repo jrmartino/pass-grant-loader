@@ -223,7 +223,7 @@ public class PassUpdater {
 
     }
 
-    private User buildUser(Map<String, String> rowMap) throws IOException {
+    private User buildUser(Map<String, String> rowMap) {
 
         User user = new User();
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
@@ -271,7 +271,7 @@ public class PassUpdater {
      */
     private URI updateUserInPass(User updatedUser) throws IOException {
         User storedUser;
-        String employeeId = updatedUser.getLocalKey() != null ? updatedUser.getLocalKey() : null;
+        String employeeId = updatedUser.getLocalKey();
         String jhedId = updatedUser.getInstitutionalId() != null ? updatedUser.getInstitutionalId().toLowerCase(): null;
         String hopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey());
         String institutionalId = null;
