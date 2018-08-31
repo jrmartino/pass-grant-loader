@@ -104,7 +104,7 @@ public class PassUpdaterIT {
      * @throws InterruptedException - the exception
      */
     @Test
-    public void depositGrantsIT() throws InterruptedException, IOException {
+    public void updateGrantsIT() throws InterruptedException, IOException {
 
         PassClient passClient = PassClientFactory.getPassClient();
         PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
@@ -182,7 +182,7 @@ public class PassUpdaterIT {
             Grant grant = new Grant();
             grant.setAwardNumber(C_GRANT_AWARD_NUMBER + Integer.toString(i));
             grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
-            grant.setLocalKey(C_GRANT_LOCAL_KEY + Integer.toString(i));
+            grant.setLocalKey(C_GRANT_LOCAL_KEY + Integer.toString(i) + institutionalSuffix);
             grant.setProjectName(C_GRANT_PROJECT_NAME + Integer.toString(i));
             grant.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
             grant.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
@@ -205,33 +205,34 @@ public class PassUpdaterIT {
 
             //let's check funder stuff
             Funder directFunder = new Funder();
-            directFunder.setLocalKey(C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
+            directFunder.setLocalKey(C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i)+institutionalSuffix);
             directFunder.setName(C_DIRECT_FUNDER_NAME + Integer.toString(i));
 
             URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
             Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
             if(i==1) {
                 Assert.assertEquals(directFunder.getName()+ "MOOOOO", passDirectFunder.getName());
+                Assert.assertEquals(directFunder.getLocalKey(), passDirectFunder.getLocalKey());
                 Assert.assertEquals(passDirectFunder.getId(), passGrant.getDirectFunder());
             } else {
                 Assert.assertEquals(directFunder.getName(),passDirectFunder.getName());
             }
 
             Funder primaryFunder = new Funder();
-            primaryFunder.setLocalKey( C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
+            primaryFunder.setLocalKey( C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i)+institutionalSuffix);
             primaryFunder.setName( C_PRIMARY_FUNDER_NAME + Integer.toString(i));
 
             URI primaryFunderUri = passClient.findByAttribute(Funder.class, "localKey", primaryFunder.getLocalKey());
             Funder passPrimaryFunder = passClient.readResource(primaryFunderUri, Funder.class);
             Assert.assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
             Assert.assertEquals(passPrimaryFunder.getId(), passGrant.getPrimaryFunder());
-            Assert.assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
+            Assert.assertEquals(primaryFunder.getLocalKey(), passPrimaryFunder.getLocalKey());
 
             User user = new User();
 
-            //institutionalId was set to a different value from JHED ID by the grant loader
-            String newInstitutionalId = directoryServiceUtilMock.getHopkinsIdForEmployeeId(C_USER_EMPLOYEE_ID + Integer.toString(i)) + "@johnshopkins.edu";
-            user.setLocalKey(C_USER_EMPLOYEE_ID + Integer.toString(i));
+            //institutionalId and localKey were set to different values by the grant loader
+            String newInstitutionalId = directoryServiceUtilMock.getHopkinsIdForEmployeeId(C_USER_EMPLOYEE_ID + Integer.toString(i)) + institutionalSuffix;
+            user.setLocalKey(C_USER_EMPLOYEE_ID + Integer.toString(i) + institutionalSuffix);
             user.setFirstName(C_USER_FIRST_NAME + Integer.toString(i));
             user.setMiddleName(C_USER_MIDDLE_NAME + Integer.toString(i));
             user.setLastName(C_USER_LAST_NAME + Integer.toString(i));
@@ -262,10 +263,76 @@ public class PassUpdaterIT {
     }
 
     @Test
+    public void updateExistingGrantsIT() throws IOException, InterruptedException {
+        Grant grant10 = new Grant();
+        grant10.setLocalKey(C_GRANT_LOCAL_KEY + 10);
+        grant10.setAwardNumber(C_GRANT_AWARD_NUMBER + 10);
+        grant10.setAwardStatus(Grant.AwardStatus.ACTIVE);
+        grant10.setLocalKey(C_GRANT_LOCAL_KEY + 10);
+        grant10.setProjectName(C_GRANT_PROJECT_NAME + 10);
+        grant10.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
+        grant10.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
+        grant10.setEndDate(DateTimeUtil.createJodaDateTime("01/01/2002"));
+
+        PassClient passClient = PassClientFactory.getPassClient();
+        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
+
+        URI passGrantURI = passUpdater.getPassClient().createResource(grant10);
+
+        Grant passGrant = passClient.readResource(passGrantURI, Grant.class);
+        assertEquals(grant10.getLocalKey(), passGrant.getLocalKey());
+
+        sleep(20000);
+
+        Set<Map<String,String>> grantResultSet = new HashSet<>();
+
+        for(int i = 10; i<12; i++) {
+            Map<String, String> rowMap = new HashMap<>();
+            rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + Integer.toString(i));
+            rowMap.put(C_GRANT_AWARD_STATUS, "Active");
+            rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + Integer.toString(i));
+            rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + Integer.toString(i));
+            rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
+            rowMap.put(C_GRANT_START_DATE, "01/01/2001");
+            rowMap.put(C_GRANT_END_DATE, "01/01/2002");
+
+            rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
+            rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + Integer.toString(i));
+            rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
+            rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + Integer.toString(i));
+
+            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
+            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
+            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
+            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
+            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
+
+            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(i) + ":00:00.0");
+            rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
+
+            grantResultSet.add(rowMap);
+        }
+
+        passUpdater.updatePass(grantResultSet, "existing-grant");
+        PassUpdateStatistics statistics = passUpdater.getStatistics();
+
+        //now update from the set of two grants - the second one is not in PASS, and should not be created
+        //the first (user10) should  be updated
+        assertEquals(0, statistics.getGrantsCreated());
+        assertEquals(1, statistics.getGrantsUpdated());
+
+        assertNotNull(passGrantURI);
+        Grant updatedGrant = passUpdater.getPassClient().readResource(passGrantURI, Grant.class);
+        assertEquals(passGrant.getLocalKey() + institutionalSuffix, updatedGrant.getLocalKey());
+
+    }
+
+    @Test
     public void updateUsersIT() throws InterruptedException, IOException {
 
         User user10 = new User();
-        user10.setLocalKey(C_USER_EMPLOYEE_ID + 10);
+        user10.setLocalKey(C_USER_EMPLOYEE_ID + 10 + institutionalSuffix);
         user10.setFirstName(C_USER_FIRST_NAME + 10);
         user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
         user10.setLastName(C_USER_LAST_NAME + 10);
@@ -303,8 +370,8 @@ public class PassUpdaterIT {
 
         //now update from the set of two users - the second one is not in PASS, and should be created
         //the first (user10) should be updated, with new fields added
-        Assert.assertEquals(1, statistics.getUsersCreated());
-        Assert.assertEquals(1, statistics.getUsersUpdated());
+        assertEquals(1, statistics.getUsersCreated());
+        assertEquals(1, statistics.getUsersUpdated());
 
         assertNotNull(passUserURI);
         User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
@@ -312,9 +379,11 @@ public class PassUpdaterIT {
         assertNotNull(updatedUser.getInstitutionalId());
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());
-        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user10.getLocalKey()) + institutionalSuffix, updatedUser.getInstitutionalId());
-
+        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(C_USER_EMPLOYEE_ID + 10) + institutionalSuffix, updatedUser.getInstitutionalId());
+        assertEquals(user10.getLocalKey(), updatedUser.getLocalKey());
+        assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
     }
+
 
     @Test
     public void updateExistingUsersIT() throws InterruptedException, IOException {
@@ -367,7 +436,9 @@ public class PassUpdaterIT {
         assertNotNull(updatedUser.getInstitutionalId());
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());
-        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user12.getLocalKey()) + institutionalSuffix, updatedUser.getInstitutionalId());
 
+        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user12.getLocalKey()) + institutionalSuffix, updatedUser.getInstitutionalId());
+        assertEquals(user12.getLocalKey()+ institutionalSuffix, updatedUser.getLocalKey());
+        assertEquals(C_USER_EMAIL + 12, updatedUser.getEmail());
     }
 }

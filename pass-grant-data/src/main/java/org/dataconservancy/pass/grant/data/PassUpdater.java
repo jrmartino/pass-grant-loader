@@ -30,7 +30,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -79,9 +78,9 @@ public class PassUpdater {
         funderMap.clear();
         statistics.reset();
         statistics.setType(mode);
-        if (mode.equals("grant")) {
+        if (mode.endsWith("grant")) {
             updateGrants(results);
-        } else if (mode.equals("user") || mode.equals("existing-user")) {
+        } else if (mode.endsWith("user")) {
             updateUsers(results);
         }
     }
@@ -160,7 +159,6 @@ public class PassUpdater {
                     grant.setPrimaryFunder(passFunderURI);
                 }
 
-
                 grant.setCoPis(new ArrayList<>());//we will build this from scratch in either case
                 grantMap.put(grantLocalKey, grant);//save the state of this Grant
             }
@@ -223,7 +221,7 @@ public class PassUpdater {
 
     }
 
-    private User buildUser(Map<String, String> rowMap) {
+    protected User buildUser(Map<String, String> rowMap) {
 
         User user = new User();
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
@@ -245,10 +243,14 @@ public class PassUpdater {
      * @return the URI for the resource representing the updated Funder in Pass
      */
     private URI updateFunderInPass(Funder updatedFunder) {
-        Funder storedFunder;
-        URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", updatedFunder.getLocalKey());
+        String baseLocalKey = updatedFunder.getLocalKey();
+        String fullLocalKey = localize(baseLocalKey);
+        String searchLocalKey = mode.startsWith("existing")? baseLocalKey : fullLocalKey;
+        updatedFunder.setLocalKey(fullLocalKey);
+
+        URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", searchLocalKey);
         if (passFunderURI != null ) {
-            storedFunder = passClient.readResource(passFunderURI, Funder.class);
+            Funder storedFunder = passClient.readResource(passFunderURI, Funder.class);
             if (!PassEntityUtil.coeusFundersEqual(updatedFunder, storedFunder)) {
                 storedFunder = PassEntityUtil.updateFunder(updatedFunder, storedFunder);
                 passClient.updateResource(storedFunder);
@@ -256,8 +258,10 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Funder for this URI - this one is new to Pass
-            passFunderURI = passClient.createResource(updatedFunder);
-            statistics.addFundersCreated();
+            if(!mode.startsWith("existing")) {//don't create funder if we don't have it already
+                passFunderURI = passClient.createResource(updatedFunder);
+                statistics.addFundersCreated();
+            }
         }
         return passFunderURI;
     }
@@ -270,45 +274,40 @@ public class PassUpdater {
      * @return the URI for the resource representing the updated User in Pass
      */
     private URI updateUserInPass(User updatedUser) throws IOException {
-        User storedUser;
-        String employeeId = updatedUser.getLocalKey();
-        String jhedId = updatedUser.getInstitutionalId() != null ? updatedUser.getInstitutionalId().toLowerCase(): null;
-        String hopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey());
-        String institutionalId = null;
 
-        if (hopkinsId != null) {
-            hopkinsId  = hopkinsId + institutionalSuffix;
-            institutionalId = hopkinsId;
-        }
+        String baseEmployeeId = updatedUser.getLocalKey();
+        String baseJhedId = updatedUser.getInstitutionalId() != null ? updatedUser.getInstitutionalId().toLowerCase(): null;
+        String baseHopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey());
 
-        if (institutionalId == null) {//no Hopkins ID turned up in directory lookup
-            institutionalId = jhedId;
-        }
+        String fullEmployeeId = localize(baseEmployeeId);
+        String fullJhedId = localize(baseJhedId);
+        String fullHopkinsId = localize(baseHopkinsId);
 
-        updatedUser.setInstitutionalId(institutionalId);
+        //with the old data format for search fields, we use "existing-user" or "existing-grant" mode
+        String searchEmployeeId = mode.startsWith("existing")? baseEmployeeId : fullEmployeeId;
+        String searchHopkinsId = mode.startsWith("existing")? baseHopkinsId : fullHopkinsId;
+        String searchJhedId = mode.startsWith("existing")? baseJhedId : fullJhedId;
+
+        updatedUser.setInstitutionalId(fullHopkinsId != null ? fullHopkinsId : fullJhedId);
+        updatedUser.setLocalKey(fullEmployeeId);
 
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
         //last attempt is the JHED ID
         URI passUserURI = null;
 
-        if (hopkinsId != null) {
-            passUserURI = passClient.findByAttribute(User.class, "institutionalId", hopkinsId);
+        if (searchHopkinsId != null) {
+            passUserURI = passClient.findByAttribute(User.class, "institutionalId", searchHopkinsId);
         }
-        if (passUserURI == null && employeeId != null) {
-                passUserURI = passClient.findByAttribute(User.class, "localKey", employeeId);
+        if (passUserURI == null && searchEmployeeId != null) {
+                passUserURI = passClient.findByAttribute(User.class, "localKey", searchEmployeeId);
         }
-        if (passUserURI == null && jhedId != null) {
-            passUserURI = passClient.findByAttribute(User.class, "institutionalId", jhedId);
+        if (passUserURI == null && searchJhedId != null) {
+            passUserURI = passClient.findByAttribute(User.class, "institutionalId", searchJhedId);
         }
 
         if (passUserURI != null ) {
-            storedUser = passClient.readResource(passUserURI, User.class);
-            if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser) ||
-                    //adjust these fields if neccessary these fields if the PASS version has a null value
-                    storedUser.getEmail() == null ||
-                    storedUser.getDisplayName() == null ||
-                    storedUser.getInstitutionalId() == null ||
-                    !storedUser.getInstitutionalId().endsWith(institutionalSuffix)){
+            User storedUser = passClient.readResource(passUserURI, User.class);
+            if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)){
                 storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
@@ -319,7 +318,7 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Pass
-            if (!mode.equals("existing-user")) {
+            if (!mode.startsWith("existing")) {//don't create new user if we are only updating existing users
                 passUserURI = passClient.createResource(updatedUser);
                 statistics.addUsersCreated();
             }
@@ -335,10 +334,14 @@ public class PassUpdater {
      * @return the PASS identifier for the Grant object
      */
     private URI updateGrantInPass(Grant updatedGrant) {
-        Grant storedGrant;
-        URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", updatedGrant.getLocalKey());
+        String baseLocalKey = updatedGrant.getLocalKey();
+        String fullLocalKey = localize(baseLocalKey);
+        String searchLocalKey = mode.startsWith("existing")? baseLocalKey : fullLocalKey;
+        updatedGrant.setLocalKey(fullLocalKey);
+
+        URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", searchLocalKey);
         if (passGrantURI != null ) {
-            storedGrant = passClient.readResource(passGrantURI, Grant.class);
+            Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
             if (!PassEntityUtil.coeusGrantsEqual(updatedGrant, storedGrant)) {
                 storedGrant = PassEntityUtil.updateGrant(updatedGrant, storedGrant);
                 passClient.updateResource(storedGrant);
@@ -346,8 +349,10 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Pass
-            passGrantURI = passClient.createResource(updatedGrant);
-            statistics.addGrantsCreated();
+            if (!mode.startsWith("existing")) {//don't create new grant if we don't already have it
+                passGrantURI = passClient.createResource(updatedGrant);
+                statistics.addGrantsCreated();
+            }
         }
         return passGrantURI;
     }
@@ -404,5 +409,9 @@ public class PassUpdater {
 
     //used in unit test
     Map<String, URI> getUserMap() { return userMap; }
+
+    private String localize (String base) {
+        return base != null ? base + institutionalSuffix : null;
+    }
 
 }

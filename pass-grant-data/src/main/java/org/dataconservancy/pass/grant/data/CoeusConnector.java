@@ -64,7 +64,7 @@ public class CoeusConnector {
     }
 
     public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException {
-        if (mode.equals("user") || mode.equals("existing-user")) {
+        if (mode.endsWith("user")) {
             return retrieveUserUpdates(queryString);
         } else {
             return retrieveGrantUpdates(queryString);
@@ -147,7 +147,7 @@ public class CoeusConnector {
     }
 
     public String buildQueryString(String startDate, String mode) {
-        if (mode.equals("user") || mode.equals("existing-user")) {
+        if (mode.endsWith("user")) {
             return buildUserQueryString(startDate);
         } else {
             return buildGrantQueryString(startDate);

@@ -20,7 +20,6 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,7 +34,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
+import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
 import static org.dataconservancy.pass.grant.data.PassUpdater.returnLaterUpdate;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -61,7 +62,7 @@ public class PassUpdaterTest {
         URI userUri1 = URI.create("piUri");
         URI useruri2 = URI.create("coPiUri");
         URI funderUri1 = URI.create("funderuri1");
-        URI funderUri2 = URI.create("funderur2");
+        URI funderUri2 = URI.create("funderuri2");
 
         when(passClientMock.createResource(any(Grant.class))).thenReturn(grantUri);
         when(passClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
@@ -80,11 +81,11 @@ public class PassUpdaterTest {
         String laterDate  = "2018-01-02 04:08:09.0";
 
         String latestDate = returnLaterUpdate(baseString, earlyDate);
-        Assert.assertEquals(earlyDate, latestDate);
+        assertEquals(earlyDate, latestDate);
         latestDate = returnLaterUpdate(latestDate, laterDate);
-        Assert.assertEquals(laterDate, latestDate);
+        assertEquals(laterDate, latestDate);
 
-        Assert.assertEquals(earlyDate, returnLaterUpdate(earlyDate, earlyDate));
+        assertEquals(earlyDate, returnLaterUpdate(earlyDate, earlyDate));
     }
 
     @Test
@@ -160,21 +161,41 @@ public class PassUpdaterTest {
         passUpdater.updatePass(resultSet, "grant");
 
         Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
-        Assert.assertEquals(1, grantMap.size());
+        assertEquals(1, grantMap.size());
         Grant grant = grantMap.get(grantUri);
-        Assert.assertEquals(1, grant.getCoPis().size());
-        //Assert.assertEquals(2, passUpdater.getFunderMap().size());
-        Assert.assertEquals(grant.getDirectFunder(), passUpdater.getFunderMap().get(directFunderId));
-        Assert.assertEquals(grant.getPrimaryFunder(), passUpdater.getFunderMap().get(primaryFunderId));
-        Assert.assertEquals(grant.getPi(), passUpdater.getUserMap().get("0000333"));
-        Assert.assertEquals(grant.getCoPis().get(0), passUpdater.getUserMap().get("0000222"));
+        assertEquals(1, grant.getCoPis().size());
+        assertEquals(2, passUpdater.getFunderMap().size());
+        assertEquals(grant.getDirectFunder(), passUpdater.getFunderMap().get(directFunderId));
+        assertEquals(grant.getPrimaryFunder(), passUpdater.getFunderMap().get(primaryFunderId));
+        assertEquals(grant.getPi(), passUpdater.getUserMap().get("0000333"));
+        assertEquals(grant.getCoPis().get(0), passUpdater.getUserMap().get("0000222"));
 
-        Assert.assertEquals(awardNumber, grant.getAwardNumber());
-        Assert.assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());
-        Assert.assertEquals(localKey, grant.getLocalKey());
-        Assert.assertEquals(DateTimeUtil.createJodaDateTime(awardDate), grant.getAwardDate());
-        Assert.assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
-        Assert.assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());
-        Assert.assertEquals(projectName, grant.getProjectName());
+        assertEquals(awardNumber, grant.getAwardNumber());
+        assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());
+        assertEquals(localKey + institutionalSuffix, grant.getLocalKey());
+        assertEquals(DateTimeUtil.createJodaDateTime(awardDate), grant.getAwardDate());
+        assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
+        assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());
+        assertEquals(projectName, grant.getProjectName());
+    }
+
+    @Test
+    public void testUserBuilding() {
+
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_USER_FIRST_NAME, "Marsha");
+        rowMap.put(C_USER_MIDDLE_NAME, null);
+        rowMap.put(C_USER_LAST_NAME, "Lartz");
+        rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
+        rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
+        rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
+        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
+
+        PassUpdater passUpdater = new PassUpdater(passClientMock, directoryServiceUtilMock);
+        User newUser = passUpdater.buildUser(rowMap);
+
+        //the only unusual field
+        assertEquals("Marsha Lartz", newUser.getDisplayName());
+
     }
 }

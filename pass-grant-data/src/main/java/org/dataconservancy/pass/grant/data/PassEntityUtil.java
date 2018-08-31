@@ -20,8 +20,6 @@ import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 
-import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
-
 /**
  * A utility class for handling Grants, Users or Funders. One function performed is comparison of two instances of
  * these PASS entity classes. These comparisons are reduced to only those fields which are updatable by
@@ -63,17 +61,23 @@ public class PassEntityUtil {
 
     /**
      * Compare two User objects. We only care about those fields for which COEUS is the authoritative source
+     * After recent changes. this method would be more accurately named "storedUserDoesNotNeedToBeUpdated"
      *
      * @param update the version of the User as seen in the COEUS update pull
      * @param stored the version of the User as read from Pass
      * @return a boolean which asserts whether the two supplied Users are "COEUS equal"
      */
     static boolean coeusUsersEqual(User update, User stored) {
+        //first the fields for which COEUS is authoritative
         if (update.getFirstName() != null ? !update.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
         if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-        //if (update.getInstitutionalId() != null ? !update.getInstitutionalId().equals(stored.getInstitutionalId()) : stored.getInstitutionalId() != null) return false;
+
+        //next, other fields which require some reasoning to decide whether an update is necessary
+        if (update.getEmail() != null && stored.getEmail() == null) return false;
+        if (update.getDisplayName() != null && stored.getEmail() == null) return false;
+        if (isJhedId(stored.getInstitutionalId()) && !isJhedId(update.getInstitutionalId())) return false;
         return true;
     }
 
@@ -92,8 +96,9 @@ public class PassEntityUtil {
         stored.setMiddleName(update.getMiddleName());
         stored.setLastName(update.getLastName());
         stored.setLocalKey(update.getLocalKey());
-        if (stored.getInstitutionalId()== null || !stored.getInstitutionalId().endsWith(institutionalSuffix) &&
-                update.getInstitutionalId() != null) {//don't overwrite a HopkinsID
+        //isJhedId will evaluate null or empty institutional id to true
+        if (isJhedId(stored.getInstitutionalId())
+                && !isJhedId(update.getInstitutionalId())) {//overwrite a possibly null jhed id with a hopkins id
             stored.setInstitutionalId(update.getInstitutionalId());
         }
         if((stored.getEmail() == null) && (update.getEmail() != null)) {
@@ -146,6 +151,21 @@ public class PassEntityUtil {
         stored.setStartDate(update.getStartDate());
         stored.setEndDate(update.getEndDate());
         return stored;
+    }
+
+    /**
+     * This method tells us whether an institutionalID is a Jhed ID. the Hopkins ID is always composed
+     * of uppercase letters and digits; Jhed ID always starts with a lower case string followed by digits.
+     * COEUS provides us with uppercase Jhed Ids, which we lowercase in the PassUpdater.
+     *
+     * @param s the string to check
+     * @return whether or not the string is a jhed id
+     */
+    static private boolean isJhedId (String s) {
+        if (s == null || s.isEmpty()) {
+            return true;// this looks odd, but a return value of true for this method kicks off a replacement action
+        }
+        return Character.isLowerCase(s.charAt(0));
     }
 
 }
