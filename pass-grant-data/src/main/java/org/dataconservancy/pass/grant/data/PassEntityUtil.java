@@ -96,9 +96,8 @@ public class PassEntityUtil {
         stored.setMiddleName(update.getMiddleName());
         stored.setLastName(update.getLastName());
         stored.setLocalKey(update.getLocalKey());
-        //isJhedId will evaluate null or empty institutional id to true
-        if (isJhedId(stored.getInstitutionalId())
-                && !isJhedId(update.getInstitutionalId())) {//overwrite a possibly null jhed id with a hopkins id
+        if (stored.getInstitutionalId() == null  ||
+                (isJhedId(stored.getInstitutionalId()) && !isJhedId(update.getInstitutionalId()))) {
             stored.setInstitutionalId(update.getInstitutionalId());
         }
         if((stored.getEmail() == null) && (update.getEmail() != null)) {
@@ -163,7 +162,7 @@ public class PassEntityUtil {
      */
     static private boolean isJhedId (String s) {
         if (s == null || s.isEmpty()) {
-            return true;// this looks odd, but a return value of true for this method kicks off a replacement action
+            return true;
         }
         return Character.isLowerCase(s.charAt(0));
     }
