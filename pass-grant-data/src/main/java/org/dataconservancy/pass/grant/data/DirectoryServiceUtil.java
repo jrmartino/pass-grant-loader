@@ -124,23 +124,28 @@ public class DirectoryServiceUtil {
 
         Request request = new Request.Builder().header("client_id", directoryClientId)
                 .header("client_secret", directoryClientSecret).url(url).build();
-        Response response = client.newCall(request).execute();
 
-        JsonParser parser = factory.createParser(response.body().string());
-        String mappedValue = null;
-        while (!parser.isClosed()) {
-            JsonToken jsonToken = parser.nextToken();
-            if (JsonToken.FIELD_NAME.equals(jsonToken)){
-                String fieldName = parser.getCurrentName();
-                parser.nextToken();
-                if(sourceId.equals(fieldName)) {
-                    mappedValue = parser.getValueAsString();
-                    mappedValue = mappedValue.equals("NULL") ? null : mappedValue;
+        try(Response response = client.newCall(request).execute()) {
+
+            JsonParser parser = factory.createParser(response.body().string());
+            String mappedValue = null;
+            while (!parser.isClosed()) {
+                JsonToken jsonToken = parser.nextToken();
+                if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+                    String fieldName = parser.getCurrentName();
+                    parser.nextToken();
+                    if (sourceId.equals(fieldName)) {
+                        mappedValue = parser.getValueAsString();
+                        mappedValue = mappedValue.equals("NULL") ? null : mappedValue;
+                    }
                 }
             }
-        }
 
-        return mappedValue;
+            return mappedValue;
+        } catch (RuntimeException e){
+            throw e;
+
+        }
 
     }
 

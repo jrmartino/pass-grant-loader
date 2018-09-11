@@ -207,6 +207,7 @@ public class PassUpdater {
     }
 
     private void updateUsers(Set<Map<String, String>> results) throws IOException {
+        LOG.info("Processing result set with " + results.size() + " rows");
         for(Map<String,String> rowMap : results) {
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
@@ -339,19 +340,24 @@ public class PassUpdater {
         String searchLocalKey = mode.startsWith("existing")? baseLocalKey : fullLocalKey;
         updatedGrant.setLocalKey(fullLocalKey);
 
+        LOG.debug("Looking for grant with localKey " + searchLocalKey);
         URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", searchLocalKey);
         if (passGrantURI != null ) {
+            LOG.debug("Found grant with localKey " + searchLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
             if (!PassEntityUtil.coeusGrantsEqual(updatedGrant, storedGrant)) {
+                LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + updatedGrant.getLocalKey());
                 storedGrant = PassEntityUtil.updateGrant(updatedGrant, storedGrant);
                 passClient.updateResource(storedGrant);
                 statistics.addGrantsUpdated();
+                LOG.debug("Updating grant with award number " + updatedGrant.getLocalKey());
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Pass
             if (!mode.startsWith("existing")) {//don't create new grant if we don't already have it
                 passGrantURI = passClient.createResource(updatedGrant);
                 statistics.addGrantsCreated();
+                LOG.debug("Creating grant with award number " + updatedGrant.getLocalKey());
             }
         }
         return passGrantURI;
