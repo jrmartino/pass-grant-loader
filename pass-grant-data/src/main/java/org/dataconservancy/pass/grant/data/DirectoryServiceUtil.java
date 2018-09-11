@@ -125,7 +125,7 @@ public class DirectoryServiceUtil {
         Request request = new Request.Builder().header("client_id", directoryClientId)
                 .header("client_secret", directoryClientSecret).url(url).build();
 
-        try(Response response = client.newCall(request).execute()) {
+        Response response = client.newCall(request).execute();
 
             JsonParser parser = factory.createParser(response.body().string());
             String mappedValue = null;
@@ -142,10 +142,6 @@ public class DirectoryServiceUtil {
             }
 
             return mappedValue;
-        } catch (RuntimeException e){
-            throw e;
-
-        }
 
     }
 
