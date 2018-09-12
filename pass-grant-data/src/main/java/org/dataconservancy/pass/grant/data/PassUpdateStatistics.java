@@ -56,16 +56,16 @@ public class PassUpdateStatistics {
             sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
             sb.append("\n");
             sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
-
             sb.append("\n");
-            this.report = sb.toString();
         } else if (type.endsWith("user")) {
             sb.append(format("%s user records processed; the most recent update in this batch has timestamp %s",
                     resultSetSize, latestUpdateString));
             sb.append("Pass Activity");
             sb.append("\n\n");
             sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
+            sb.append("\n");
         }
+        this.report = sb.toString();
     }
 
     void reset() {
