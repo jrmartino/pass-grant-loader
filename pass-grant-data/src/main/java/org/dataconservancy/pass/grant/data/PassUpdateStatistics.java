@@ -43,7 +43,7 @@ public class PassUpdateStatistics {
     void setReport(int resultSetSize, int size) {
         StringBuilder sb = new StringBuilder();
 
-        if (type.endsWith("grant")) {
+        if (type.equals("grant")) {
             sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
                     resultSetSize, latestUpdateString));
             sb.append("\n");
@@ -57,7 +57,7 @@ public class PassUpdateStatistics {
             sb.append("\n");
             sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
             sb.append("\n");
-        } else if (type.endsWith("user")) {
+        } else if (type.equals("user")) {
             sb.append(format("%s user records processed; the most recent update in this batch has timestamp %s",
                     resultSetSize, latestUpdateString));
             sb.append("Pass Activity");

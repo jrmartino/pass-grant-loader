@@ -70,35 +70,6 @@ public class CoeusConnectorTest {
     }
 
     @Test
-    public void testBuildExistingGrantString() {
-
-        String expectedQueryString= "SELECT A.AWARD_ID, A.AWARD_STATUS, A.GRANT_NUMBER, A.TITLE, A.AWARD_DATE," +
-                " A.AWARD_START, A.AWARD_END, A.SPONSOR, A.SPOSNOR_CODE, A.UPDATE_TIMESTAMP, B.ABBREVIATED_ROLE, B.EMPLOYEE_ID," +
-                " C.FIRST_NAME, C.MIDDLE_NAME, C.LAST_NAME, C.EMAIL_ADDRESS, C.JHED_ID, D.SPONSOR_NAME, D.SPONSOR_CODE" +
-                " FROM" +
-                " COEUS.JHU_FACULTY_FORCE_PROP A INNER JOIN " +
-                " (SELECT GRANT_NUMBER, MAX(UPDATE_TIMESTAMP) AS MAX_UPDATE_TIMESTAMP" +
-                " FROM COEUS.JHU_FACULTY_FORCE_PROP" +
-                " GROUP BY GRANT_NUMBER) LATEST" +
-                " ON A.UPDATE_TIMESTAMP = LATEST.MAX_UPDATE_TIMESTAMP AND A.GRANT_NUMBER = LATEST.GRANT_NUMBER" +
-                " INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B" +
-                " ON A.INST_PROPOSAL = B.INST_PROPOSAL" +
-                " INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C" +
-                " ON B.EMPLOYEE_ID = C.EMPLOYEE_ID" +
-                " LEFT JOIN COEUS.SWIFT_SPONSOR D" +
-                " ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE" +
-                " WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '2018-06-01 06:00:00.0'" +
-                " AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('06/01/2018', 'MM/DD/YYYY')" +
-                " AND A.PROPOSAL_STATUS = 'Funded'" +
-                " AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C' OR REGEXP_LIKE (UPPER(B.ROLE), '^CO ?-?INVESTIGATOR$'))" +
-                " AND A.GRANT_NUMBER IS NOT NULL";
-
-        Assert.assertEquals(expectedQueryString, connector.buildQueryString("2018-06-01 06:00:00.0", "existing-grant"));
-
-    }
-
-
-    @Test
     public void testBuildUserQueryString(){
 
         String expectedQueryString = "SELECT FIRST_NAME, MIDDLE_NAME, LAST_NAME, EMAIL_ADDRESS, JHED_ID, EMPLOYEE_ID, " +

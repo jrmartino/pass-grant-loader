@@ -70,7 +70,7 @@ public class CoeusConnector {
     }
 
     public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException, IOException {
-        if (mode.endsWith("user")) {
+        if (mode.equals("user")) {
             return retrieveUserUpdates(queryString);
         } else {
             return retrieveGrantUpdates(queryString);
@@ -158,11 +158,7 @@ public class CoeusConnector {
 
     public String buildQueryString(String startDate, String mode) {
         String awardEndLimit = "01/01/2011";
-        if (mode.startsWith("existing")) {
-            DateTime awardEndDate = DateTimeUtil.createJodaDateTime(startDate);
-            awardEndLimit = awardEndDate.toLocalDate().toString("MM/dd/yyyy");
-        }
-        if (mode.endsWith("user")) {
+        if (mode.equals("user")) {
             return buildUserQueryString(startDate);
         } else {
             return buildGrantQueryString(startDate, awardEndLimit);
@@ -231,9 +227,7 @@ public class CoeusConnector {
         sb.append(" WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
         sb.append(startDate);
         sb.append("' ");
-        sb.append("AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('");
-        sb.append(awardEndLimit);
-        sb.append("', 'MM/DD/YYYY') ");
+        sb.append("AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('01/01/2011', 'MM/DD/YYYY') ");
         sb.append("AND A.PROPOSAL_STATUS = 'Funded' ");
         sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C' OR REGEXP_LIKE (UPPER(B.ROLE), '^CO ?-?INVESTIGATOR$')) ");
         sb.append("AND A.GRANT_NUMBER IS NOT NULL");

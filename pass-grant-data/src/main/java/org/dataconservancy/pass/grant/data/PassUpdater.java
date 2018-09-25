@@ -82,9 +82,9 @@ public class PassUpdater {
         funderMap.clear();
         statistics.reset();
         statistics.setType(mode);
-        if (mode.endsWith("grant")) {
+        if (mode.equals("grant")) {
             updateGrants(results);
-        } else if (mode.endsWith("user")) {
+        } else if (mode.equals("user")) {
             updateUsers(results);
         }
     }
@@ -273,10 +273,8 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Funder for this URI - this one is new to Pass
-            if(!mode.startsWith("existing")) {//don't create funder if we don't have it already
                 passFunderURI = passClient.createResource(updatedFunder);
                 statistics.addFundersCreated();
-            }
         }
         return passFunderURI;
     }
@@ -314,10 +312,8 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Pass
-            if (!mode.startsWith("existing")) {//don't create new user if we are only updating existing users
                 passUserUri = passClient.createResource(updatedUser);
                 statistics.addUsersCreated();
-            }
         }
         return passUserUri;
     }
@@ -348,11 +344,9 @@ public class PassUpdater {
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Pass
-            if (!mode.startsWith("existing")) {//don't create new grant if we don't already have it
                 passGrantURI = passClient.createResource(updatedGrant);
                 statistics.addGrantsCreated();
                 LOG.debug("Creating grant with award number " + updatedGrant.getLocalKey());
-            }
         }
         return passGrantURI;
     }
