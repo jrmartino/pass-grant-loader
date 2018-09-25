@@ -25,10 +25,10 @@ import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 import org.joda.time.DateTime;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -47,11 +47,9 @@ public class PassUpdater {
 
     private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
     private String latestUpdateString = "";
-    public static String institutionalSuffix = "@johnshopkins.edu";
 
     private PassClient passClient;
     private PassUpdateStatistics statistics = new PassUpdateStatistics();
-    private DirectoryServiceUtil directoryServiceUtil;
 
     //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
@@ -66,13 +64,12 @@ public class PassUpdater {
 
     private String mode;
 
-    public PassUpdater(PassClient passClient, DirectoryServiceUtil directoryServiceUtil)
+    public PassUpdater(PassClient passClient)
     {
         this.passClient = passClient;
-        this.directoryServiceUtil = directoryServiceUtil;
     }
 
-    public void updatePass(Set<Map<String, String>> results, String mode) throws IOException {
+    public void updatePass(Set<Map<String, String>> results, String mode) {
         this.mode = mode;
         userMap.clear();
         funderMap.clear();
@@ -90,7 +87,7 @@ public class PassUpdater {
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
      */
-    private void updateGrants(Set<Map<String, String>> results) throws IOException {
+    private void updateGrants(Set<Map<String, String>> results) {
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
@@ -206,7 +203,7 @@ public class PassUpdater {
         }
     }
 
-    private void updateUsers(Set<Map<String, String>> results) throws IOException {
+    private void updateUsers(Set<Map<String, String>> results) {
         LOG.info("Processing result set with " + results.size() + " rows");
         for(Map<String,String> rowMap : results) {
             User updatedUser = buildUser(rowMap);
@@ -222,7 +219,7 @@ public class PassUpdater {
 
     }
 
-    protected User buildUser(Map<String, String> rowMap) {
+    User buildUser(Map<String, String> rowMap) {
 
         User user = new User();
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
@@ -230,8 +227,19 @@ public class PassUpdater {
         user.setLastName(rowMap.get(C_USER_LAST_NAME));
         user.setDisplayName(rowMap.get(C_USER_FIRST_NAME) + " " + rowMap.get(C_USER_LAST_NAME));
         user.setEmail(rowMap.get(C_USER_EMAIL));
-        user.setInstitutionalId(rowMap.get(C_USER_INSTITUTIONAL_ID));
-        user.setLocalKey(rowMap.get(C_USER_EMPLOYEE_ID));
+        String employeeId = rowMap.get(C_USER_EMPLOYEE_ID);
+        String hopkinsId = rowMap.get(C_USER_HOPKINS_ID);
+        String jhedId = rowMap.get(C_USER_INSTITUTIONAL_ID);
+        //Build the List of locatorIds - put the most reliable ids first
+        if (employeeId != null) {
+            user.getLocatorIds().add(localize(employeeId, "employeeid"));
+        }
+        if (hopkinsId != null) {
+            user.getLocatorIds().add(localize(hopkinsId, "hopkinsid"));
+        }
+        if (jhedId != null) {
+            user.getLocatorIds().add(localize(jhedId, "jhed"));
+        }
         user.getRoles().add(User.Role.SUBMITTER);
         return user;
     }
@@ -245,11 +253,10 @@ public class PassUpdater {
      */
     private URI updateFunderInPass(Funder updatedFunder) {
         String baseLocalKey = updatedFunder.getLocalKey();
-        String fullLocalKey = localize(baseLocalKey);
-        String searchLocalKey = mode.startsWith("existing")? baseLocalKey : fullLocalKey;
+        String fullLocalKey = localize(baseLocalKey, "funder");
         updatedFunder.setLocalKey(fullLocalKey);
 
-        URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", searchLocalKey);
+        URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", fullLocalKey);
         if (passFunderURI != null ) {
             Funder storedFunder = passClient.readResource(passFunderURI, Funder.class);
             if (!PassEntityUtil.coeusFundersEqual(updatedFunder, storedFunder)) {
@@ -274,40 +281,21 @@ public class PassUpdater {
      * @param updatedUser the new User object populated from COEUS
      * @return the URI for the resource representing the updated User in Pass
      */
-    private URI updateUserInPass(User updatedUser) throws IOException {
-
-        String baseEmployeeId = updatedUser.getLocalKey();
-        String baseJhedId = updatedUser.getInstitutionalId() != null ? updatedUser.getInstitutionalId().toLowerCase(): null;
-        String baseHopkinsId = directoryServiceUtil.getHopkinsIdForEmployeeId(updatedUser.getLocalKey());
-
-        String fullEmployeeId = localize(baseEmployeeId);
-        String fullJhedId = localize(baseJhedId);
-        String fullHopkinsId = localize(baseHopkinsId);
-
-        //with the old data format for search fields, we use "existing-user" or "existing-grant" mode
-        String searchEmployeeId = mode.startsWith("existing")? baseEmployeeId : fullEmployeeId;
-        String searchHopkinsId = mode.startsWith("existing")? baseHopkinsId : fullHopkinsId;
-        String searchJhedId = mode.startsWith("existing")? baseJhedId : fullJhedId;
-
-        updatedUser.setInstitutionalId(fullHopkinsId != null ? fullHopkinsId : fullJhedId);
-        updatedUser.setLocalKey(fullEmployeeId);
-
+    private URI updateUserInPass(User updatedUser) {
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
-        //last attempt is the JHED ID
-        URI passUserURI = null;
+        //last attempt is the JHED ID. this order is specified by the order of the List as constructed on updatedUser
+        URI passUserUri = null;
+        ListIterator idIterator = updatedUser.getLocatorIds().listIterator();
 
-        if (searchHopkinsId != null) {
-            passUserURI = passClient.findByAttribute(User.class, "institutionalId", searchHopkinsId);
-        }
-        if (passUserURI == null && searchEmployeeId != null) {
-                passUserURI = passClient.findByAttribute(User.class, "localKey", searchEmployeeId);
-        }
-        if (passUserURI == null && searchJhedId != null) {
-            passUserURI = passClient.findByAttribute(User.class, "institutionalId", searchJhedId);
+        while (passUserUri == null && idIterator.hasNext()) {
+            String id = String.valueOf(idIterator.next());
+            if (id != null) {
+                passUserUri = passClient.findByAttribute(User.class, "locatorIds", id);
+            }
         }
 
-        if (passUserURI != null ) {
-            User storedUser = passClient.readResource(passUserURI, User.class);
+        if (passUserUri != null ) {
+            User storedUser = passClient.readResource(passUserUri, User.class);
             if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)){
                 storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
@@ -320,11 +308,11 @@ public class PassUpdater {
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else {//don't have a stored User for this URI - this one is new to Pass
             if (!mode.startsWith("existing")) {//don't create new user if we are only updating existing users
-                passUserURI = passClient.createResource(updatedUser);
+                passUserUri = passClient.createResource(updatedUser);
                 statistics.addUsersCreated();
             }
         }
-        return passUserURI;
+        return passUserUri;
     }
 
     /**
@@ -336,14 +324,13 @@ public class PassUpdater {
      */
     private URI updateGrantInPass(Grant updatedGrant) {
         String baseLocalKey = updatedGrant.getLocalKey();
-        String fullLocalKey = localize(baseLocalKey);
-        String searchLocalKey = mode.startsWith("existing")? baseLocalKey : fullLocalKey;
+        String fullLocalKey = localize(baseLocalKey, "grant");
         updatedGrant.setLocalKey(fullLocalKey);
 
-        LOG.debug("Looking for grant with localKey " + searchLocalKey);
-        URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", searchLocalKey);
+        LOG.debug("Looking for grant with localKey " + fullLocalKey);
+        URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", fullLocalKey);
         if (passGrantURI != null ) {
-            LOG.debug("Found grant with localKey " + searchLocalKey);
+            LOG.debug("Found grant with localKey " + fullLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
             if (!PassEntityUtil.coeusGrantsEqual(updatedGrant, storedGrant)) {
                 LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + updatedGrant.getLocalKey());
@@ -416,8 +403,13 @@ public class PassUpdater {
     //used in unit test
     Map<String, URI> getUserMap() { return userMap; }
 
-    private String localize (String base) {
-        return base != null ? base + institutionalSuffix : null;
+    String localize (String value, String type) {
+        String domain = "johnshopkins.edu";
+        if(type != null && value != null) {
+            return  String.join(":", domain, type, value);
+        } else {
+            return null;
+        }
     }
 
 }

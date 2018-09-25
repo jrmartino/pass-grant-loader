@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
-import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
 import static org.dataconservancy.pass.grant.data.PassUpdater.returnLaterUpdate;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,13 +50,10 @@ public class PassUpdaterTest {
     @Mock
     private PassClient passClientMock;
 
-    @Mock
-    private DirectoryServiceUtil directoryServiceUtilMock;
-
     private URI grantUri;
 
     @Before
-    public void setup() throws IOException{
+    public void setup() {
         grantUri = URI.create("grantUri");
         URI userUri1 = URI.create("piUri");
         URI useruri2 = URI.create("coPiUri");
@@ -68,8 +64,8 @@ public class PassUpdaterTest {
         when(passClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
         when(passClientMock.createResource(any(User.class))).thenReturn(userUri1, useruri2);
 
-        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000222")).thenReturn("A1A1A1");
-        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000333")).thenReturn("B2B2B2");
+//        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000222")).thenReturn("A1A1A1");
+ //       when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000333")).thenReturn("B2B2B2");
     }
     /**
      * Test static timestamp utility method to verify it returns the later of two supplied timestamps
@@ -89,7 +85,7 @@ public class PassUpdaterTest {
     }
 
     @Test
-    public void testGrantBuilding() throws IOException {
+    public void testGrantBuilding() {
 
         Set<Map<String, String>> resultSet = new HashSet<>();
 
@@ -125,6 +121,7 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_EMAIL, "areckon3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "ARECKON3");
         rowMap.put(C_USER_EMPLOYEE_ID, "0000333");
+        rowMap.put(C_USER_HOPKINS_ID, "B2B2B2");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "P");
@@ -151,13 +148,15 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
         rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
+        rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "C");
 
+
         resultSet.add(rowMap);
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock, directoryServiceUtilMock);
+        PassUpdater passUpdater = new PassUpdater(passClientMock);
         passUpdater.updatePass(resultSet, "grant");
 
         Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
@@ -172,7 +171,7 @@ public class PassUpdaterTest {
 
         assertEquals(awardNumber, grant.getAwardNumber());
         assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());
-        assertEquals(localKey + institutionalSuffix, grant.getLocalKey());
+        assertEquals(passUpdater.localize(localKey, "grant"), grant.getLocalKey());
         assertEquals(DateTimeUtil.createJodaDateTime(awardDate), grant.getAwardDate());
         assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
         assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());
@@ -189,13 +188,14 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
         rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
+        rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock, directoryServiceUtilMock);
+        PassUpdater passUpdater = new PassUpdater(passClientMock);
         User newUser = passUpdater.buildUser(rowMap);
 
-        //the only unusual field
+        //unusual fields
         assertEquals("Marsha Lartz", newUser.getDisplayName());
-
+        //TODO test ids
     }
 }

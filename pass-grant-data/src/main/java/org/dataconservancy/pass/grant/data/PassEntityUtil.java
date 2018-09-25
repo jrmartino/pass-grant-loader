@@ -20,6 +20,13 @@ import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * A utility class for handling Grants, Users or Funders. One function performed is comparison of two instances of
  * these PASS entity classes. These comparisons are reduced to only those fields which are updatable by
@@ -72,12 +79,11 @@ public class PassEntityUtil {
         if (update.getFirstName() != null ? !update.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
-        if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-
+        //if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
+        if (update.getLocatorIds() != null? !new HashSet(update.getLocatorIds()).equals(new HashSet(stored.getLocatorIds())): stored.getLocatorIds() != null) return false;
         //next, other fields which require some reasoning to decide whether an update is necessary
         if (update.getEmail() != null && stored.getEmail() == null) return false;
         if (update.getDisplayName() != null && stored.getEmail() == null) return false;
-        if (isJhedId(stored.getInstitutionalId()) && !isJhedId(update.getInstitutionalId())) return false;
         return true;
     }
 
@@ -95,11 +101,12 @@ public class PassEntityUtil {
         stored.setFirstName(update.getFirstName());
         stored.setMiddleName(update.getMiddleName());
         stored.setLastName(update.getLastName());
-        stored.setLocalKey(update.getLocalKey());
-        if (stored.getInstitutionalId() == null  ||
-                (isJhedId(stored.getInstitutionalId()) && !isJhedId(update.getInstitutionalId()))) {
-            stored.setInstitutionalId(update.getInstitutionalId());
-        }
+        //combine the locatorIds from both objects
+        Set<String> idSet = new HashSet<>();
+        idSet.addAll(stored.getLocatorIds());
+        idSet.addAll(update.getLocatorIds());
+        stored.setLocatorIds(idSet.stream().collect(Collectors.toList()));
+        //populate null fields if we can
         if((stored.getEmail() == null) && (update.getEmail() != null)) {
             stored.setEmail(update.getEmail());
         }
@@ -110,7 +117,7 @@ public class PassEntityUtil {
     }
 
     /**
-     * Compare two Grant objects. Note that the Lists of Co-Pis are essentially compared as Sets
+     * Compare two Grant objects. Note that the Lists of Co-Pis are compared as Sets
      * @param update the version of the Grant as seen in the COEUS update pull
      * @param stored the version of the Grant as read from Pass
      * @return a boolean which asserts whether the two supplied Grants are "COEUS equal"
@@ -123,7 +130,7 @@ public class PassEntityUtil {
         if (update.getPrimaryFunder() != null? !update.getPrimaryFunder().equals(stored.getPrimaryFunder()) : stored.getPrimaryFunder() != null) return false;
         if (update.getDirectFunder() != null? !update.getDirectFunder().equals(stored.getDirectFunder()) : stored.getDirectFunder() != null) return false;
         if (update.getPi() != null? !update.getPi().equals(stored.getPi()) : stored.getPi() != null) return false;
-        if (update.getCoPis() != null? !(update.getCoPis().size()==stored.getCoPis().size()) || !update.getCoPis().containsAll(stored.getCoPis()) || !stored.getCoPis().containsAll(update.getCoPis()) : stored.getCoPis() != null) return false;
+        if (update.getCoPis() != null? !new HashSet(update.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return false;
         if (update.getAwardDate() != null? !update.getAwardDate().equals(stored.getAwardDate()) : stored.getAwardDate() != null) return false;
         if (update.getStartDate() != null? !update.getStartDate().equals(stored.getStartDate()) : stored.getStartDate() != null) return false;
         if (update.getEndDate() != null? !update.getEndDate().equals(stored.getEndDate()) : stored.getEndDate() != null) return false;
@@ -152,19 +159,5 @@ public class PassEntityUtil {
         return stored;
     }
 
-    /**
-     * This method tells us whether an institutionalID is a Jhed ID. the Hopkins ID is always composed
-     * of uppercase letters and digits; Jhed ID always starts with a lower case string followed by digits.
-     * COEUS provides us with uppercase Jhed Ids, which we lowercase in the PassUpdater.
-     *
-     * @param s the string to check
-     * @return whether or not the string is a jhed id
-     */
-    static private boolean isJhedId (String s) {
-        if (s == null || s.isEmpty()) {
-            return true;
-        }
-        return Character.isLowerCase(s.charAt(0));
-    }
 
 }

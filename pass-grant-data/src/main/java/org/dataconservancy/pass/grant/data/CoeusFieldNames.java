@@ -44,6 +44,7 @@ public class CoeusFieldNames {
     public static final String C_UPDATE_TIMESTAMP = "UPDATE_TIMESTAMP";
     public static final String C_ABBREVIATED_ROLE = "ABBREVIATED_ROLE";
 
-
+    //this is not a COEUS field, but is a place in our row map to put a hopkins id if it exists
+    public static final String C_USER_HOPKINS_ID = "HOPKINS_ID";
 
 }

@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 package org.dataconservancy.pass.grant.data;
+
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -49,6 +51,8 @@ public class CoeusConnector {
     private String coeusUser;
     private String coeusPassword;
 
+    private DirectoryServiceUtil directoryServiceUtil;
+
     public CoeusConnector(Properties connectionProperties) {
         if (connectionProperties != null) {
 
@@ -61,10 +65,11 @@ public class CoeusConnector {
             if (connectionProperties.getProperty(COEUS_PASS) != null) {
                 this.coeusPassword = connectionProperties.getProperty(COEUS_PASS);
             }
+            this.directoryServiceUtil = new DirectoryServiceUtil(connectionProperties);
         }
     }
 
-    public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException {
+    public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException, IOException {
         if (mode.endsWith("user")) {
             return retrieveUserUpdates(queryString);
         } else {
@@ -78,7 +83,7 @@ public class CoeusConnector {
      * @param queryString the query string to the COEUS database needed to update the information
      * @return the {@code ResultSet} from the query
      */
-    private Set<Map<String, String>> retrieveGrantUpdates(String queryString) throws ClassNotFoundException, SQLException {
+    private Set<Map<String, String>> retrieveGrantUpdates(String queryString) throws ClassNotFoundException, SQLException, IOException {
 
         Set<Map<String, String>> mapSet = new HashSet<>();
 
@@ -111,6 +116,10 @@ public class CoeusConnector {
                 rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
                 rowMap.put(C_ABBREVIATED_ROLE, rs.getString(C_ABBREVIATED_ROLE));
+                String employeeId = rs.getString(C_USER_EMPLOYEE_ID);
+                if (employeeId != null) {
+                    rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
+                }
                 LOG.debug("Record processed: " + rowMap.toString());
                 mapSet.add(rowMap);
             }
@@ -180,7 +189,7 @@ public class CoeusConnector {
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    String buildGrantQueryString(String startDate, String awardEndLimit){
+    private String buildGrantQueryString(String startDate, String awardEndLimit){
 
         String[] viewFields = {
             "A." + C_GRANT_AWARD_NUMBER,
@@ -203,8 +212,7 @@ public class CoeusConnector {
             "C." + C_USER_EMAIL,
             "C." + C_USER_INSTITUTIONAL_ID,
 
-
-            "D." + C_PRIMARY_FUNDER_NAME,
+                "D." + C_PRIMARY_FUNDER_NAME,
             "D." + C_PRIMARY_FUNDER_LOCAL_KEY };
 
         StringBuilder sb = new StringBuilder();
@@ -237,7 +245,7 @@ public class CoeusConnector {
         return queryString;
     }
 
-    String buildUserQueryString(String startDate) {
+    private String buildUserQueryString(String startDate) {
         String viewFields [] = {
             C_USER_FIRST_NAME,
             C_USER_MIDDLE_NAME,

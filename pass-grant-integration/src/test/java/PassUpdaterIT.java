@@ -17,7 +17,6 @@
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.DirectoryServiceUtil;
 import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.dataconservancy.pass.grant.data.PassEntityUtil;
@@ -29,22 +28,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
-import static org.dataconservancy.pass.grant.data.PassUpdater.institutionalSuffix;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -54,14 +49,15 @@ import java.util.Set;
 @RunWith(MockitoJUnitRunner.class)
 public class PassUpdaterIT {
 
-    private Set<Map<String,String>> resultSet = new HashSet<>();
-
-    @Mock
-    private DirectoryServiceUtil directoryServiceUtilMock;
-
+    private Set<Map<String, String>> resultSet = new HashSet<>();
+    private static String funderIdPrefix = "johnshopkins.edu:funder:";
+    private static String grantIdPrefix = "johnshopkins.edu:grant:";
+    private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
+    private static String hopkinsidPrefix = "johnshopkins.edu:hopkinsid:";
+    private static String jhedPrefix = "johnshopkins.edu:jhed:";
 
     @Before
-    public void setup() throws IOException {
+    public void setup() {
 
         for (int i = 0; i < 10; i++) {
 
@@ -85,14 +81,14 @@ public class PassUpdaterIT {
             rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
             rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
             rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
+            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + Integer.toString(i));
 
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(i) + ":00:00.0");
-            rowMap.put(C_ABBREVIATED_ROLE, (i%2==0?"P":"C"));
+            rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
 
             resultSet.add(rowMap);
         }
 
-        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId(anyString())).thenAnswer(i -> i.getArguments()[0].toString().substring(6)); //needs to be unique
     }
 
     /**
@@ -104,10 +100,10 @@ public class PassUpdaterIT {
      * @throws InterruptedException - the exception
      */
     @Test
-    public void updateGrantsIT() throws InterruptedException, IOException {
+    public void updateGrantsIT() throws InterruptedException {
 
         PassClient passClient = PassClientFactory.getPassClient();
-        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
+        PassUpdater passUpdater = new PassUpdater(passClient);
         passUpdater.updatePass(resultSet, "grant");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
 
@@ -161,6 +157,7 @@ public class PassUpdaterIT {
         rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(1));
         rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(1));
         rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(1));
+        rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + Integer.toString(1));
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, ("C"));
@@ -178,11 +175,11 @@ public class PassUpdaterIT {
 
         sleep(20000);
 
-        for(int i = 0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             Grant grant = new Grant();
             grant.setAwardNumber(C_GRANT_AWARD_NUMBER + Integer.toString(i));
             grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
-            grant.setLocalKey(C_GRANT_LOCAL_KEY + Integer.toString(i) + institutionalSuffix);
+            grant.setLocalKey(grantIdPrefix + C_GRANT_LOCAL_KEY + Integer.toString(i));
             grant.setProjectName(C_GRANT_PROJECT_NAME + Integer.toString(i));
             grant.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
             grant.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
@@ -194,33 +191,33 @@ public class PassUpdaterIT {
             Assert.assertEquals(grant.getAwardNumber(), passGrant.getAwardNumber());
             Assert.assertEquals(grant.getAwardStatus(), passGrant.getAwardStatus());
             Assert.assertEquals(grant.getLocalKey(), passGrant.getLocalKey());
-            if(i==1) {
-                Assert.assertEquals(grant.getProjectName()+"MOOO", passGrant.getProjectName());
+            if (i == 1) {
+                Assert.assertEquals(grant.getProjectName() + "MOOO", passGrant.getProjectName());
             } else {
                 Assert.assertEquals(grant.getProjectName(), passGrant.getProjectName());
             }
-            Assert.assertEquals(grant.getAwardDate(),passGrant.getAwardDate());
+            Assert.assertEquals(grant.getAwardDate(), passGrant.getAwardDate());
             Assert.assertEquals(grant.getStartDate(), passGrant.getStartDate());
-            Assert.assertEquals(grant.getEndDate(),passGrant.getEndDate());
+            Assert.assertEquals(grant.getEndDate(), passGrant.getEndDate());
 
             //let's check funder stuff
             Funder directFunder = new Funder();
-            directFunder.setLocalKey(C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i)+institutionalSuffix);
+            directFunder.setLocalKey(funderIdPrefix + C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
             directFunder.setName(C_DIRECT_FUNDER_NAME + Integer.toString(i));
 
             URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
             Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
-            if(i==1) {
-                Assert.assertEquals(directFunder.getName()+ "MOOOOO", passDirectFunder.getName());
+            if (i == 1) {
+                Assert.assertEquals(directFunder.getName() + "MOOOOO", passDirectFunder.getName());
                 Assert.assertEquals(directFunder.getLocalKey(), passDirectFunder.getLocalKey());
                 Assert.assertEquals(passDirectFunder.getId(), passGrant.getDirectFunder());
             } else {
-                Assert.assertEquals(directFunder.getName(),passDirectFunder.getName());
+                Assert.assertEquals(directFunder.getName(), passDirectFunder.getName());
             }
 
             Funder primaryFunder = new Funder();
-            primaryFunder.setLocalKey( C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i)+institutionalSuffix);
-            primaryFunder.setName( C_PRIMARY_FUNDER_NAME + Integer.toString(i));
+            primaryFunder.setLocalKey(funderIdPrefix + C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
+            primaryFunder.setName(C_PRIMARY_FUNDER_NAME + Integer.toString(i));
 
             URI primaryFunderUri = passClient.findByAttribute(Funder.class, "localKey", primaryFunder.getLocalKey());
             Funder passPrimaryFunder = passClient.readResource(primaryFunderUri, Funder.class);
@@ -231,27 +228,36 @@ public class PassUpdaterIT {
             User user = new User();
 
             //institutionalId and localKey were set to different values by the grant loader
-            String newInstitutionalId = directoryServiceUtilMock.getHopkinsIdForEmployeeId(C_USER_EMPLOYEE_ID + Integer.toString(i)) + institutionalSuffix;
-            user.setLocalKey(C_USER_EMPLOYEE_ID + Integer.toString(i) + institutionalSuffix);
+            user.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + Integer.toString(i));
+            user.getLocatorIds().add(hopkinsidPrefix + C_USER_HOPKINS_ID + Integer.toString(i));
+            user.getLocatorIds().add(jhedPrefix + C_USER_INSTITUTIONAL_ID + Integer.toString(i));
             user.setFirstName(C_USER_FIRST_NAME + Integer.toString(i));
             user.setMiddleName(C_USER_MIDDLE_NAME + Integer.toString(i));
             user.setLastName(C_USER_LAST_NAME + Integer.toString(i));
             user.setEmail(C_USER_EMAIL + Integer.toString(i));
-            user.setInstitutionalId(newInstitutionalId);
 
-            URI userUri = passClient.findByAttribute(User.class, "localKey", user.getLocalKey());
+            URI userUri = null;
+            ListIterator idIterator = user.getLocatorIds().listIterator();
+
+            while (userUri == null && idIterator.hasNext()) {
+                String id = String.valueOf(idIterator.next());
+                if (id != null) {
+                    userUri = passClient.findByAttribute(User.class, "locatorIds", id);
+                }
+            }
+
             User passUser = passClient.readResource(userUri, User.class);
             Assert.assertEquals(user.getFirstName(), passUser.getFirstName());
-            if (i==1) {
+            if (i == 1) {
                 Assert.assertEquals(user.getMiddleName() + "MOOOO", passUser.getMiddleName());
             } else {
                 Assert.assertEquals(user.getMiddleName(), passUser.getMiddleName());
             }
             Assert.assertEquals(user.getLastName(), passUser.getLastName());
             Assert.assertEquals(user.getEmail(), passUser.getEmail());
-            Assert.assertEquals(user.getInstitutionalId(), passUser.getInstitutionalId());
+            Assert.assertEquals(user.getLocatorIds(), passUser.getLocatorIds());
 
-            if (i%2 == 0) {
+            if (i % 2 == 0) {
                 assertNotNull(passGrant.getPi());
                 Assert.assertEquals(0, passGrant.getCoPis().size());
             } else {
@@ -262,96 +268,31 @@ public class PassUpdaterIT {
         }
     }
 
-    @Test
-    public void updateExistingGrantsIT() throws IOException, InterruptedException {
-        Grant grant10 = new Grant();
-        grant10.setLocalKey(C_GRANT_LOCAL_KEY + 10);
-        grant10.setAwardNumber(C_GRANT_AWARD_NUMBER + 10);
-        grant10.setAwardStatus(Grant.AwardStatus.ACTIVE);
-        grant10.setLocalKey(C_GRANT_LOCAL_KEY + 10);
-        grant10.setProjectName(C_GRANT_PROJECT_NAME + 10);
-        grant10.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
-        grant10.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
-        grant10.setEndDate(DateTimeUtil.createJodaDateTime("01/01/2002"));
-
-        PassClient passClient = PassClientFactory.getPassClient();
-        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
-
-        URI passGrantURI = passUpdater.getPassClient().createResource(grant10);
-
-        Grant passGrant = passClient.readResource(passGrantURI, Grant.class);
-        assertEquals(grant10.getLocalKey(), passGrant.getLocalKey());
-
-        sleep(20000);
-
-        Set<Map<String,String>> grantResultSet = new HashSet<>();
-
-        for(int i = 10; i<12; i++) {
-            Map<String, String> rowMap = new HashMap<>();
-            rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + Integer.toString(i));
-            rowMap.put(C_GRANT_AWARD_STATUS, "Active");
-            rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + Integer.toString(i));
-            rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + Integer.toString(i));
-            rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
-            rowMap.put(C_GRANT_START_DATE, "01/01/2001");
-            rowMap.put(C_GRANT_END_DATE, "01/01/2002");
-
-            rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
-            rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + Integer.toString(i));
-            rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
-            rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + Integer.toString(i));
-
-            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
-            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
-            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
-
-            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(i) + ":00:00.0");
-            rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
-
-            grantResultSet.add(rowMap);
-        }
-
-        passUpdater.updatePass(grantResultSet, "existing-grant");
-        PassUpdateStatistics statistics = passUpdater.getStatistics();
-
-        //now update from the set of two grants - the second one is not in PASS, and should not be created
-        //the first (user10) should  be updated
-        assertEquals(0, statistics.getGrantsCreated());
-        assertEquals(1, statistics.getGrantsUpdated());
-
-        assertNotNull(passGrantURI);
-        Grant updatedGrant = passUpdater.getPassClient().readResource(passGrantURI, Grant.class);
-        assertEquals(passGrant.getLocalKey() + institutionalSuffix, updatedGrant.getLocalKey());
-
-    }
 
     @Test
-    public void updateUsersIT() throws InterruptedException, IOException {
+    public void updateUsersIT() throws InterruptedException {
 
         User user10 = new User();
-        user10.setLocalKey(C_USER_EMPLOYEE_ID + 10 + institutionalSuffix);
+        user10.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + 10);
         user10.setFirstName(C_USER_FIRST_NAME + 10);
         user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
         user10.setLastName(C_USER_LAST_NAME + 10);
 
         PassClient passClient = PassClientFactory.getPassClient();
-        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
+        PassUpdater passUpdater = new PassUpdater(passClient);
 
         URI passUserURI = passUpdater.getPassClient().createResource(user10);
 
         User passUser = passClient.readResource(passUserURI, User.class);
         assertNull(passUser.getDisplayName());
-        assertNull(passUser.getInstitutionalId());
+        assertEquals(1, passUser.getLocatorIds().size());
         assertNull(passUser.getEmail());
 
         sleep(20000);
 
-        Set<Map<String,String>> userResultSet = new HashSet<>();
+        Set<Map<String, String>> userResultSet = new HashSet<>();
 
-        for(int i=10; i<12; i++) {
+        for (int i = 10; i < 12; i++) {
             Map<String, String> rowMap = new HashMap<>();
 
             rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
@@ -376,69 +317,13 @@ public class PassUpdaterIT {
         assertNotNull(passUserURI);
         User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
 
-        assertNotNull(updatedUser.getInstitutionalId());
+
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());
-        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(C_USER_EMPLOYEE_ID + 10) + institutionalSuffix, updatedUser.getInstitutionalId());
-        assertEquals(user10.getLocalKey(), updatedUser.getLocalKey());
+        assertNotNull(updatedUser.getLocatorIds());
+        assertEquals(employeeidPrefix +  C_USER_EMPLOYEE_ID + Integer.toString(10), updatedUser.getLocatorIds().get(0));
+        assertEquals(jhedPrefix + C_USER_INSTITUTIONAL_ID + Integer.toString(10), updatedUser.getLocatorIds().get(1));
+
         assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
-    }
-
-
-    @Test
-    public void updateExistingUsersIT() throws InterruptedException, IOException {
-
-        User user12 = new User();
-        user12.setLocalKey(C_USER_EMPLOYEE_ID + 12);
-        user12.setFirstName(C_USER_FIRST_NAME + 12);
-        user12.setMiddleName(C_USER_MIDDLE_NAME + 12);
-        user12.setLastName(C_USER_LAST_NAME + 12);
-
-        PassClient passClient = PassClientFactory.getPassClient();
-        PassUpdater passUpdater = new PassUpdater(passClient, directoryServiceUtilMock);
-
-        URI passUserURI = passUpdater.getPassClient().createResource(user12);
-
-        User passUser = passClient.readResource(passUserURI, User.class);
-        assertNull(passUser.getDisplayName());
-        assertNull(passUser.getInstitutionalId());
-        assertNull(passUser.getEmail());
-
-        sleep(20000);
-
-        Set<Map<String,String>> userResultSet = new HashSet<>();
-
-        for(int i=12; i<14; i++) {
-            Map<String, String> rowMap = new HashMap<>();
-
-            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
-            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
-            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
-            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
-            userResultSet.add(rowMap);
-        }
-
-
-        passUpdater.updatePass(userResultSet, "existing-user");
-        PassUpdateStatistics statistics = passUpdater.getStatistics();
-
-        //now update from the set of two users - the second one is not in PASS, and not be created
-        //the first (user10) should be updated, with new fields added
-        Assert.assertEquals(0, statistics.getUsersCreated());
-        Assert.assertEquals(1, statistics.getUsersUpdated());
-
-        assertNotNull(passUserURI);
-        User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
-
-        assertNotNull(updatedUser.getInstitutionalId());
-        assertNotNull(updatedUser.getEmail());
-        assertNotNull(updatedUser.getDisplayName());
-
-        assertEquals(directoryServiceUtilMock.getHopkinsIdForEmployeeId(user12.getLocalKey()) + institutionalSuffix, updatedUser.getInstitutionalId());
-        assertEquals(user12.getLocalKey()+ institutionalSuffix, updatedUser.getLocalKey());
-        assertEquals(C_USER_EMAIL + 12, updatedUser.getEmail());
     }
 }
