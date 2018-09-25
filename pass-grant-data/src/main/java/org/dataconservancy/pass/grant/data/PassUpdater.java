@@ -44,6 +44,13 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 
 public class PassUpdater {
 
+    public static final String DOMAIN = "johnshopkins.edu";
+    public static final String EMPLOYEE_ID = "employeeid";
+    public static final String HOPKINS_ID = "hopkinsid";
+    public static final String JHED = "jhed";
+    public static final String GRANT_ID = "grant";
+    public static final String FUNDER_ID = "funder";
+
 
     private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
     private String latestUpdateString = "";
@@ -229,16 +236,16 @@ public class PassUpdater {
         user.setEmail(rowMap.get(C_USER_EMAIL));
         String employeeId = rowMap.get(C_USER_EMPLOYEE_ID);
         String hopkinsId = rowMap.get(C_USER_HOPKINS_ID);
-        String jhedId = rowMap.get(C_USER_INSTITUTIONAL_ID);
+        String jhedId = rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase();
         //Build the List of locatorIds - put the most reliable ids first
         if (employeeId != null) {
-            user.getLocatorIds().add(localize(employeeId, "employeeid"));
+            user.getLocatorIds().add(localize(employeeId, EMPLOYEE_ID));
         }
         if (hopkinsId != null) {
-            user.getLocatorIds().add(localize(hopkinsId, "hopkinsid"));
+            user.getLocatorIds().add(localize(hopkinsId, HOPKINS_ID));
         }
         if (jhedId != null) {
-            user.getLocatorIds().add(localize(jhedId, "jhed"));
+            user.getLocatorIds().add(localize(jhedId, JHED));
         }
         user.getRoles().add(User.Role.SUBMITTER);
         return user;
@@ -253,7 +260,7 @@ public class PassUpdater {
      */
     private URI updateFunderInPass(Funder updatedFunder) {
         String baseLocalKey = updatedFunder.getLocalKey();
-        String fullLocalKey = localize(baseLocalKey, "funder");
+        String fullLocalKey = localize(baseLocalKey, FUNDER_ID);
         updatedFunder.setLocalKey(fullLocalKey);
 
         URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", fullLocalKey);
@@ -324,7 +331,7 @@ public class PassUpdater {
      */
     private URI updateGrantInPass(Grant updatedGrant) {
         String baseLocalKey = updatedGrant.getLocalKey();
-        String fullLocalKey = localize(baseLocalKey, "grant");
+        String fullLocalKey = localize(baseLocalKey, GRANT_ID);
         updatedGrant.setLocalKey(fullLocalKey);
 
         LOG.debug("Looking for grant with localKey " + fullLocalKey);
@@ -403,10 +410,9 @@ public class PassUpdater {
     //used in unit test
     Map<String, URI> getUserMap() { return userMap; }
 
-    String localize (String value, String type) {
-        String domain = "johnshopkins.edu";
+    public String localize (String value, String type) {
         if(type != null && value != null) {
-            return  String.join(":", domain, type, value);
+            return  String.join(":", DOMAIN, type, value);
         } else {
             return null;
         }

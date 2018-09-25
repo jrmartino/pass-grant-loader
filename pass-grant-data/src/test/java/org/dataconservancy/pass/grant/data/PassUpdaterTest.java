@@ -176,6 +176,8 @@ public class PassUpdaterTest {
         assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
         assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());
         assertEquals(projectName, grant.getProjectName());
+
+        assertEquals("johnshopkins.edu:grant:8675309", grant.getLocalKey());
     }
 
     @Test
@@ -196,6 +198,10 @@ public class PassUpdaterTest {
 
         //unusual fields
         assertEquals("Marsha Lartz", newUser.getDisplayName());
-        //TODO test ids
+        //test ids
+        assertEquals("johnshopkins.edu:employeeid:0000222", newUser.getLocatorIds().get(0));
+        assertEquals("johnshopkins.edu:hopkinsid:A1A1A1", newUser.getLocatorIds().get(1));
+        assertEquals("johnshopkins.edu:jhed:mlartz5", newUser.getLocatorIds().get(2));
     }
+
 }
