@@ -25,7 +25,9 @@ import org.dataconservancy.pass.model.Grant;
 
 import org.dataconservancy.pass.model.User;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -36,6 +38,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +64,9 @@ public class PassUpdaterIT {
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
     private static String hopkinsidPrefix = "johnshopkins.edu:hopkinsid:";
     private static String jhedPrefix = "johnshopkins.edu:jhed:";
+
+    @Rule
+    public TemporaryFolder folder= new TemporaryFolder();
 
     @Before
     public void setup() {
@@ -324,9 +336,34 @@ public class PassUpdaterIT {
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());
         assertNotNull(updatedUser.getLocatorIds());
-        assertTrue(updatedUser.getLocatorIds().contains(employeeidPrefix +  C_USER_EMPLOYEE_ID + Integer.toString(10)));
+        assertTrue(updatedUser.getLocatorIds().contains(employeeidPrefix + C_USER_EMPLOYEE_ID + Integer.toString(10)));
         assertTrue(updatedUser.getLocatorIds().contains(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + Integer.toString(10)));
 
         assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
     }
+
+    @Test
+    public void testSerializeAndDeserialize() throws IOException {
+        File serialized= folder.newFile("serializedData");
+
+        try (FileOutputStream fos = new FileOutputStream(serialized);
+              ObjectOutputStream out  = new ObjectOutputStream(fos)
+            ){
+            out.writeObject(resultSet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Set input = null;
+        try (FileInputStream fis = new FileInputStream(serialized);
+            ObjectInputStream in = new ObjectInputStream(fis)
+            ){
+            input = (Set)in.readObject();
+        } catch (IOException | ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+
+        assertEquals(resultSet, input);
+    }
+
 }

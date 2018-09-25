@@ -125,7 +125,7 @@ are processed we know that each Grant object on the List is current, and so we u
 
 
 ###User Mode
-This mode (-m user) is similar to the grant mode, but updates users only. 
+This mode (-m user) is similar to the grant mode, but updates users only.
 
 
 
