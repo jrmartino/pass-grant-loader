@@ -79,8 +79,7 @@ public class PassEntityUtil {
         if (update.getFirstName() != null ? !update.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (update.getMiddleName() != null ? !update.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
         if (update.getLastName() != null ? !update.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
-        //if (update.getLocalKey() != null ? !update.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-        if (update.getLocatorIds() != null? !new HashSet(update.getLocatorIds()).equals(new HashSet(stored.getLocatorIds())): stored.getLocatorIds() != null) return false;
+        if (update.getLocatorIds() != null? !stored.getLocatorIds().containsAll(update.getLocatorIds()): stored.getLocatorIds() != null) return false;
         //next, other fields which require some reasoning to decide whether an update is necessary
         if (update.getEmail() != null && stored.getEmail() == null) return false;
         if (update.getDisplayName() != null && stored.getEmail() == null) return false;
