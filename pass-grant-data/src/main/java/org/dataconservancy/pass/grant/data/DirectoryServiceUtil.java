@@ -27,6 +27,8 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.util.Properties;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * This util class is designed to hit a service which provides resolution of one identifier to another. The two endpoints
  * provide lookups between our Hopkins Id, which is a durable identifier for all members of the Hopkins community, and the
@@ -43,7 +45,10 @@ public class DirectoryServiceUtil {
     private String directoryClientId;
     private String directoryClientSecret;
 
-    public DirectoryServiceUtil(Properties connectionProperties) {
+    private final OkHttpClient client;
+    private final JsonFactory factory = new JsonFactory();
+
+    DirectoryServiceUtil(Properties connectionProperties) {
         if (connectionProperties != null) {
 
             if (connectionProperties.getProperty(DIRECTORY_SERVICE_BASE_URL) != null) {
@@ -56,6 +61,11 @@ public class DirectoryServiceUtil {
                 this.directoryClientSecret = connectionProperties.getProperty(DIRECTORY_SERVICE_CLIENT_SECRET);
             }
         }
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        builder.connectTimeout(30, SECONDS);
+        builder.readTimeout(30, SECONDS);
+        builder.writeTimeout(30, SECONDS);
+        client = builder.build();
     }
 
     /**
@@ -83,20 +93,16 @@ public class DirectoryServiceUtil {
         }
     }
 
-    private final OkHttpClient client = new OkHttpClient();//shared client
-    private final JsonFactory factory = new JsonFactory();
 
     /**
      * Return Hopkins ID for a given employee ID
      *
      * @param employeeId the user's employeeId
      * @return the user's Hopkins ID - should never be null
-     * @throws IOException
+     * @throws IOException if the service cannot be reached
      */
     public String getHopkinsIdForEmployeeId(String employeeId) throws  IOException {
-        String hopkinsId = askDirectoryForMappedValue(Type.EMPLOYEE2HOPKINS, employeeId);
-        return hopkinsId;
-
+        return askDirectoryForMappedValue(Type.EMPLOYEE2HOPKINS, employeeId);
     }
 
     /**
@@ -105,9 +111,8 @@ public class DirectoryServiceUtil {
      * @return the user's employee ID if it exists; null if it does not
      * @throws IOException
      */
-    public String getEmployeeIdForHopkinsId(String hopkinsId) throws IOException {
-        String employeeId = askDirectoryForMappedValue(Type.HOPKINS2EMPLOYEE, hopkinsId);
-        return employeeId;
+    String getEmployeeIdForHopkinsId(String hopkinsId) throws IOException {
+        return askDirectoryForMappedValue(Type.HOPKINS2EMPLOYEE, hopkinsId);
     }
 
     private String askDirectoryForMappedValue(Type type, String sourceId) throws IOException {
@@ -124,23 +129,24 @@ public class DirectoryServiceUtil {
 
         Request request = new Request.Builder().header("client_id", directoryClientId)
                 .header("client_secret", directoryClientSecret).url(url).build();
+
         Response response = client.newCall(request).execute();
 
-        JsonParser parser = factory.createParser(response.body().string());
-        String mappedValue = null;
-        while (!parser.isClosed()) {
-            JsonToken jsonToken = parser.nextToken();
-            if (JsonToken.FIELD_NAME.equals(jsonToken)){
-                String fieldName = parser.getCurrentName();
-                parser.nextToken();
-                if(sourceId.equals(fieldName)) {
-                    mappedValue = parser.getValueAsString();
-                    mappedValue = mappedValue.equals("NULL") ? null : mappedValue;
+            JsonParser parser = factory.createParser(response.body().string());
+            String mappedValue = null;
+            while (!parser.isClosed()) {
+                JsonToken jsonToken = parser.nextToken();
+                if (JsonToken.FIELD_NAME.equals(jsonToken)) {
+                    String fieldName = parser.getCurrentName();
+                    parser.nextToken();
+                    if (sourceId.equals(fieldName)) {
+                        mappedValue = parser.getValueAsString();
+                        mappedValue = mappedValue.equals("NULL") ? null : mappedValue;
+                    }
                 }
             }
-        }
 
-        return mappedValue;
+            return mappedValue;
 
     }
 

@@ -67,14 +67,11 @@ public class DirectoryServiceUtilTest {
     public void testGetEmployeeId() throws java.io.IOException {
         String result = underTest.getEmployeeIdForHopkinsId("A58756");
         Assert.assertEquals("expected value", result);
-        System.out.println(result);
-
     }
 
     @Test
     public void testGetEmployeeIdIsNull() throws IOException {
         String result = underTest.getEmployeeIdForHopkinsId("SomeBadValue");
         Assert.assertNull(result);
-        System.out.println(result);
     }
 }

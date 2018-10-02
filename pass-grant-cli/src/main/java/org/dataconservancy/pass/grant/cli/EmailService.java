@@ -38,10 +38,6 @@ class EmailService {
     private static Logger LOG = LoggerFactory.getLogger(EmailService.class);
     private Properties mailProperties;
 
-    private static String ERR_ADDRESS = "Could not send email: an addressing exception occurred";
-    private static String ERR_MESSAGING = "Could not send email: a messaging exception occurred";
-    private static String ERR_ENCODING = "Could not send email; an encoding exception occurred";
-
     /**
      * The constructor
      * @param mailProperties - the mail properties
@@ -76,12 +72,15 @@ class EmailService {
             Transport.send(msg);
         } catch (AddressException e) {
             e.printStackTrace();
+            String ERR_ADDRESS = "Could not send email: an addressing exception occurred";
             LOG.error(ERR_ADDRESS, e);
         } catch (MessagingException e) {
             e.printStackTrace();
+            String ERR_MESSAGING = "Could not send email: a messaging exception occurred";
             LOG.error(ERR_MESSAGING, e);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
+            String ERR_ENCODING = "Could not send email; an encoding exception occurred";
             LOG.error(ERR_ENCODING, e);
         }
 

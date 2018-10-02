@@ -65,7 +65,7 @@ public class CoeusConnectorTest {
                 " AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C' OR REGEXP_LIKE (UPPER(B.ROLE), '^CO ?-?INVESTIGATOR$'))" +
                 " AND A.GRANT_NUMBER IS NOT NULL";
 
-        Assert.assertEquals(expectedQueryString, connector.buildGrantQueryString("2018-06-01 06:00:00.0"));
+        Assert.assertEquals(expectedQueryString, connector.buildQueryString("2018-06-01 06:00:00.0", "grant"));
 
     }
 
@@ -75,7 +75,7 @@ public class CoeusConnectorTest {
         String expectedQueryString = "SELECT FIRST_NAME, MIDDLE_NAME, LAST_NAME, EMAIL_ADDRESS, JHED_ID, EMPLOYEE_ID, " +
                 "UPDATE_TIMESTAMP FROM COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL " +
                 "WHERE UPDATE_TIMESTAMP > TIMESTAMP '2018-13-14 06:00:00.0'";
-        Assert.assertEquals(expectedQueryString, connector.buildUserQueryString("2018-13-14 06:00:00.0"));
+        Assert.assertEquals(expectedQueryString, connector.buildQueryString("2018-13-14 06:00:00.0", "user"));
 
     }
 

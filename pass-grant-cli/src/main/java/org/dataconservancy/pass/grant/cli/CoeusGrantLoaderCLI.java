@@ -42,7 +42,7 @@ public class CoeusGrantLoaderCLI {
     @Option(name = "-e", aliases = { "-email", "--email" }, usage = "flag to use the internal email server for notification")
     private static boolean email = false;
 
-    @Option(name = "-m", aliases = { "-mode", "--mode" }, usage = "option to set the query mode to \"grant\" (default), \"user\", or \"existing-user\"")
+    @Option(name = "-m", aliases = { "-mode", "--mode" }, usage = "option to set the query mode to \"grant\" (default) or \"user\"")
     private static String mode = "grant";
 
     /** Specifies a start datetime timestamp for basing the database query */

@@ -20,7 +20,6 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,6 +35,7 @@ import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.dataconservancy.pass.grant.data.PassUpdater.returnLaterUpdate;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -50,25 +50,22 @@ public class PassUpdaterTest {
     @Mock
     private PassClient passClientMock;
 
-    @Mock
-    private DirectoryServiceUtil directoryServiceUtilMock;
-
     private URI grantUri;
 
     @Before
-    public void setup() throws IOException{
+    public void setup() {
         grantUri = URI.create("grantUri");
         URI userUri1 = URI.create("piUri");
         URI useruri2 = URI.create("coPiUri");
         URI funderUri1 = URI.create("funderuri1");
-        URI funderUri2 = URI.create("funderur2");
+        URI funderUri2 = URI.create("funderuri2");
 
         when(passClientMock.createResource(any(Grant.class))).thenReturn(grantUri);
         when(passClientMock.createResource(any(Funder.class))).thenReturn(funderUri1, funderUri2);
         when(passClientMock.createResource(any(User.class))).thenReturn(userUri1, useruri2);
 
-        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000222")).thenReturn("A1A1A1");
-        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000333")).thenReturn("B2B2B2");
+//        when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000222")).thenReturn("A1A1A1");
+ //       when(directoryServiceUtilMock.getHopkinsIdForEmployeeId("0000333")).thenReturn("B2B2B2");
     }
     /**
      * Test static timestamp utility method to verify it returns the later of two supplied timestamps
@@ -80,15 +77,15 @@ public class PassUpdaterTest {
         String laterDate  = "2018-01-02 04:08:09.0";
 
         String latestDate = returnLaterUpdate(baseString, earlyDate);
-        Assert.assertEquals(earlyDate, latestDate);
+        assertEquals(earlyDate, latestDate);
         latestDate = returnLaterUpdate(latestDate, laterDate);
-        Assert.assertEquals(laterDate, latestDate);
+        assertEquals(laterDate, latestDate);
 
-        Assert.assertEquals(earlyDate, returnLaterUpdate(earlyDate, earlyDate));
+        assertEquals(earlyDate, returnLaterUpdate(earlyDate, earlyDate));
     }
 
     @Test
-    public void testGrantBuilding() throws IOException {
+    public void testGrantBuilding() {
 
         Set<Map<String, String>> resultSet = new HashSet<>();
 
@@ -124,6 +121,7 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_EMAIL, "areckon3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "ARECKON3");
         rowMap.put(C_USER_EMPLOYEE_ID, "0000333");
+        rowMap.put(C_USER_HOPKINS_ID, "B2B2B2");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "P");
@@ -150,31 +148,60 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
         rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
+        rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "C");
 
+
         resultSet.add(rowMap);
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock, directoryServiceUtilMock);
+        PassUpdater passUpdater = new PassUpdater(passClientMock);
         passUpdater.updatePass(resultSet, "grant");
 
         Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
-        Assert.assertEquals(1, grantMap.size());
+        assertEquals(1, grantMap.size());
         Grant grant = grantMap.get(grantUri);
-        Assert.assertEquals(1, grant.getCoPis().size());
-        //Assert.assertEquals(2, passUpdater.getFunderMap().size());
-        Assert.assertEquals(grant.getDirectFunder(), passUpdater.getFunderMap().get(directFunderId));
-        Assert.assertEquals(grant.getPrimaryFunder(), passUpdater.getFunderMap().get(primaryFunderId));
-        Assert.assertEquals(grant.getPi(), passUpdater.getUserMap().get("0000333"));
-        Assert.assertEquals(grant.getCoPis().get(0), passUpdater.getUserMap().get("0000222"));
+        assertEquals(1, grant.getCoPis().size());
+        assertEquals(2, passUpdater.getFunderMap().size());
+        assertEquals(grant.getDirectFunder(), passUpdater.getFunderMap().get(directFunderId));
+        assertEquals(grant.getPrimaryFunder(), passUpdater.getFunderMap().get(primaryFunderId));
+        assertEquals(grant.getPi(), passUpdater.getUserMap().get("0000333"));
+        assertEquals(grant.getCoPis().get(0), passUpdater.getUserMap().get("0000222"));
 
-        Assert.assertEquals(awardNumber, grant.getAwardNumber());
-        Assert.assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());
-        Assert.assertEquals(localKey, grant.getLocalKey());
-        Assert.assertEquals(DateTimeUtil.createJodaDateTime(awardDate), grant.getAwardDate());
-        Assert.assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
-        Assert.assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());
-        Assert.assertEquals(projectName, grant.getProjectName());
+        assertEquals(awardNumber, grant.getAwardNumber());
+        assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());
+        assertEquals(passUpdater.localize(localKey, "grant"), grant.getLocalKey());
+        assertEquals(DateTimeUtil.createJodaDateTime(awardDate), grant.getAwardDate());
+        assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
+        assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());
+        assertEquals(projectName, grant.getProjectName());
+
+        assertEquals("johnshopkins.edu:grant:8675309", grant.getLocalKey());
     }
+
+    @Test
+    public void testUserBuilding() {
+
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_USER_FIRST_NAME, "Marsha");
+        rowMap.put(C_USER_MIDDLE_NAME, null);
+        rowMap.put(C_USER_LAST_NAME, "Lartz");
+        rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
+        rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
+        rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
+        rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
+        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
+
+        PassUpdater passUpdater = new PassUpdater(passClientMock);
+        User newUser = passUpdater.buildUser(rowMap);
+
+        //unusual fields
+        assertEquals("Marsha Lartz", newUser.getDisplayName());
+        //test ids
+        assertEquals("johnshopkins.edu:employeeid:0000222", newUser.getLocatorIds().get(0));
+        assertEquals("johnshopkins.edu:hopkinsid:A1A1A1", newUser.getLocatorIds().get(1));
+        assertEquals("johnshopkins.edu:jhed:mlartz5", newUser.getLocatorIds().get(2));
+    }
+
 }

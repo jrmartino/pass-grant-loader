@@ -34,7 +34,6 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.DirectoryServiceUtil;
 import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +101,7 @@ class CoeusGrantLoaderApp {
         Properties mailProperties;
 
         //check that we have a good value for mode
-        if (!mode.equals("grant") && !mode.equals("user") && !mode.equals("existing-user")) {
+        if (!mode.equals("grant") && !mode.equals("user")) {
             throw processException(format(ERR_MODE_NOT_VALID,mode), null);
         }
 
@@ -167,7 +166,6 @@ class CoeusGrantLoaderApp {
 
         //now do things;
         CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
-        DirectoryServiceUtil directoryServiceUtil = new DirectoryServiceUtil(connectionProperties);
         String queryString = coeusConnector.buildQueryString(startDate, mode);
         Set<Map<String,String>> resultsSet;
         PassUpdater passUpdater;
@@ -175,7 +173,7 @@ class CoeusGrantLoaderApp {
 
         try {
             resultsSet = coeusConnector.retrieveUpdates(queryString, mode);
-            passUpdater = new PassUpdater(passClient, directoryServiceUtil);
+            passUpdater = new PassUpdater(passClient);
             passUpdater.updatePass(resultsSet, mode);
 
         } catch (ClassNotFoundException e) {

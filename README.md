@@ -125,9 +125,7 @@ are processed we know that each Grant object on the List is current, and so we u
 
 
 ###User Mode
-This mode (-m user) is similar to the user mode, with one important difference - if a user record in COEUS is encountered,
-but is not present in the PASS system, then the user will not be created. This mode can be used for correction, or for applying changed requirements to the existing PASS User records. For example, changing an identifier,
-adding more fields.
+This mode (-m user) is similar to the grant mode, but updates users only.
 
 
 
