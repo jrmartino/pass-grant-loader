@@ -324,9 +324,9 @@ public class PassUpdaterIT {
         passUpdater.updatePass(userResultSet, "user");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
 
-        //now update from the set of two users - the second one is not in PASS, and should be created
+        //now update from the set of two users - the second one is not in PASS, but is not created
         //the first (user10) should be updated, with new fields added
-        assertEquals(1, statistics.getUsersCreated());
+        assertEquals(0, statistics.getUsersCreated());
         assertEquals(1, statistics.getUsersUpdated());
 
         assertNotNull(passUserURI);

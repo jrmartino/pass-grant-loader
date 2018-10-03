@@ -171,7 +171,7 @@ public class PassUpdaterTest {
 
         assertEquals(awardNumber, grant.getAwardNumber());
         assertEquals(Grant.AwardStatus.ACTIVE, grant.getAwardStatus());
-        assertEquals(passUpdater.localize(localKey, "grant"), grant.getLocalKey());
+        assertEquals("johnshopkins.edu:grant:8675309", grant.getLocalKey());
         assertEquals(DateTimeUtil.createJodaDateTime(awardDate), grant.getAwardDate());
         assertEquals(DateTimeUtil.createJodaDateTime(startDate), grant.getStartDate());
         assertEquals(DateTimeUtil.createJodaDateTime(endDate), grant.getEndDate());
