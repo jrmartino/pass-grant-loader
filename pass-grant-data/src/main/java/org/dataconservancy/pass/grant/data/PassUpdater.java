@@ -17,6 +17,7 @@
 package org.dataconservancy.pass.grant.data;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.model.support.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,11 +46,11 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 public class PassUpdater {
 
     public static final String DOMAIN = "johnshopkins.edu";
-    public static final String EMPLOYEE_ID = "employeeid";
-    public static final String HOPKINS_ID = "hopkinsid";
-    public static final String JHED = "jhed";
-    public static final String GRANT_ID = "grant";
-    public static final String FUNDER_ID = "funder";
+    public static final String EMPLOYEE_ID_TYPE = "employeeid";
+    public static final String HOPKINS_ID_TYPE = "hopkinsid";
+    public static final String JHED_ID_TYPE = "jhed";
+    public static final String GRANT_ID_TYPE = "grant";
+    public static final String FUNDER_ID_TYPE = "funder";
 
 
     private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
@@ -239,13 +240,13 @@ public class PassUpdater {
         String jhedId = rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase();
         //Build the List of locatorIds - put the most reliable ids first
         if (employeeId != null) {
-            user.getLocatorIds().add(localize(employeeId, EMPLOYEE_ID));
+            user.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, employeeId).serialize());
         }
         if (hopkinsId != null) {
-            user.getLocatorIds().add(localize(hopkinsId, HOPKINS_ID));
+            user.getLocatorIds().add(new Identifier(DOMAIN, HOPKINS_ID_TYPE, hopkinsId).serialize());
         }
         if (jhedId != null) {
-            user.getLocatorIds().add(localize(jhedId, JHED));
+            user.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE, jhedId).serialize());
         }
         user.getRoles().add(User.Role.SUBMITTER);
         return user;
@@ -260,7 +261,7 @@ public class PassUpdater {
      */
     private URI updateFunderInPass(Funder updatedFunder) {
         String baseLocalKey = updatedFunder.getLocalKey();
-        String fullLocalKey = localize(baseLocalKey, FUNDER_ID);
+        String fullLocalKey = new Identifier(DOMAIN, FUNDER_ID_TYPE, baseLocalKey).serialize();
         updatedFunder.setLocalKey(fullLocalKey);
 
         URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", fullLocalKey);
@@ -311,7 +312,8 @@ public class PassUpdater {
                 statistics.addUsersUpdated();
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
-        } else {//don't have a stored User for this URI - this one is new to Pass
+        } else if (! mode.equals("user")) {//don't have a stored User for this URI - this one is new to Pass
+            //but don't update if we are in user mode - jus update existing users
                 passUserUri = passClient.createResource(updatedUser);
                 statistics.addUsersCreated();
         }
@@ -327,7 +329,7 @@ public class PassUpdater {
      */
     private URI updateGrantInPass(Grant updatedGrant) {
         String baseLocalKey = updatedGrant.getLocalKey();
-        String fullLocalKey = localize(baseLocalKey, GRANT_ID);
+        String fullLocalKey = new Identifier(DOMAIN, GRANT_ID_TYPE, baseLocalKey).serialize();
         updatedGrant.setLocalKey(fullLocalKey);
 
         LOG.debug("Looking for grant with localKey " + fullLocalKey);
@@ -403,13 +405,5 @@ public class PassUpdater {
 
     //used in unit test
     Map<String, URI> getUserMap() { return userMap; }
-
-    public String localize (String value, String type) {
-        if(type != null && value != null) {
-            return  String.join(":", DOMAIN, type, value);
-        } else {
-            return null;
-        }
-    }
 
 }
