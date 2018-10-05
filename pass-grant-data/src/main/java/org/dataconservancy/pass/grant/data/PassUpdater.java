@@ -237,7 +237,10 @@ public class PassUpdater {
         user.setEmail(rowMap.get(C_USER_EMAIL));
         String employeeId = rowMap.get(C_USER_EMPLOYEE_ID);
         String hopkinsId = rowMap.get(C_USER_HOPKINS_ID);
-        String jhedId = rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase();
+        String jhedId = null;
+        if (rowMap.get(C_USER_INSTITUTIONAL_ID) != null) {
+            jhedId = rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase();
+        }
         //Build the List of locatorIds - put the most reliable ids first
         if (employeeId != null) {
             user.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, employeeId).serialize());
