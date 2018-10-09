@@ -125,8 +125,8 @@ are processed we know that each Grant object on the List is current, and so we u
 
 
 ###User Mode
-This mode (-m user) is similar to the grant mode, but updates users only.
-
+This mode (-m user) is similar to the grant mode, but updates existing PASS users only. Grant updates will update associated users
+(and funders) automatically. This mode is used to perform data updates related to model changes, for example.
 
 
 

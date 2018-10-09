@@ -216,6 +216,8 @@ public class PassUpdater {
         for(Map<String,String> rowMap : results) {
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
+            String userUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
+            latestUpdateString = latestUpdateString.length()==0 ? userUpdateString : returnLaterUpdate(userUpdateString, latestUpdateString);
         }
 
         if (results.size() > 0) {

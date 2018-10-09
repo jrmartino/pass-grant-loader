@@ -148,9 +148,15 @@ public class CoeusConnector {
                 rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
                 rowMap.put(C_USER_EMPLOYEE_ID, rs.getString(C_USER_EMPLOYEE_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
+                String employeeId = rs.getString(C_USER_EMPLOYEE_ID);
+                if (employeeId != null) {
+                    rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
+                }
                 LOG.debug("Record processed: " + rowMap.toString());
                 mapSet.add(rowMap);
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
         return mapSet;
