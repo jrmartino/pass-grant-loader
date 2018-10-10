@@ -22,6 +22,8 @@ class CoeusGrantLoaderErrors {
         " and writable by the user running this application.";
     static String ERR_REQUIRED_CONFIGURATION_FILE_MISSING = "Required file %s is missing in the specified home directory.";
     static String ERR_COULD_NOT_OPEN_CONFIGURATION_FILE = "Could not open configuration file";
+    static String ERR_REQUIRED_DATA_FILE_MISSING = "Data file %s does not exist";
+    static String ERR_DATA_FILE_CANNOT_READ = "Could not read data file %s";
     static String ERR_INVALID_COMMAND_LINE_TIMESTAMP = "An invalid timestamp was specified on the command line: %s. Please make sure it" +
         " is of the form 'yyyy-mm-dd hh:mm:ss.m{mm}";
     static String ERR_INVALID_TIMESTAMP = "An invalid timestamp was found at the last line of the update timestamp file. Please make sure it" +
@@ -29,6 +31,8 @@ class CoeusGrantLoaderErrors {
     static String ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP = "The updated succeeded, but could not append last modified date %s to update timestamp file";
     static String ERR_SQL_EXCEPTION = "An SQL error occurred querying the COEUS database";
     static String ERR_ORACLE_DRIVER_NOT_FOUND = "Could not find the oracle db driver on classpath.";
-    static String ERR_MODE_NOT_VALID = "%s is not a valid mopde - must be either \"grant\" or \"user\"";
+    static String ERR_MODE_NOT_VALID = "%s is not a valid mode - must be either \"grant\" or \"user\"";
+    static String ERR_ACTION_NOT_VALID = "%s is not a valid action - must be either \"pull\" or \"load\"";
     static String ERR_DIRECTORY_LOOKUP_ERROR = "Error looking up Hopkins ID from employee ID";
+    static String ERR_RESULT_SET_NULL = "The result set was null - either the pull from COEUS failed, or there was an error reading the result set from the data file";
 }

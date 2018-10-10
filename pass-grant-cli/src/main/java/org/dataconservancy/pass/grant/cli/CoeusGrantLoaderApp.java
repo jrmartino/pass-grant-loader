@@ -24,6 +24,8 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.sql.SQLException;
 import java.util.Map;
@@ -63,6 +65,8 @@ class CoeusGrantLoaderApp {
     private File updateTimestampsFile;
     private boolean email;
     private String mode;
+    private String action;
+    private String dataFileName;
 
     private String updateTimestampsFileName;
 
@@ -70,12 +74,18 @@ class CoeusGrantLoaderApp {
      * Constructor for this class
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
      * @param email - a boolean which indicates whether or not to send email notification of the result of the current run
+     * @param mode - a String indicating whether we are updating grants, or existing users in PASS
+     * @param action - a String indicating an optional restriction to just pulling data from COEUS and saving a serialized
+     *               version to a file, or just taking serialized data in a file and loading it into PASS
+     * @param dataFileName - a String representing the path to an output file for a pull, or input for a load
      */
-    CoeusGrantLoaderApp(String startDate, boolean email, String mode) {
+    CoeusGrantLoaderApp(String startDate, boolean email, String mode, String action, String dataFileName) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
         this.email = email;
         this.mode = mode;
+        this.action = action;
+        this.dataFileName = dataFileName;
         this.updateTimestampsFileName = mode + "_update_timestamps";
         }
 
@@ -92,6 +102,8 @@ class CoeusGrantLoaderApp {
         File mailPropertiesFile = new File(appHome, mailPropertiesFileName);
         String systemPropertiesFileName = "system.properties";
         File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
+        File dataFile = new File(dataFileName);
+
         //let's be careful about overwriting system properties
         String[] systemProperties = {"pass.fedora.user", "pass.fedora.password", "pass.fedora.baseurl",
         "pass.elasticsearch.url", "pass.elasticsearch.limit"};
@@ -103,6 +115,11 @@ class CoeusGrantLoaderApp {
         //check that we have a good value for mode
         if (!mode.equals("grant") && !mode.equals("user")) {
             throw processException(format(ERR_MODE_NOT_VALID,mode), null);
+        }
+
+        //check that we have a good value for action
+        if (!action.equals("") && !action.equals("pull") && !action.equals("load")) {
+            throw processException(format(ERR_ACTION_NOT_VALID,action), null);
         }
 
         //first check that we have the required files
@@ -124,6 +141,14 @@ class CoeusGrantLoaderApp {
             }
         }
 
+        //check suitability of our input file
+        if(action.equals("load")) {
+            if (!dataFile.exists()) {
+                throw processException(format(ERR_REQUIRED_DATA_FILE_MISSING, dataFileName), null);
+            } else if (!dataFile.canRead()) {
+                throw processException(format(ERR_DATA_FILE_CANNOT_READ, dataFileName), null);
+            }
+        }
 
         //create mail properties and instantiate email service if we are using the service
         if (email) {
@@ -164,44 +189,73 @@ class CoeusGrantLoaderApp {
             throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
         }
 
+        Set<Map<String,String>> resultSet = null;
+
         //now do things;
-        CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
-        String queryString = coeusConnector.buildQueryString(startDate, mode);
-        Set<Map<String,String>> resultsSet;
-        PassUpdater passUpdater;
-        PassClient passClient = PassClientFactory.getPassClient();
-
-        try {
-            resultsSet = coeusConnector.retrieveUpdates(queryString, mode);
-            passUpdater = new PassUpdater(passClient);
-            passUpdater.updatePass(resultsSet, mode);
-
-        } catch (ClassNotFoundException e) {
-            throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
-        } catch (SQLException e) {
-            throw processException(ERR_SQL_EXCEPTION, e);
-        } catch (RuntimeException e) {
-            throw processException ("Runtime Exception", e);
-        } catch (IOException e ) {
-            throw processException (ERR_DIRECTORY_LOOKUP_ERROR, e);
-        }
-
-        //apparently the hard part has succeeded, let's write the timestamp to our update timestamps file
-        String updateTimestamp = passUpdater.getLatestUpdate();
-        if (DateTimeUtil.verifyDateTimeFormat(updateTimestamp)) {
+        if (!action.equals("load")) {//action includes a pull - need to build a result set
+            CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
+            String queryString = coeusConnector.buildQueryString(startDate, mode);
             try {
-                appendLineToFile(updateTimestampsFile, passUpdater.getLatestUpdate());
+                resultSet = coeusConnector.retrieveUpdates(queryString, mode);
+            } catch (ClassNotFoundException e) {
+                throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
+            } catch (SQLException e) {
+                throw processException(ERR_SQL_EXCEPTION, e);
+            } catch (RuntimeException e) {
+                throw processException("Runtime Exception", e);
             } catch (IOException e) {
-                throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, passUpdater.getLatestUpdate()), null);
+                throw processException(ERR_DIRECTORY_LOOKUP_ERROR, e);
+            }
+        } else {//just doing a PASS load, must have results set in the data file
+            try (FileInputStream fis = new FileInputStream(dataFile);
+                 ObjectInputStream in = new ObjectInputStream(fis)
+                ) {
+                resultSet = (Set<Map<String,String>>)in.readObject();
+            } catch (IOException | ClassNotFoundException ex) {
+                ex.printStackTrace();
             }
         }
-        
-        //now everything succeeded - log this result and send email if enabled
-        String message =  passUpdater.getReport();
-        LOG.info(message);
-        System.out.println(message);
-        if(email) {
-            emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
+
+        if (resultSet == null) {//this shouldn't happen
+            throw processException(ERR_RESULT_SET_NULL, null);
+        }
+
+        //update PASS if required
+        if (!action.equals("pull")) {
+            PassUpdater passUpdater;
+            PassClient passClient = PassClientFactory.getPassClient();
+            try {
+                passUpdater = new PassUpdater(passClient);
+                passUpdater.updatePass(resultSet, mode);
+            } catch (RuntimeException e) {
+                throw processException("Runtime Exception", e);
+            }
+
+            //apparently the hard part has succeeded, let's write the timestamp to our update timestamps file
+            String updateTimestamp = passUpdater.getLatestUpdate();
+            if (DateTimeUtil.verifyDateTimeFormat(updateTimestamp)) {
+                try {
+                    appendLineToFile(updateTimestampsFile, passUpdater.getLatestUpdate());
+                } catch (IOException e) {
+                    throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, passUpdater.getLatestUpdate()), null);
+                }
+            }
+
+            //now everything succeeded - log this result and send email if enabled
+            String message = passUpdater.getReport();
+            LOG.info(message);
+            System.out.println(message);
+            if (email) {
+                emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
+            }
+        } else {//don't need to update, just write the result set out to the data file
+            try (FileOutputStream fos = new FileOutputStream(dataFile);
+                 ObjectOutputStream out  = new ObjectOutputStream(fos)
+            ) {
+                out.writeObject(resultSet);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

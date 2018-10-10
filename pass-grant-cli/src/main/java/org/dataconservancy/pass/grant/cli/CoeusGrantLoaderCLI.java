@@ -15,9 +15,15 @@
  */
 package org.dataconservancy.pass.grant.cli;
 
+import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.lang.String.format;
 
 
 /**
@@ -51,6 +57,20 @@ public class CoeusGrantLoaderCLI {
             "dateTime listed in the updates file.")
     private static String startDate = "";
 
+    /** Specifies an optional action - either "pull" or "load" - to restrict the operation of the application to only pull data
+     * from COEUS to store in a file, or to only load into PASS data taken from a stored file, respectively. In either case, the path to
+     * the file in question is the first command line argument after all options. If no action is specified, the default is to perform
+     * a pull followed directly by a load.
+     */
+    @Option(name = "-a", aliases = { "-action", "--action" }, usage = "Action to be taken - 'pull' is for COEUS pull only," +
+            "'load' is for Fedora load only. Either option requires a file path specified as an argument after all options - an" +
+            "output file in the case of 'pull', and an input file in the case of 'load'. If no action is specified, " +
+            "the data will be pulled from COEUS and loaded directly into PASS")
+    private static String action = "";
+
+    @Argument
+    private static List<String> arguments = new ArrayList<>();
+
     /**
      * The main method which parses the command line arguments and options; also reports errors and exit statuses
      * when the {@code CoeusGrantLoaderApp} executes
@@ -60,6 +80,7 @@ public class CoeusGrantLoaderCLI {
 
         final CoeusGrantLoaderCLI application = new CoeusGrantLoaderCLI();
         CmdLineParser parser = new CmdLineParser(application);
+        String dataFileName = "";
 
         try {
             parser.parseArgument(args);
@@ -74,8 +95,17 @@ public class CoeusGrantLoaderCLI {
                 System.exit(0);
             }
 
+            if (action.equals("pull") || action.equals("load")) {
+                if (arguments.size() > 0 ) {
+                    dataFileName = arguments.get(0);
+                } else {
+                    System.err.println(format("Action {} requires a command line argument after the options" , action));
+                    System.exit(1);
+                }
+            }
+
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, email, mode);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, email, mode, action, dataFileName);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

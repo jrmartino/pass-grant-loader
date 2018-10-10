@@ -358,7 +358,7 @@ public class PassUpdaterIT {
         try (FileInputStream fis = new FileInputStream(serialized);
             ObjectInputStream in = new ObjectInputStream(fis)
             ){
-            input = (Set)in.readObject();
+            input = (Set<Map<String,String>>)in.readObject();
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
         }
