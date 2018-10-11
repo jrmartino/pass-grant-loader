@@ -65,7 +65,7 @@ the port number and path to the base container (for example, `http://localhost:8
 `pass.fedora.user=`
 `pass.fedora.password=`
 `pass.fedora.baseurl=`
-`pass.elasticsearch.url=`
+`pass.elasticsearch.url=`  
 `pass.elasticsearch.limit=`
 
 
