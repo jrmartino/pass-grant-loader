@@ -35,38 +35,38 @@ driver typically looks like this: jdbc:oracle:thin:@host.name.institution:1521:s
 We also put the connection parameters for the directory lookup service which provides us a mapping between a user's
 employee id and their Hopkins ID. these values are the service's base URL, and the credentials needed to access the service
 
-`coeus.url =`
-`coeus.user =`
-`coeus.password =`
-`directory.base.url =`
-`directory.client.id =`
-`directory.client.secret =`
+`coeus.url =`\
+`coeus.user =`\
+`coeus.password =`\
+`directory.base.url =`\
+`directory.client.id =`\
+`directory.client.secret =`\
 
 ### Mail server properties file (`mail.properties`)
 The use of the mail server is enabled by supplying the command line option `-e`.
 This configuration file contains values for parameters needed to send mail out from the application.
 These values suggest using a gmail server for example.
 
-`mail.transport.protocol=SMTPS`
-`mail.smtp.starttls.enable=true`
-`mail.smtp.host=smtp.gmail.com`
-`mail.smtp.port=587`
-`mail.smtp.auth=true`
-`mail.smtp.user=`
-`mail.smtp.password=`
-`mail.from=`
-`mail.to=`
+`mail.transport.protocol=SMTPS`\
+`mail.smtp.starttls.enable=true`\
+`mail.smtp.host=smtp.gmail.com`\
+`mail.smtp.port=587`\
+`mail.smtp.auth=true`\
+`mail.smtp.user=`\
+`mail.smtp.password=`\
+`mail.from=`\
+`mail.to=`\
 
 ### Fedora and Elasticsearch configuration (`system.properties`)
 This file contains parameters which must be set as system properties so that  the java PASS client
 can configure itself to attach to its storage and its search endpoint - in our case, a Fedora instance and an Elasticsearch instance. The base URL must contain
 the port number and path to the base container (for example, `http://localhost:8080/fcrepo/rest/`)
 
-`pass.fedora.user=`
-`pass.fedora.password=`
-`pass.fedora.baseurl=`
-`pass.elasticsearch.url=`  
-`pass.elasticsearch.limit=`
+`pass.fedora.user=`\
+`pass.fedora.password=`\
+`pass.fedora.baseurl=`\
+`pass.elasticsearch.url=`\
+`pass.elasticsearch.limit=`\
 
 
 ### Grants
@@ -81,11 +81,11 @@ are processed we know that each Grant object on the List is current, and so we u
 
 This mode is the default mode, but may ansl be specified using the `-m grant` option.
 
-###User Mode
+### User Mode
 This mode (`-m user`) is similar to the `grant` mode, but updates existing PASS users only. Grant updates will update associated users
 (and funders) automatically. This mode is used to perform data updates related to model changes, for example.
 
-###Actions
+### Actions
 The tool can be used to perform a just a pull from COEUS by using the `-a pull` option. This saves a serialized version of
 the COEUS data to be applied to PASS at a later time, into a file specified by a path which is the first (only) command
 line argument. The subsequent loading into PASS would be accomplished by invoking the tool with the -a "load" option,
