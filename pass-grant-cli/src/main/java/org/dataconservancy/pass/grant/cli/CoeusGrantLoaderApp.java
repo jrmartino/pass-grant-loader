@@ -28,9 +28,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
+import static org.dataconservancy.pass.grant.data.CoeusFieldNames.C_GRANT_LOCAL_KEY;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
@@ -167,32 +168,30 @@ class CoeusGrantLoaderApp {
         if (!connectionPropertiesFile.exists()) {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
         }
+
         try {
             connectionProperties = loadProperties(connectionPropertiesFile);
             } catch (RuntimeException e) {
                 throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
             }
 
-
-        //establish the start dateTime - it is either given as an option, or it is
-        //the last entry in the update_timestamps file
-        if (startDate.length() > 0) {
-            if (!verifyDateTimeFormat(startDate)) {
-                throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
-            }
-        } else {
-            startDate = getLatestTimestamp();
-        }
-
-        //we need a valid dateTime to start the query
-        if (!verifyDateTimeFormat(startDate)){//the start timestamp file is not in valid date time format
-            throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
-        }
-
-        Set<Map<String,String>> resultSet = null;
+        List<Map<String,String>> resultSet = null;
 
         //now do things;
         if (!action.equals("load")) {//action includes a pull - need to build a result set
+            //establish the start dateTime - it is either given as an option, or it is
+            //the last entry in the update_timestamps file
+            if (startDate.length() > 0) {
+                if (!verifyDateTimeFormat(startDate)) {
+                    throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
+                }
+                //we need a valid dateTime to start the query
+                if (!verifyDateTimeFormat(startDate)){//the start timestamp is not in valid date time format
+                    throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
+                }
+            } else {
+                startDate = getLatestTimestamp();
+            }
             CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
             String queryString = coeusConnector.buildQueryString(startDate, mode);
             try {
@@ -210,7 +209,16 @@ class CoeusGrantLoaderApp {
             try (FileInputStream fis = new FileInputStream(dataFile);
                  ObjectInputStream in = new ObjectInputStream(fis)
                 ) {
-                resultSet = (Set<Map<String,String>>)in.readObject();
+                resultSet = (List<Map<String, String>>)in.readObject();
+                //simple heuristic "autodetect" of type of results in data file
+                //in case no mode was specified, or incorrect mode was specified on command line
+                if (resultSet.size() > 0 ) {
+                    if (((List<Map<String,String>>)resultSet).get(0).containsKey(C_GRANT_LOCAL_KEY)) {
+                        mode = "grant";
+                    } else {
+                        mode = "user";
+                    }
+                }
             } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             }
@@ -350,5 +358,4 @@ class CoeusGrantLoaderApp {
         }
         return clie;
     }
-
 }

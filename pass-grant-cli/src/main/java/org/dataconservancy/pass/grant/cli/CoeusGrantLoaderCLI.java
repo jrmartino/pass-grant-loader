@@ -99,7 +99,7 @@ public class CoeusGrantLoaderCLI {
                 if (arguments.size() > 0 ) {
                     dataFileName = arguments.get(0);
                 } else {
-                    System.err.println(format("Action {} requires a command line argument after the options" , action));
+                    System.err.println(format("Action %s requires a command line argument after the options" , action));
                     System.exit(1);
                 }
             }

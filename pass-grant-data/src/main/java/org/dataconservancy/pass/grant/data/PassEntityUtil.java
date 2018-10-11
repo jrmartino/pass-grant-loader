@@ -80,7 +80,7 @@ public class PassEntityUtil {
         if (update.getLocatorIds() != null? !stored.getLocatorIds().containsAll(update.getLocatorIds()): stored.getLocatorIds() != null) return false;
         //next, other fields which require some reasoning to decide whether an update is necessary
         if (update.getEmail() != null && stored.getEmail() == null) return false;
-        if (update.getDisplayName() != null && stored.getEmail() == null) return false;
+        if (update.getDisplayName() != null && stored.getDisplayName() == null) return false;
         return true;
     }
 
