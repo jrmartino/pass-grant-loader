@@ -40,7 +40,7 @@ employee id and their Hopkins ID. these values are the service's base URL, and t
 `coeus.password =`\
 `directory.base.url =`\
 `directory.client.id =`\
-`directory.client.secret =`\
+`directory.client.secret =`
 
 ### Mail server properties file (`mail.properties`)
 The use of the mail server is enabled by supplying the command line option `-e`.
@@ -55,7 +55,7 @@ These values suggest using a gmail server for example.
 `mail.smtp.user=`\
 `mail.smtp.password=`\
 `mail.from=`\
-`mail.to=`\
+`mail.to=`
 
 ### Fedora and Elasticsearch configuration (`system.properties`)
 This file contains parameters which must be set as system properties so that  the java PASS client
@@ -66,7 +66,7 @@ the port number and path to the base container (for example, `http://localhost:8
 `pass.fedora.password=`\
 `pass.fedora.baseurl=`\
 `pass.elasticsearch.url=`\
-`pass.elasticsearch.limit=`\
+`pass.elasticsearch.limit=`
 
 
 ### Grants
