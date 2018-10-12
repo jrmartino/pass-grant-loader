@@ -264,6 +264,23 @@ class CoeusGrantLoaderApp {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            //do some notification
+            int size = resultSet.size();
+            StringBuilder sb = new StringBuilder();
+            sb.append("Wrote result set for ");
+            sb.append(Integer.toBinaryString(size));
+            sb.append(" ");
+            sb.append(mode);
+            sb.append((size==1?"":"s")); //handle plural correctly
+            sb.append(" into file ");
+            sb.append(dataFileName);
+            sb.append("\n");
+            String message = sb.toString();
+            LOG.info(message);
+            System.out.println(message);
+            if (email) {
+                emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
+            }
         }
     }
 

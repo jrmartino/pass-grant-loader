@@ -74,7 +74,7 @@ Our approach is that for each grant record, to see if PASS knows about it yet, a
 of the grant. We then look at the hash map and overwrite any information on the existing object with the new
 information. Fields which are themselves ids representing PASS objects are also updated. In order to keep processing as efficient
 as possible, we do track which PASS objects have been updated in the current session, as some of them may
-appear many times (`Funder`s or `User`s for example). We update these only once in the session.
+appear many times (Funders or Users for example). We update these only once in the session.
 
 After we have processed each record, we save the state of the Grant objects in a List. After all records
 are processed we know that each Grant object on the List is current, and so we update these grants in Pass.
