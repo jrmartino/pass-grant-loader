@@ -254,7 +254,7 @@ class CoeusGrantLoaderApp {
             LOG.info(message);
             System.out.println(message);
             if (email) {
-                emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
+                emailService.sendEmailMessage("COEUS Data Pull SUCCESS", message);
             }
         } else {//don't need to update, just write the result set out to the data file
             try (FileOutputStream fos = new FileOutputStream(dataFile);
