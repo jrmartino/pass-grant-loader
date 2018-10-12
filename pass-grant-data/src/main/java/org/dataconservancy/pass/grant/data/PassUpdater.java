@@ -109,7 +109,7 @@ public class PassUpdater {
             String primaryFunderLocalKey = rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY);
             primaryFunderLocalKey = (primaryFunderLocalKey == null? directFunderLocalKey: primaryFunderLocalKey);
             Grant grant;
-
+            LOG.debug("Processing grant with localKey " + grantLocalKey);
             //if this is the first record for this Grant, it will not be on the Map
             //we process all data which is common to every record for this grant
             //i.e., everything except the investigator(s)
@@ -230,7 +230,6 @@ public class PassUpdater {
     }
 
     User buildUser(Map<String, String> rowMap) {
-
         User user = new User();
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
         user.setMiddleName(rowMap.get(C_USER_MIDDLE_NAME));
@@ -254,6 +253,7 @@ public class PassUpdater {
             user.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE, jhedId).serialize());
         }
         user.getRoles().add(User.Role.SUBMITTER);
+        LOG.debug("Built user with employee ID " + employeeId);
         return user;
     }
 
