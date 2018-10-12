@@ -268,7 +268,7 @@ class CoeusGrantLoaderApp {
             int size = resultSet.size();
             StringBuilder sb = new StringBuilder();
             sb.append("Wrote result set for ");
-            sb.append(Integer.toBinaryString(size));
+            sb.append(Integer.toString(size));
             sb.append(" ");
             sb.append(mode);
             sb.append((size==1?"":"s")); //handle plural correctly
