@@ -271,6 +271,7 @@ class CoeusGrantLoaderApp {
             sb.append(Integer.toString(size));
             sb.append(" ");
             sb.append(mode);
+            sb.append(" record");
             sb.append((size==1?"":"s")); //handle plural correctly
             sb.append(" into file ");
             sb.append(dataFileName);
