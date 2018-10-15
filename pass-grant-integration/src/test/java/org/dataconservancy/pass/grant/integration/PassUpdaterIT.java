@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.dataconservancy.pass.grant.integration;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
@@ -40,17 +41,16 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * An integration test class for the PassUpdater.
@@ -58,7 +58,7 @@ import java.util.Set;
 @RunWith(MockitoJUnitRunner.class)
 public class PassUpdaterIT {
 
-    private Set<Map<String, String>> resultSet = new HashSet<>();
+    private List<Map<String, String>> resultSet = new ArrayList<>();
     private static String funderIdPrefix = "johnshopkins.edu:funder:";
     private static String grantIdPrefix = "johnshopkins.edu:grant:";
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
@@ -304,7 +304,7 @@ public class PassUpdaterIT {
 
         sleep(20000);
 
-        Set<Map<String, String>> userResultSet = new HashSet<>();
+        List<Map<String, String>> userResultSet = new ArrayList<>();
 
         for (int i = 10; i < 12; i++) {
             Map<String, String> rowMap = new HashMap<>();
@@ -354,11 +354,11 @@ public class PassUpdaterIT {
             e.printStackTrace();
         }
 
-        Set input = null;
+        List input = null;
         try (FileInputStream fis = new FileInputStream(serialized);
             ObjectInputStream in = new ObjectInputStream(fis)
             ){
-            input = (Set)in.readObject();
+            input = (List<Map<String,String>>)in.readObject();
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
         }

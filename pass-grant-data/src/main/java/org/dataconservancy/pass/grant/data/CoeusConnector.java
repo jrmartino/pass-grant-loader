@@ -15,7 +15,6 @@
  */
 package org.dataconservancy.pass.grant.data;
 
-import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +24,11 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -69,7 +68,7 @@ public class CoeusConnector {
         }
     }
 
-    public Set<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException, IOException {
+    public List<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException, IOException {
         if (mode.equals("user")) {
             return retrieveUserUpdates(queryString);
         } else {
@@ -83,9 +82,9 @@ public class CoeusConnector {
      * @param queryString the query string to the COEUS database needed to update the information
      * @return the {@code ResultSet} from the query
      */
-    private Set<Map<String, String>> retrieveGrantUpdates(String queryString) throws ClassNotFoundException, SQLException, IOException {
+    private List<Map<String, String>> retrieveGrantUpdates(String queryString) throws ClassNotFoundException, SQLException, IOException {
 
-        Set<Map<String, String>> mapSet = new HashSet<>();
+        List<Map<String, String>> mapList = new ArrayList<>();
 
         Class.forName("oracle.jdbc.driver.OracleDriver");
 
@@ -121,16 +120,18 @@ public class CoeusConnector {
                     rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
                 }
                 LOG.debug("Record processed: " + rowMap.toString());
-                mapSet.add(rowMap);
+                if (!mapList.contains(rowMap)) {
+                    mapList.add(rowMap);
+                }
             }
         }
-        LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
-        return mapSet;
+        LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
+        return mapList;
     }
 
-    private Set<Map<String, String>> retrieveUserUpdates(String queryString) throws ClassNotFoundException, SQLException {
+    private List<Map<String, String>> retrieveUserUpdates(String queryString) throws ClassNotFoundException, SQLException {
 
-        Set<Map<String, String>> mapSet = new HashSet<>();
+        List<Map<String, String>> mapList = new ArrayList<>();
 
         Class.forName("oracle.jdbc.driver.OracleDriver");
 
@@ -148,12 +149,20 @@ public class CoeusConnector {
                 rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
                 rowMap.put(C_USER_EMPLOYEE_ID, rs.getString(C_USER_EMPLOYEE_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
+                String employeeId = rs.getString(C_USER_EMPLOYEE_ID);
+                if (employeeId != null) {
+                    rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
+                }
                 LOG.debug("Record processed: " + rowMap.toString());
-                mapSet.add(rowMap);
+                if (!mapList.contains(rowMap)) {
+                    mapList.add(rowMap);
+                }
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        LOG.info("Retrieved result set from COEUS: " + mapSet.size() + " records processed");
-        return mapSet;
+        LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
+        return mapList;
     }
 
     public String buildQueryString(String startDate, String mode) {

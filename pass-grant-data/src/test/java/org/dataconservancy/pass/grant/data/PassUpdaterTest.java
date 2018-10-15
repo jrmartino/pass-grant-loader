@@ -28,8 +28,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,7 +89,7 @@ public class PassUpdaterTest {
     @Test
     public void testGrantBuilding() {
 
-        Set<Map<String, String>> resultSet = new HashSet<>();
+        List<Map<String, String>> resultSet = new ArrayList<>();
 
         String awardNumber = "12345678";
         String awardStatus = "Active";

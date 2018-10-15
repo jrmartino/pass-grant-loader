@@ -28,10 +28,10 @@ import org.joda.time.DateTime;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTime;
@@ -77,7 +77,7 @@ public class PassUpdater {
         this.passClient = passClient;
     }
 
-    public void updatePass(Set<Map<String, String>> results, String mode) {
+    public void updatePass(Collection<Map<String, String>> results, String mode) {
         this.mode = mode;
         userMap.clear();
         funderMap.clear();
@@ -95,7 +95,7 @@ public class PassUpdater {
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
      */
-    private void updateGrants(Set<Map<String, String>> results) {
+    private void updateGrants(Collection<Map<String, String>> results) {
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
@@ -109,7 +109,7 @@ public class PassUpdater {
             String primaryFunderLocalKey = rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY);
             primaryFunderLocalKey = (primaryFunderLocalKey == null? directFunderLocalKey: primaryFunderLocalKey);
             Grant grant;
-
+            LOG.debug("Processing grant with localKey " + grantLocalKey);
             //if this is the first record for this Grant, it will not be on the Map
             //we process all data which is common to every record for this grant
             //i.e., everything except the investigator(s)
@@ -211,11 +211,13 @@ public class PassUpdater {
         }
     }
 
-    private void updateUsers(Set<Map<String, String>> results) {
+    private void updateUsers(Collection<Map<String, String>> results) {
         LOG.info("Processing result set with " + results.size() + " rows");
         for(Map<String,String> rowMap : results) {
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
+            String userUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
+            latestUpdateString = latestUpdateString.length()==0 ? userUpdateString : returnLaterUpdate(userUpdateString, latestUpdateString);
         }
 
         if (results.size() > 0) {
@@ -228,7 +230,6 @@ public class PassUpdater {
     }
 
     User buildUser(Map<String, String> rowMap) {
-
         User user = new User();
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
         user.setMiddleName(rowMap.get(C_USER_MIDDLE_NAME));
@@ -252,6 +253,7 @@ public class PassUpdater {
             user.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE, jhedId).serialize());
         }
         user.getRoles().add(User.Role.SUBMITTER);
+        LOG.debug("Built user with employee ID " + employeeId);
         return user;
     }
 

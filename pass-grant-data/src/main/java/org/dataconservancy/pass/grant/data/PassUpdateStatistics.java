@@ -60,6 +60,7 @@ public class PassUpdateStatistics {
         } else if (type.equals("user")) {
             sb.append(format("%s user records processed; the most recent update in this batch has timestamp %s",
                     resultSetSize, latestUpdateString));
+            sb.append("\n");
             sb.append("Pass Activity");
             sb.append("\n\n");
             sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
