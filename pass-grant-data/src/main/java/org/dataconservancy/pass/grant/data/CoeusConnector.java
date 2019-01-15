@@ -39,7 +39,7 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
  *
  * @author jrm@jhu.edu
  */
-public class CoeusConnector {
+public class CoeusConnector implements GrantConnector {
     private static Logger LOG = LoggerFactory.getLogger(CoeusConnector.class);
     //property names
     private static final String COEUS_URL = "coeus.url";
@@ -166,11 +166,10 @@ public class CoeusConnector {
     }
 
     public String buildQueryString(String startDate, String mode) {
-        String awardEndLimit = "01/01/2011";
         if (mode.equals("user")) {
             return buildUserQueryString(startDate);
         } else {
-            return buildGrantQueryString(startDate, awardEndLimit);
+            return buildGrantQueryString(startDate);
         }
     }
 
@@ -194,7 +193,7 @@ public class CoeusConnector {
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    private String buildGrantQueryString(String startDate, String awardEndLimit){
+    private String buildGrantQueryString(String startDate){
 
         String[] viewFields = {
             "A." + C_GRANT_AWARD_NUMBER,
