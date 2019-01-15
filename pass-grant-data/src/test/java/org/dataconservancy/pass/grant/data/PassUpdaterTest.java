@@ -189,7 +189,7 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_FIRST_NAME, "Marsha");
         rowMap.put(C_USER_MIDDLE_NAME, null);
         rowMap.put(C_USER_LAST_NAME, "Lartz");
-        rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
+        rowMap.put(C_USER_EMAIL, "mlartz3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
         rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
         rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
