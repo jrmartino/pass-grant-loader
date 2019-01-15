@@ -41,16 +41,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
-import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
+import static org.dataconservancy.pass.grant.cli.DataLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.C_GRANT_LOCAL_KEY;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
- * This class does the orchestration for the pulling of COEUS grant and user data. The basic steps are to read in all of the
- * configuration files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all
- * of the grants or users updated since the timestamp at the end of the updated timestamps file; execute the query against this
- * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s or {@code User}s in our java
- * model; and finally to push this data into our pass instance via the java pass client.
+ * This class does the orchestration for the pulling of grant and user data. The basic steps are to read in all of the
+ * configuration files needed by the various classes; call the GrantLoader to pull in all
+ * of the grants or users updated since the timestamp at the end of the updated timestamps file;
+ * use the PassLoader to take {@code List} representing the {@code ResultSet} to push this data into our PASS instance
+ * via the java pass client.
  *
  * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated
  * fashion, so care must be taken to log errors, report them to STDOUT, and also send email notifications.
