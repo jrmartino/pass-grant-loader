@@ -90,7 +90,7 @@ public class CoeusGrantLoaderCLI {
                 System.err.println();
                 System.exit(0);
             } else if (application.version) {
-                System.err.println(CoeusCliException.class.getPackage()
+                System.err.println(PassCliException.class.getPackage()
                         .getImplementationVersion());
                 System.exit(0);
             }
@@ -117,7 +117,7 @@ public class CoeusGrantLoaderCLI {
             parser.printUsage(System.err);
             System.err.println();
             System.exit(1);
-        } catch (CoeusCliException e) {
+        } catch (PassCliException e) {
             e.printStackTrace();
             System.err.println(e.getMessage());
             System.exit(1);

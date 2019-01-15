@@ -94,9 +94,9 @@ class CoeusGrantLoaderApp {
      * The orchestration method for everything. This is called by the {@code CoeusGrantLoaderCLI}, which only manages the
      * command line interaction.
      *
-     * @throws CoeusCliException if there was any error occurring during the grant loading or updating processes
+     * @throws PassCliException if there was any error occurring during the grant loading or updating processes
      */
-    void run() throws CoeusCliException {
+    void run() throws PassCliException {
         String connectionPropertiesFileName = "connection.properties";
         File connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
         String mailPropertiesFileName = "mail.properties";
@@ -289,9 +289,9 @@ class CoeusGrantLoaderApp {
      * This method processes a plain text properties file and returns a {@code Properties} object
      * @param propertiesFile - the properties {@code File} to be read
      * @return the Properties object derived from the supplied {@code File}
-     * @throws CoeusCliException if the properties file could not be accessed.
+     * @throws PassCliException if the properties file could not be accessed.
      */
-    private Properties loadProperties(File propertiesFile) throws CoeusCliException {
+    private Properties loadProperties(File propertiesFile) throws PassCliException {
         Properties properties = new Properties();
         String resource;
         try{
@@ -310,9 +310,9 @@ class CoeusGrantLoaderApp {
     /**
      * Ths method returns  a string representing the timestamp on the last line of the updated timestamps file
      * @return the timestamp string
-     * @throws CoeusCliException if the updated timestamps file could not be accessed
+     * @throws PassCliException if the updated timestamps file could not be accessed
      */
-    private String getLatestTimestamp() throws CoeusCliException {
+    private String getLatestTimestamp() throws PassCliException {
         String lastLine="";
         if (!updateTimestampsFile.exists()) {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, updateTimestampsFileName),null);
@@ -353,21 +353,21 @@ class CoeusGrantLoaderApp {
      * in the mail properties file
      * @param message - the error message
      * @param e - the Exception
-     * @return = the {@code CoeusCliException} wrapper
+     * @return = the {@code PassCliException} wrapper
      */
-    private CoeusCliException processException (String message, Exception e){
-        CoeusCliException clie;
+    private PassCliException processException (String message, Exception e){
+        PassCliException clie;
 
         String errorSubject = "COEUS Data Loader ERROR";
         if(e != null) {
-            clie = new CoeusCliException(message, e);
+            clie = new PassCliException(message, e);
             LOG.error(message, e);
             e.printStackTrace();
             if (email) {
                 emailService.sendEmailMessage(errorSubject, clie.getMessage());
             }
         } else {
-            clie = new CoeusCliException(message);
+            clie = new PassCliException(message);
             LOG.error(message);
             System.err.println(message);
             if(email) {
