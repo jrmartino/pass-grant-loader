@@ -102,9 +102,17 @@ public class PassUpdater {
         Map<String, Grant> grantMap = new HashMap<>();
 
         LOG.info("Processing result set with " + results.size() + " rows");
-
+        boolean isFirstRow = true;
         for(Map<String,String> rowMap : results){
-            String grantLocalKey = rowMap.get(C_GRANT_LOCAL_KEY);
+            String grantLocalKey;
+
+            if (rowMap.containsKey(C_GRANT_LOCAL_KEY)) {
+                    grantLocalKey = rowMap.get(C_GRANT_LOCAL_KEY);
+                    isFirstRow = false;
+            } else {
+                    throw new RuntimeException("Mode of grant was supplied, but data does not seem to match.");
+            }
+
             String directFunderLocalKey = rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY);
             String primaryFunderLocalKey = rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY);
             primaryFunderLocalKey = (primaryFunderLocalKey == null? directFunderLocalKey: primaryFunderLocalKey);
@@ -212,8 +220,17 @@ public class PassUpdater {
     }
 
     private void updateUsers(Collection<Map<String, String>> results) {
-        LOG.info("Processing result set with " + results.size() + " rows");
+        boolean isFirsRow = true;
+
+        boolean isFirstRow = true;
+
         for(Map<String,String> rowMap : results) {
+            if (rowMap.containsKey(C_USER_EMPLOYEE_ID)) {
+                isFirstRow = false;
+            } else {
+                throw new RuntimeException("Mode of user was supplied, but data does not seem to match.");
+            }
+            LOG.info("Processing result set with " + results.size() + " rows");
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
             String userUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);

@@ -210,15 +210,6 @@ class CoeusGrantLoaderApp {
                  ObjectInputStream in = new ObjectInputStream(fis)
                 ) {
                 resultSet = (List<Map<String, String>>)in.readObject();
-                //simple heuristic "autodetect" of type of results in data file
-                //in case no mode was specified, or incorrect mode was specified on command line
-                if (resultSet.size() > 0 ) {
-                    if (((List<Map<String,String>>)resultSet).get(0).containsKey(C_GRANT_LOCAL_KEY)) {
-                        mode = "grant";
-                    } else {
-                        mode = "user";
-                    }
-                }
             } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             }
