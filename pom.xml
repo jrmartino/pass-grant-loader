@@ -90,8 +90,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven.compiler.plugin.version}</version>
                     <configuration>
-                        <source>11</source>
-                        <target>11</target>
+                        <source>1.8</source>
+                        <target>1.8</target>
                         <compilerArgument>-Xlint:all</compilerArgument>
                         <showWarnings>true</showWarnings>
                         <showDeprecation>true</showDeprecation>
@@ -147,6 +147,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
             </plugin>
         </plugins>
 

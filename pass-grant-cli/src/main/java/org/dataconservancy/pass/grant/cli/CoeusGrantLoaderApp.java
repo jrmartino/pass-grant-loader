@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,6 @@ import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.cli.DataLoaderErrors.*;
-import static org.dataconservancy.pass.grant.data.CoeusFieldNames.C_GRANT_LOCAL_KEY;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
@@ -259,7 +259,7 @@ class CoeusGrantLoaderApp {
             int size = resultSet.size();
             StringBuilder sb = new StringBuilder();
             sb.append("Wrote result set for ");
-            sb.append(Integer.toString(size));
+            sb.append(size);
             sb.append(" ");
             sb.append(mode);
             sb.append(" record");
@@ -331,7 +331,7 @@ class CoeusGrantLoaderApp {
      */
     private void appendLineToFile(File file, String updateString) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(
-                new FileOutputStream(file.getCanonicalPath(), true), "UTF-8");
+                new FileOutputStream(file.getCanonicalPath(), true), StandardCharsets.UTF_8);
         BufferedWriter fbw = new BufferedWriter(writer);
         fbw.write(updateString);
         fbw.newLine();

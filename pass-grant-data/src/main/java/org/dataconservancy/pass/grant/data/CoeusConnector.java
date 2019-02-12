@@ -196,28 +196,28 @@ public class CoeusConnector implements GrantConnector {
     private String buildGrantQueryString(String startDate){
 
         String[] viewFields = {
-            "A." + C_GRANT_AWARD_NUMBER,
-            "A." + C_GRANT_AWARD_STATUS,
-            "A." + C_GRANT_LOCAL_KEY,
-            "A." + C_GRANT_PROJECT_NAME,
-            "A." + C_GRANT_AWARD_DATE,
-            "A." + C_GRANT_START_DATE,
-            "A." + C_GRANT_END_DATE,
-            "A." + C_DIRECT_FUNDER_NAME,
-            "A." + C_DIRECT_FUNDER_LOCAL_KEY, //"SPOSNOR_CODE"
-            "A." + C_UPDATE_TIMESTAMP,
+                "A." + C_GRANT_AWARD_NUMBER,
+                "A." + C_GRANT_AWARD_STATUS,
+                "A." + C_GRANT_LOCAL_KEY,
+                "A." + C_GRANT_PROJECT_NAME,
+                "A." + C_GRANT_AWARD_DATE,
+                "A." + C_GRANT_START_DATE,
+                "A." + C_GRANT_END_DATE,
+                "A." + C_DIRECT_FUNDER_NAME,
+                "A." + C_DIRECT_FUNDER_LOCAL_KEY, //"SPOSNOR_CODE"
+                "A." + C_UPDATE_TIMESTAMP,
 
-            "B." + C_ABBREVIATED_ROLE,
+                "B." + C_ABBREVIATED_ROLE,
                 "B." + C_USER_EMPLOYEE_ID,
 
-            "C." + C_USER_FIRST_NAME,
-            "C." + C_USER_MIDDLE_NAME,
-            "C." + C_USER_LAST_NAME,
-            "C." + C_USER_EMAIL,
-            "C." + C_USER_INSTITUTIONAL_ID,
+                "C." + C_USER_FIRST_NAME,
+                "C." + C_USER_MIDDLE_NAME,
+                "C." + C_USER_LAST_NAME,
+                "C." + C_USER_EMAIL,
+                "C." + C_USER_INSTITUTIONAL_ID,
 
                 "D." + C_PRIMARY_FUNDER_NAME,
-            "D." + C_PRIMARY_FUNDER_LOCAL_KEY };
+                "D." + C_PRIMARY_FUNDER_LOCAL_KEY };
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -249,13 +249,13 @@ public class CoeusConnector implements GrantConnector {
 
     private String buildUserQueryString(String startDate) {
         String viewFields [] = {
-            C_USER_FIRST_NAME,
-            C_USER_MIDDLE_NAME,
-            C_USER_LAST_NAME,
-            C_USER_EMAIL,
-            C_USER_INSTITUTIONAL_ID,
+                C_USER_FIRST_NAME,
+                C_USER_MIDDLE_NAME,
+                C_USER_LAST_NAME,
+                C_USER_EMAIL,
+                C_USER_INSTITUTIONAL_ID,
                 C_USER_EMPLOYEE_ID,
-            C_UPDATE_TIMESTAMP };
+                C_UPDATE_TIMESTAMP };
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");

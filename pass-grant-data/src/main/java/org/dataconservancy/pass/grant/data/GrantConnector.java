@@ -21,10 +21,30 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This interface defines methods for connecting to a grant datasource for us with PASS
+ *
+ */
 public interface GrantConnector {
 
+    /**
+     * If the grant data source is a database, we will need a query string
+     * @param startDate - the date of the earlieat record we wish to get on this pull
+     * @param mode - indicates whether the data pull is for grants, or users
+     * @return
+     */
     String buildQueryString(String startDate, String mode);
 
+    /**
+     * This method retrieves the data from a data source. The format is a List of Maps - one List element for each
+     * grant or user record.
+     * @param queryString - a query string, if required
+     * @param mode - indicates whether the data pull is for grants, or users
+     * @return
+     * @throws ClassNotFoundException
+     * @throws SQLException
+     * @throws IOException
+     */
     List<Map<String, String>> retrieveUpdates(String queryString, String mode)throws
             ClassNotFoundException, SQLException, IOException;
 
