@@ -19,7 +19,7 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
 import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
-import org.dataconservancy.pass.grant.data.PassUpdater;
+import org.dataconservancy.pass.grant.data.JhuPassUpdater;
 import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
@@ -53,10 +53,10 @@ import java.util.ListIterator;
 import java.util.Map;
 
 /**
- * An integration test class for the PassUpdater.
+ * An integration test class for the JhuPassUpdater.
  */
 @RunWith(MockitoJUnitRunner.class)
-public class PassUpdaterIT {
+public class JhuPassUpdaterIT {
 
     private List<Map<String, String>> resultSet = new ArrayList<>();
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
@@ -113,7 +113,7 @@ public class PassUpdaterIT {
     public void updateGrantsIT() throws InterruptedException {
 
         PassClient passClient = PassClientFactory.getPassClient();
-        PassUpdater passUpdater = new PassUpdater(passClient);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
         passUpdater.updatePass(resultSet, "grant");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
 
@@ -295,7 +295,7 @@ public class PassUpdaterIT {
         user10.setLastName(C_USER_LAST_NAME + 10);
 
         PassClient passClient = PassClientFactory.getPassClient();
-        PassUpdater passUpdater = new PassUpdater(passClient);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
 
         URI passUserURI = passUpdater.getPassClient().createResource(user10);
 

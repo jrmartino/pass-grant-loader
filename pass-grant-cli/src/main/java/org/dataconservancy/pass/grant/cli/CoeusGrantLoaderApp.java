@@ -37,7 +37,7 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.PassUpdater;
+import org.dataconservancy.pass.grant.data.JhuPassUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,10 +221,10 @@ class CoeusGrantLoaderApp {
 
         //update PASS if required
         if (!action.equals("pull")) {
-            PassUpdater passUpdater;
+            JhuPassUpdater passUpdater;
             PassClient passClient = PassClientFactory.getPassClient();
             try {
-                passUpdater = new PassUpdater(passClient);
+                passUpdater = new JhuPassUpdater(passClient);
                 passUpdater.updatePass(resultSet, mode);
             } catch (RuntimeException e) {
                 throw processException("Runtime Exception", e);

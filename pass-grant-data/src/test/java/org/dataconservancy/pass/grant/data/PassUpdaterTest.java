@@ -26,17 +26,14 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
-import static org.dataconservancy.pass.grant.data.PassUpdater.returnLaterUpdate;
+import static org.dataconservancy.pass.grant.data.JhuPassUpdater.returnLaterUpdate;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -158,7 +155,7 @@ public class PassUpdaterTest {
 
         resultSet.add(rowMap);
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
         passUpdater.updatePass(resultSet, "grant");
 
         Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
@@ -195,7 +192,7 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
         User newUser = passUpdater.buildUser(rowMap);
 
         //unusual fields

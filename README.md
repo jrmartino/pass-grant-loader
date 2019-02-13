@@ -21,13 +21,13 @@ Because the application is intended to run unattended in slack hours, we
 send email notification indicating success, or reporting errors which prevented the 
 application from performing an update.
 
-## Configuration
+### Configuration
 The user running this application must supply a full path to a home
 or base directory for the application. This directory will contain any 
 configuration files, and will also contain the log file and the file(s) containing the
 update timestamps. Necessary configuration files are as follows.
 
-### Connection properties file (`connection.properties`)
+#### Connection properties file (`connection.properties`)
 This file must contain the values for the URL, user, and password needed to
 attach to COEUS's Oracle database, and the local directory lookup service. The URL for a database used with the Oracle
 driver typically looks like this: jdbc:oracle:thin:@host.name.institution:1521:service-name
@@ -42,7 +42,7 @@ employee id and their Hopkins ID. these values are the service's base URL, and t
 `directory.client.id =`\
 `directory.client.secret =`
 
-### Mail server properties file (`mail.properties`)
+#### Mail server properties file (`mail.properties`)
 The use of the mail server is enabled by supplying the command line option `-e`.
 This configuration file contains values for parameters needed to send mail out from the application.
 These values suggest using a gmail server for example.
@@ -57,7 +57,7 @@ These values suggest using a gmail server for example.
 `mail.from=`\
 `mail.to=`
 
-### Fedora and Elasticsearch configuration (`system.properties`)
+#### Fedora and Elasticsearch configuration (`system.properties`)
 This file contains parameters which must be set as system properties so that  the java PASS client
 can configure itself to attach to its storage and its search endpoint - in our case, a Fedora instance and an Elasticsearch instance. The base URL must contain
 the port number and path to the base container (for example, `http://localhost:8080/fcrepo/rest/`)
@@ -91,7 +91,7 @@ the COEUS data to be applied to PASS at a later time, into a file specified by a
 line argument. The subsequent loading into PASS would be accomplished by invoking the tool with the -a "load" option,
 specifying the serialized data file as the command line argument.
 
-## Invocation
+### Invocation
 The application is provided as an executable jar file. The absolute path for the base directory `COEUS_HOME` must be provided as a command line
 option to java in order to inject it into the java context. The command line looks like this
 
@@ -120,16 +120,22 @@ this data pull can be applied to the PASS repository by a subsequent invocation
 We note that when a load is being done into PASS, the application will figure out the mode that was used for pulling the data on the fly.
 So, it isn't necessary to supply a mode or a start date to the application - these will be ignored.
 
-## Email Notification
+### Email Notification
 We may add the command line option -e to enable the use of the email server to send email messages after
 each execution which involves a load into PASS. This will report information on the successful run of the application, or information
 on what went wrong in the case of an error. If this option is enabled, the email configuration file
 must be filled out accordingly. We also have a command line option -m to pass in the mode of operation -
  grant or user - depending on which mode we wish to operate in. If no mode is specified, we default to `grant`
 
-## Implementation Details
+### Implementation Details
 The processing of the ResultSet is straightforward - we simply construct a set of hash maps which represent the
 column names and the values for each record. We do not assume that the PASS objects in Fedora are updated
 only by this application, as there may be some fields on these objects which are not known to COEUS, but
 may be populated by other applications eventually (for example ORCID on User, Submissions on Grant, or Policy on Funder).
 
+## Developer Notes
+This project has been adapted to be able to build several jars for loading data for loading data into PASS instances for different institutions.
+For the sake of efficiency, we do this in one project rather than in several projects. We abuse the shade plugin and provide a separate <execution> for each
+artifact. Because different jars will have different revision schedules, we control the versioning for each implementation manually. We increment the current version
+for each implementation at the end of the <properties> section of the main pom file for the project. This is reflected in the <fileName> element in the configuration
+for the corresponding <execution> section for the implementation in the pass-grant-cli pom file.
