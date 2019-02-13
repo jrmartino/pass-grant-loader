@@ -35,8 +35,7 @@ import java.util.stream.Collectors;
  *
  * @author jrm@jhu.edu
  */
-public class CoeusPassEntityUtil {
-
+public class CoeusPassEntityUtil implements PassEntityUtil{
 
     /**
      *  This method takes a COEUS Funder, calculates whether it needs to be updated, and if so, returns the updated object
@@ -45,7 +44,7 @@ public class CoeusPassEntityUtil {
      * @param system the version of the Funder from the COEUS pull
      * @return the updated Funder - null if the Funder does not need to be updated
      */
-    public static Funder update(Funder system, Funder stored) {
+    public Funder update(Funder system, Funder stored) {
             if (!coeusFundersEqual(system, stored)) {
                 return updateFunder(system, stored);
             }
@@ -59,7 +58,7 @@ public class CoeusPassEntityUtil {
      * @param system the version of the user from the COEUS pull
      * @return the updated User - null if the User does not need to be updated
      */
-    public static User update(User system, User stored) {
+    public User update(User system, User stored) {
         if (!coeusUsersEqual(system, stored)) {
             return updateUser(system, stored);
         }
@@ -73,7 +72,7 @@ public class CoeusPassEntityUtil {
      * @param system the version of the Grant from the COEUS pull
      * @return the updated object - null if the Grant does not need to be updated
      */
-    public static Grant update(Grant system, Grant stored) {
+    public Grant update(Grant system, Grant stored) {
         if (!coeusGrantsEqual(system, stored)) {
             return updateGrant(system, stored);
         }
@@ -87,7 +86,7 @@ public class CoeusPassEntityUtil {
      * @param stored the version of the Funder as read from Pass
      * @return a boolean which asserts whether the two supplied Funders are "COEUS equal"
      */
-    private static boolean coeusFundersEqual(Funder system, Funder stored) {
+    private boolean coeusFundersEqual(Funder system, Funder stored) {
 
         if (system.getName() != null ? !system.getName().equals(stored.getName()) : stored.getName() != null) return false;
         if (system.getLocalKey() != null ? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
@@ -101,7 +100,7 @@ public class CoeusPassEntityUtil {
      * @param stored the version of the Funder as read from Pass
      * @return the Funder object which represents the Pass object, with any new information from COEUS merged in
      */
-    private static Funder updateFunder (Funder system, Funder stored) {
+    private Funder updateFunder (Funder system, Funder stored) {
         stored.setLocalKey(system.getLocalKey());
         stored.setName(system.getName());
         return stored;
@@ -115,7 +114,7 @@ public class CoeusPassEntityUtil {
      * @param stored the version of the User as read from Pass
      * @return a boolean which asserts whether the two supplied Users are "COEUS equal"
      */
-    private static boolean coeusUsersEqual(User system, User stored) {
+    private  boolean coeusUsersEqual(User system, User stored) {
         //first the fields for which COEUS is authoritative
         if (system.getFirstName() != null ? !system.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
         if (system.getMiddleName() != null ? !system.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
@@ -137,7 +136,7 @@ public class CoeusPassEntityUtil {
      * @param stored the version of the User as read from Pass
      * @return the User object which represents the Pass object, with any new information from COEUS merged in
      */
-    private static User updateUser (User system, User stored) {
+    private User updateUser (User system, User stored) {
         stored.setFirstName(system.getFirstName());
         stored.setMiddleName(system.getMiddleName());
         stored.setLastName(system.getLastName());
@@ -162,7 +161,7 @@ public class CoeusPassEntityUtil {
      * @param stored the version of the Grant as read from Pass
      * @return a boolean which asserts whether the two supplied Grants are "COEUS equal"
      */
-    private static boolean coeusGrantsEqual(Grant system, Grant stored) {
+    private boolean coeusGrantsEqual(Grant system, Grant stored) {
         if (system.getAwardNumber() != null ? !system.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return false;
         if (system.getAwardStatus() != null? !system.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return false;
         if (system.getLocalKey() != null? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
@@ -184,7 +183,7 @@ public class CoeusPassEntityUtil {
      * @param stored the version of the Grant as read from Pass
      * @return the Grant object which represents the Pass object, with any new information from COEUS merged in
      */
-    private static Grant updateGrant(Grant system, Grant stored) {
+    private Grant updateGrant(Grant system, Grant stored) {
         stored.setAwardNumber(system.getAwardNumber());
         stored.setAwardStatus(system.getAwardStatus());
         stored.setLocalKey(system.getLocalKey());

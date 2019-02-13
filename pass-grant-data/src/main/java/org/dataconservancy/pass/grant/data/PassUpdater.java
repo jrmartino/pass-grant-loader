@@ -58,6 +58,7 @@ public class PassUpdater {
 
     private PassClient passClient;
     private PassUpdateStatistics statistics = new PassUpdateStatistics();
+    private CoeusPassEntityUtil coeusPassEntityUtil = new CoeusPassEntityUtil();
 
     //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
@@ -290,7 +291,7 @@ public class PassUpdater {
         if (passFunderURI != null ) {
             Funder storedFunder = passClient.readResource(passFunderURI, Funder.class);
             Funder updatedFunder;
-            if ((updatedFunder = CoeusPassEntityUtil.update(systemFunder, storedFunder)) != null) {
+            if ((updatedFunder = coeusPassEntityUtil.update(systemFunder, storedFunder)) != null) {
                 passClient.updateResource(updatedFunder);
                 statistics.addFundersUpdated();
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
@@ -325,7 +326,7 @@ public class PassUpdater {
         if (passUserUri != null ) {
             User storedUser = passClient.readResource(passUserUri, User.class);
             User updatedUser;
-            if ((updatedUser = CoeusPassEntityUtil.update(systemUser, storedUser)) != null){
+            if ((updatedUser = coeusPassEntityUtil.update(systemUser, storedUser)) != null){
               //  storedUser = CoeusPassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
@@ -361,9 +362,8 @@ public class PassUpdater {
             LOG.debug("Found grant with localKey " + fullLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
             Grant updatedGrant;
-            if ( (updatedGrant = CoeusPassEntityUtil.update(systemGrant, storedGrant)) != null) {
+            if ( (updatedGrant = coeusPassEntityUtil.update(systemGrant, storedGrant)) != null) {
                 LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + systemGrant.getLocalKey());
-               // storedGrant = CoeusPassEntityUtil.updateGrant(systemGrant, storedGrant);
                 passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();
                 LOG.debug("Updating grant with award number " + systemGrant.getLocalKey());
