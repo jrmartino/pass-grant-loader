@@ -278,25 +278,25 @@ public class PassUpdater {
      * Take a new Funder object populated as fully as possible from the COEUS pull, and use this
      * new information to update an object for the same Funder in Pass (if it exists)
      *
-     * @param updatedFunder the new Funder object populated from COEUS
+     * @param systemFunder the new Funder object populated from COEUS
      * @return the URI for the resource representing the updated Funder in Pass
      */
-    private URI updateFunderInPass(Funder updatedFunder) {
-        String baseLocalKey = updatedFunder.getLocalKey();
+    private URI updateFunderInPass(Funder systemFunder) {
+        String baseLocalKey = systemFunder.getLocalKey();
         String fullLocalKey = new Identifier(DOMAIN, FUNDER_ID_TYPE, baseLocalKey).serialize();
-        updatedFunder.setLocalKey(fullLocalKey);
+        systemFunder.setLocalKey(fullLocalKey);
 
         URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", fullLocalKey);
         if (passFunderURI != null ) {
             Funder storedFunder = passClient.readResource(passFunderURI, Funder.class);
-            if (!PassEntityUtil.coeusFundersEqual(updatedFunder, storedFunder)) {
-                storedFunder = PassEntityUtil.updateFunder(updatedFunder, storedFunder);
-                passClient.updateResource(storedFunder);
+            Funder updatedFunder;
+            if ((updatedFunder = CoeusPassEntityUtil.update(systemFunder, storedFunder)) != null) {
+                passClient.updateResource(updatedFunder);
                 statistics.addFundersUpdated();
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Funder for this URI - this one is new to Pass
-                passFunderURI = passClient.createResource(updatedFunder);
+                passFunderURI = passClient.createResource(systemFunder);
                 statistics.addFundersCreated();
         }
         return passFunderURI;
@@ -306,14 +306,14 @@ public class PassUpdater {
      * Take a new User object populated as fully as possible from the COEUS pull, and use this
      * new information to update an object for the same User in Pass (if it exists)
      *
-     * @param updatedUser the new User object populated from COEUS
+     * @param systemUser the new User object populated from COEUS
      * @return the URI for the resource representing the updated User in Pass
      */
-    private URI updateUserInPass(User updatedUser) {
+    private URI updateUserInPass(User systemUser) {
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
         //last attempt is the JHED ID. this order is specified by the order of the List as constructed on updatedUser
         URI passUserUri = null;
-        ListIterator idIterator = updatedUser.getLocatorIds().listIterator();
+        ListIterator idIterator = systemUser.getLocatorIds().listIterator();
 
         while (passUserUri == null && idIterator.hasNext()) {
             String id = String.valueOf(idIterator.next());
@@ -324,19 +324,20 @@ public class PassUpdater {
 
         if (passUserUri != null ) {
             User storedUser = passClient.readResource(passUserUri, User.class);
-            if (!PassEntityUtil.coeusUsersEqual(updatedUser, storedUser)){
-                storedUser = PassEntityUtil.updateUser(updatedUser, storedUser);
+            User updatedUser;
+            if ((updatedUser = CoeusPassEntityUtil.update(systemUser, storedUser)) != null){
+              //  storedUser = CoeusPassEntityUtil.updateUser(updatedUser, storedUser);
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
                     storedUser.getRoles().add(User.Role.SUBMITTER);
                 }
-                passClient.updateResource(storedUser);
+                passClient.updateResource(updatedUser);
                 statistics.addUsersUpdated();
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else if (! mode.equals("user")) {//don't have a stored User for this URI - this one is new to Pass
             //but don't update if we are in user mode - jus update existing users
-                passUserUri = passClient.createResource(updatedUser);
+                passUserUri = passClient.createResource(systemUser);
                 statistics.addUsersCreated();
         }
         return passUserUri;
@@ -346,31 +347,32 @@ public class PassUpdater {
      * Take a new Grant object populated as fully as possible from the COEUS pull, and use this
      * new information to update an object for the same Grant in Pass (if it exists)
      *
-     * @param updatedGrant the new Grant object populated from COEUS
+     * @param systemGrant the new Grant object populated from COEUS
      * @return the PASS identifier for the Grant object
      */
-    private URI updateGrantInPass(Grant updatedGrant) {
-        String baseLocalKey = updatedGrant.getLocalKey();
+    private URI updateGrantInPass(Grant systemGrant) {
+        String baseLocalKey = systemGrant.getLocalKey();
         String fullLocalKey = new Identifier(DOMAIN, GRANT_ID_TYPE, baseLocalKey).serialize();
-        updatedGrant.setLocalKey(fullLocalKey);
+        systemGrant.setLocalKey(fullLocalKey);
 
         LOG.debug("Looking for grant with localKey " + fullLocalKey);
         URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", fullLocalKey);
         if (passGrantURI != null ) {
             LOG.debug("Found grant with localKey " + fullLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
-            if (!PassEntityUtil.coeusGrantsEqual(updatedGrant, storedGrant)) {
-                LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + updatedGrant.getLocalKey());
-                storedGrant = PassEntityUtil.updateGrant(updatedGrant, storedGrant);
-                passClient.updateResource(storedGrant);
+            Grant updatedGrant;
+            if ( (updatedGrant = CoeusPassEntityUtil.update(systemGrant, storedGrant)) != null) {
+                LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + systemGrant.getLocalKey());
+               // storedGrant = CoeusPassEntityUtil.updateGrant(systemGrant, storedGrant);
+                passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();
-                LOG.debug("Updating grant with award number " + updatedGrant.getLocalKey());
+                LOG.debug("Updating grant with award number " + systemGrant.getLocalKey());
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Pass
-                passGrantURI = passClient.createResource(updatedGrant);
+                passGrantURI = passClient.createResource(systemGrant);
                 statistics.addGrantsCreated();
-                LOG.debug("Creating grant with award number " + updatedGrant.getLocalKey());
+                LOG.debug("Creating grant with award number " + systemGrant.getLocalKey());
         }
         return passGrantURI;
     }

@@ -20,7 +20,7 @@ import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
 import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.grant.data.PassUpdater;
-import org.dataconservancy.pass.grant.data.PassEntityUtil;
+import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 
@@ -134,7 +134,8 @@ public class PassUpdaterIT {
         for (URI grantUri : passUpdater.getGrantUriMap().keySet()) {
             Grant grant = passUpdater.getGrantUriMap().get(grantUri);
             Grant passGrant = passUpdater.getPassClient().readResource(grantUri, Grant.class);
-            assertTrue(PassEntityUtil.coeusGrantsEqual(grant, passGrant));
+            assertNull(CoeusPassEntityUtil.update(grant, passGrant)); //this means grants are "coeus-equal"
+
         }
 
         sleep(20000);
