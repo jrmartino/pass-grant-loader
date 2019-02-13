@@ -45,13 +45,7 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 
 public class PassUpdater {
 
-    public static final String DOMAIN = "johnshopkins.edu";
-    public static final String EMPLOYEE_ID_TYPE = "employeeid";
-    public static final String HOPKINS_ID_TYPE = "hopkinsid";
-    public static final String JHED_ID_TYPE = "jhed";
-    public static final String GRANT_ID_TYPE = "grant";
-    public static final String FUNDER_ID_TYPE = "funder";
-
+    private final String DOMAIN = "johnshopkins.edu";
 
     private static Logger LOG = LoggerFactory.getLogger(PassUpdater.class);
     private String latestUpdateString = "";
@@ -103,16 +97,21 @@ public class PassUpdater {
         Map<String, Grant> grantMap = new HashMap<>();
 
         LOG.info("Processing result set with " + results.size() + " rows");
-        boolean isFirstRow = true;
+        boolean modeChecked = false;
+
         for(Map<String,String> rowMap : results){
+
             String grantLocalKey;
 
-            if (rowMap.containsKey(C_GRANT_LOCAL_KEY)) {
-                    grantLocalKey = rowMap.get(C_GRANT_LOCAL_KEY);
-                    isFirstRow = false;
-            } else {
+            if (!modeChecked) {
+                if (!rowMap.containsKey(C_GRANT_LOCAL_KEY)) {//we always have this for grants
                     throw new RuntimeException("Mode of grant was supplied, but data does not seem to match.");
+                } else {
+                    modeChecked = true;
+                }
             }
+
+            grantLocalKey = rowMap.get(C_GRANT_LOCAL_KEY);
 
             String directFunderLocalKey = rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY);
             String primaryFunderLocalKey = rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY);
@@ -221,16 +220,19 @@ public class PassUpdater {
     }
 
     private void updateUsers(Collection<Map<String, String>> results) {
-        boolean isFirsRow = true;
 
-        boolean isFirstRow = true;
+        boolean modeChecked = false;
 
         for(Map<String,String> rowMap : results) {
-            if (rowMap.containsKey(C_USER_EMPLOYEE_ID)) {
-                isFirstRow = false;
-            } else {
-                throw new RuntimeException("Mode of user was supplied, but data does not seem to match.");
+
+            if (!modeChecked) {
+                if (!rowMap.containsKey(C_USER_EMPLOYEE_ID)) {//we always have this for grants
+                    throw new RuntimeException("Mode of user was supplied, but data does not seem to match.");
+                } else {
+                    modeChecked = true;
+                }
             }
+
             LOG.info("Processing result set with " + results.size() + " rows");
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
@@ -262,12 +264,15 @@ public class PassUpdater {
         }
         //Build the List of locatorIds - put the most reliable ids first
         if (employeeId != null) {
+            String EMPLOYEE_ID_TYPE = "employeeid";
             user.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, employeeId).serialize());
         }
         if (hopkinsId != null) {
+            String HOPKINS_ID_TYPE = "hopkinsid";
             user.getLocatorIds().add(new Identifier(DOMAIN, HOPKINS_ID_TYPE, hopkinsId).serialize());
         }
         if (jhedId != null) {
+            String JHED_ID_TYPE = "jhed";
             user.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE, jhedId).serialize());
         }
         user.getRoles().add(User.Role.SUBMITTER);
@@ -284,6 +289,7 @@ public class PassUpdater {
      */
     private URI updateFunderInPass(Funder systemFunder) {
         String baseLocalKey = systemFunder.getLocalKey();
+        String FUNDER_ID_TYPE = "funder";
         String fullLocalKey = new Identifier(DOMAIN, FUNDER_ID_TYPE, baseLocalKey).serialize();
         systemFunder.setLocalKey(fullLocalKey);
 
@@ -291,7 +297,7 @@ public class PassUpdater {
         if (passFunderURI != null ) {
             Funder storedFunder = passClient.readResource(passFunderURI, Funder.class);
             Funder updatedFunder;
-            if ((updatedFunder = coeusPassEntityUtil.update(systemFunder, storedFunder)) != null) {
+            if ((updatedFunder = coeusPassEntityUtil.update(systemFunder, storedFunder)) != null) {//need to update
                 passClient.updateResource(updatedFunder);
                 statistics.addFundersUpdated();
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
@@ -326,8 +332,7 @@ public class PassUpdater {
         if (passUserUri != null ) {
             User storedUser = passClient.readResource(passUserUri, User.class);
             User updatedUser;
-            if ((updatedUser = coeusPassEntityUtil.update(systemUser, storedUser)) != null){
-              //  storedUser = CoeusPassEntityUtil.updateUser(updatedUser, storedUser);
+            if ((updatedUser = coeusPassEntityUtil.update(systemUser, storedUser)) != null){//need to update
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
                     storedUser.getRoles().add(User.Role.SUBMITTER);
@@ -353,6 +358,7 @@ public class PassUpdater {
      */
     private URI updateGrantInPass(Grant systemGrant) {
         String baseLocalKey = systemGrant.getLocalKey();
+        String GRANT_ID_TYPE = "grant";
         String fullLocalKey = new Identifier(DOMAIN, GRANT_ID_TYPE, baseLocalKey).serialize();
         systemGrant.setLocalKey(fullLocalKey);
 
@@ -362,7 +368,7 @@ public class PassUpdater {
             LOG.debug("Found grant with localKey " + fullLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
             Grant updatedGrant;
-            if ( (updatedGrant = coeusPassEntityUtil.update(systemGrant, storedGrant)) != null) {
+            if ( (updatedGrant = coeusPassEntityUtil.update(systemGrant, storedGrant)) != null) {//need to update
                 LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + systemGrant.getLocalKey());
                 passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();

@@ -59,10 +59,7 @@ import java.util.Map;
 public class PassUpdaterIT {
 
     private List<Map<String, String>> resultSet = new ArrayList<>();
-    private static String funderIdPrefix = "johnshopkins.edu:funder:";
-    private static String grantIdPrefix = "johnshopkins.edu:grant:";
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
-    private static String hopkinsidPrefix = "johnshopkins.edu:hopkinsid:";
     private static String jhedPrefix = "johnshopkins.edu:jhed:";
     private CoeusPassEntityUtil coeusPassEntityUtil = new CoeusPassEntityUtil();
 
@@ -75,28 +72,28 @@ public class PassUpdaterIT {
         for (int i = 0; i < 10; i++) {
 
             Map<String, String> rowMap = new HashMap<>();
-            rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + Integer.toString(i));
+            rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + i);
             rowMap.put(C_GRANT_AWARD_STATUS, "Active");
-            rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + Integer.toString(i));
-            rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + Integer.toString(i));
+            rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + i);
+            rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + i);
             rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
             rowMap.put(C_GRANT_START_DATE, "01/01/2001");
             rowMap.put(C_GRANT_END_DATE, "01/01/2002");
 
-            rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
-            rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + Integer.toString(i));
-            rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
-            rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + Integer.toString(i));
+            rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + i);
+            rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + i);
+            rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + i);
+            rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + i);
 
-            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
-            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
-            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
-            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + Integer.toString(i));
+            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + i);
+            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + i);
+            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + i);
+            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + i);
+            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
+            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + i);
+            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
 
-            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(i) + ":00:00.0");
+            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + i + ":00:00.0");
             rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
 
             resultSet.add(rowMap);
@@ -152,28 +149,28 @@ public class PassUpdaterIT {
 
         //now let's monkey with a few things; we expect to update the changed objects
         Map<String, String> rowMap = new HashMap<>();
-        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + Integer.toString(1));
+        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + 1);
         rowMap.put(C_GRANT_AWARD_STATUS, "Active");
-        rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + Integer.toString(1));
-        rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + Integer.toString(1) + "MOOO");
+        rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + 1);
+        rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + 1 + "MOOO");
         rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
         rowMap.put(C_GRANT_START_DATE, "01/01/2001");
         rowMap.put(C_GRANT_END_DATE, "01/01/2002");
 
-        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(1));
-        rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + Integer.toString(1) + "MOOOOO");
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(1));
-        rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + Integer.toString(1));
+        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + 1);
+        rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + 1 + "MOOOOO");
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + 1);
+        rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + 1);
 
-        rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(1));
-        rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(1) + "MOOOO");
-        rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(1));
-        rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(1));
-        rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(1));
-        rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(1));
-        rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + Integer.toString(1));
+        rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + 1);
+        rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + 1 + "MOOOO");
+        rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + 1);
+        rowMap.put(C_USER_EMAIL, C_USER_EMAIL + 1);
+        rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + 1);
+        rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + 1);
+        rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + 1);
 
-        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
+        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, ("C"));
 
         resultSet.clear();
@@ -191,10 +188,11 @@ public class PassUpdaterIT {
 
         for (int i = 0; i < 10; i++) {
             Grant grant = new Grant();
-            grant.setAwardNumber(C_GRANT_AWARD_NUMBER + Integer.toString(i));
+            grant.setAwardNumber(C_GRANT_AWARD_NUMBER + i);
             grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
-            grant.setLocalKey(grantIdPrefix + C_GRANT_LOCAL_KEY + Integer.toString(i));
-            grant.setProjectName(C_GRANT_PROJECT_NAME + Integer.toString(i));
+            String grantIdPrefix = "johnshopkins.edu:grant:";
+            grant.setLocalKey(grantIdPrefix + C_GRANT_LOCAL_KEY + i);
+            grant.setProjectName(C_GRANT_PROJECT_NAME + i);
             grant.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
             grant.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
             grant.setEndDate(DateTimeUtil.createJodaDateTime("01/01/2002"));
@@ -216,8 +214,9 @@ public class PassUpdaterIT {
 
             //let's check funder stuff
             Funder directFunder = new Funder();
-            directFunder.setLocalKey(funderIdPrefix + C_DIRECT_FUNDER_LOCAL_KEY + Integer.toString(i));
-            directFunder.setName(C_DIRECT_FUNDER_NAME + Integer.toString(i));
+            String funderIdPrefix = "johnshopkins.edu:funder:";
+            directFunder.setLocalKey(funderIdPrefix + C_DIRECT_FUNDER_LOCAL_KEY + i);
+            directFunder.setName(C_DIRECT_FUNDER_NAME + i);
 
             URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
             Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
@@ -230,8 +229,8 @@ public class PassUpdaterIT {
             }
 
             Funder primaryFunder = new Funder();
-            primaryFunder.setLocalKey(funderIdPrefix + C_PRIMARY_FUNDER_LOCAL_KEY + Integer.toString(i));
-            primaryFunder.setName(C_PRIMARY_FUNDER_NAME + Integer.toString(i));
+            primaryFunder.setLocalKey(funderIdPrefix + C_PRIMARY_FUNDER_LOCAL_KEY + i);
+            primaryFunder.setName(C_PRIMARY_FUNDER_NAME + i);
 
             URI primaryFunderUri = passClient.findByAttribute(Funder.class, "localKey", primaryFunder.getLocalKey());
             Funder passPrimaryFunder = passClient.readResource(primaryFunderUri, Funder.class);
@@ -242,13 +241,14 @@ public class PassUpdaterIT {
             User user = new User();
 
             //institutionalId and localKey were localized by the grant loader
-            user.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + Integer.toString(i));
-            user.getLocatorIds().add(hopkinsidPrefix + C_USER_HOPKINS_ID + Integer.toString(i));
-            user.getLocatorIds().add(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + Integer.toString(i));
-            user.setFirstName(C_USER_FIRST_NAME + Integer.toString(i));
-            user.setMiddleName(C_USER_MIDDLE_NAME + Integer.toString(i));
-            user.setLastName(C_USER_LAST_NAME + Integer.toString(i));
-            user.setEmail(C_USER_EMAIL + Integer.toString(i));
+            user.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + i);
+            String hopkinsidPrefix = "johnshopkins.edu:hopkinsid:";
+            user.getLocatorIds().add(hopkinsidPrefix + C_USER_HOPKINS_ID + i);
+            user.getLocatorIds().add(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + i);
+            user.setFirstName(C_USER_FIRST_NAME + i);
+            user.setMiddleName(C_USER_MIDDLE_NAME + i);
+            user.setLastName(C_USER_LAST_NAME + i);
+            user.setEmail(C_USER_EMAIL + i);
 
             URI userUri = null;
             ListIterator idIterator = user.getLocatorIds().listIterator();
@@ -311,14 +311,14 @@ public class PassUpdaterIT {
         for (int i = 10; i < 12; i++) {
             Map<String, String> rowMap = new HashMap<>();
 
-            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + Integer.toString(i));
-            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + Integer.toString(i));
-            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + Integer.toString(i));
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + Integer.toString(i));
-            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + Integer.toString(i));
-            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + Integer.toString(i));
-            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + Integer.toString(1) + ":00:00.0");
+            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + i);
+            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + i);
+            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + i);
+            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + i);
+            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
+            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + i);
+            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
+            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
             userResultSet.add(rowMap);
         }
 
@@ -338,8 +338,8 @@ public class PassUpdaterIT {
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());
         assertNotNull(updatedUser.getLocatorIds());
-        assertTrue(updatedUser.getLocatorIds().contains(employeeidPrefix + C_USER_EMPLOYEE_ID + Integer.toString(10)));
-        assertTrue(updatedUser.getLocatorIds().contains(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + Integer.toString(10)));
+        assertTrue(updatedUser.getLocatorIds().contains(employeeidPrefix + C_USER_EMPLOYEE_ID + 10));
+        assertTrue(updatedUser.getLocatorIds().contains(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + 10));
 
         assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
     }
