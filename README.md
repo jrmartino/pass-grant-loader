@@ -1,4 +1,4 @@
-#PASS Grant Loader
+# PASS Grant Loader
 
 This project is comprised of code for retrieving grant data from some kind of data source, and using that data to update the PASS backend.
 
@@ -12,7 +12,7 @@ for the corresponding `<execution>` section for the implementation in the pass-g
 
 ## Implementations
 
-###JHU
+### JHU
 
 The JhUS implementation is used to pull data from Oracle database views for the purpose of performing regular updates.
 We look at grants which have been updated since a particular time (typically the time of the previous update), join this
