@@ -296,6 +296,9 @@ public class JhuPassUpdater implements PassUpdater{
         URI passFunderURI = passClient.findByAttribute(Funder.class, "localKey", fullLocalKey);
         if (passFunderURI != null ) {
             Funder storedFunder = passClient.readResource(passFunderURI, Funder.class);
+            if (storedFunder == null) {
+                throw new RuntimeException("Could not read Funder object with URI " + passFunderURI);
+            }
             Funder updatedFunder;
             if ((updatedFunder = coeusPassEntityUtil.update(systemFunder, storedFunder)) != null) {//need to update
                 passClient.updateResource(updatedFunder);
@@ -331,6 +334,9 @@ public class JhuPassUpdater implements PassUpdater{
 
         if (passUserUri != null ) {
             User storedUser = passClient.readResource(passUserUri, User.class);
+            if (storedUser == null) {
+                throw new RuntimeException("Could not read User object with URI " + passUserUri);
+            }
             User updatedUser;
             if ((updatedUser = coeusPassEntityUtil.update(systemUser, storedUser)) != null){//need to update
                 //post COEUS processing goes here
@@ -367,6 +373,9 @@ public class JhuPassUpdater implements PassUpdater{
         if (passGrantURI != null ) {
             LOG.debug("Found grant with localKey " + fullLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
+            if (storedGrant == null) {
+                throw new RuntimeException("Could not read Funder object with URI " + passGrantURI);
+            }
             Grant updatedGrant;
             if ( (updatedGrant = coeusPassEntityUtil.update(systemGrant, storedGrant)) != null) {//need to update
                 LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + systemGrant.getLocalKey());
