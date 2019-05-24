@@ -57,6 +57,14 @@ public class CoeusGrantLoaderCLI {
             "dateTime listed in the updates file.")
     private static String startDate = "";
 
+
+    /** Specifies an award end date for basing the database query */
+    @Option(name = "-z", aliases = { "-awardEndDate", "--awardEndDate" }, usage = "Date for the AWARD_END to start the query against COEUS. This will cause " +
+            "a return of all records having an AWARD_END after the supplied date. Syntax must be MM/dd/yyyy. If not specified, the default will be " +
+            "01/01/2011")
+    private static String awardEndDate = "01/01/2011";
+
+
     /** Specifies an optional action - either "pull" or "load" - to restrict the operation of the application to only pull data
      * from COEUS to store in a file, or to only load into PASS data taken from a stored file, respectively. In either case, the path to
      * the file in question is the first command line argument after all options. If no action is specified, the default is to perform
@@ -105,7 +113,7 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, email, mode, action, dataFileName);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

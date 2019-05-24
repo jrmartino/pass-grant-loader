@@ -116,4 +116,17 @@ public class DateTimeUtilTest {
         Assert.assertEquals(0, dateTime.getMillisOfSecond());
 
     }
+
+    /**
+     * Test that verifyDate works
+     *
+     */
+    public void testDateVerify() {
+        String date = "01/01/2011";
+        Assert.assertTrue(DateTimeUtil.verifyDate(date));
+
+        date = "02/20/1999";
+        Assert.assertFalse(DateTimeUtil.verifyDate(date));
+    }
+
 }

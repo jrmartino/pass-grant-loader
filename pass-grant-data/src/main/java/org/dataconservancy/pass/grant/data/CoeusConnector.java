@@ -165,11 +165,11 @@ public class CoeusConnector implements GrantConnector {
         return mapList;
     }
 
-    public String buildQueryString(String startDate, String mode) {
+    public String buildQueryString(String startDate, String awardEndDate, String mode) {
         if (mode.equals("user")) {
             return buildUserQueryString(startDate);
         } else {
-            return buildGrantQueryString(startDate);
+            return buildGrantQueryString(startDate, awardEndDate);
         }
     }
 
@@ -193,7 +193,7 @@ public class CoeusConnector implements GrantConnector {
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    private String buildGrantQueryString(String startDate){
+    private String buildGrantQueryString(String startDate, String awardEndDate){
 
         String[] viewFields = {
                 "A." + C_GRANT_AWARD_NUMBER,
@@ -235,7 +235,7 @@ public class CoeusConnector implements GrantConnector {
         sb.append(" WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
         sb.append(startDate);
         sb.append("' ");
-        sb.append("AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('01/01/2011', 'MM/DD/YYYY') ");
+        sb.append("AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('"+ awardEndDate +"', 'MM/DD/YYYY') ");
         sb.append("AND A.PROPOSAL_STATUS = 'Funded' ");
         sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C' OR REGEXP_LIKE (UPPER(B.ROLE), '^CO ?-?INVESTIGATOR$')) ");
         sb.append("AND A.GRANT_NUMBER IS NOT NULL");

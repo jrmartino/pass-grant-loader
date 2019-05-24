@@ -81,6 +81,8 @@ are processed we know that each Grant object on the List is current, and so we u
 
 This mode is the default mode, but may ansl be specified using the `-m grant` option.
 
+We note that we (arbitrarily) have populated our grant data only with those having an AWARD_END date on or after 01/01/2011.
+
 ### User Mode
 This mode (`-m user`) is similar to the `grant` mode, but updates existing PASS users only. Grant updates will update associated users
 (and funders) automatically. This mode is used to perform data updates related to model changes, for example.

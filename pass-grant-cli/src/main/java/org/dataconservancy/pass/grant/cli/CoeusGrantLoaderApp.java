@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.cli.DataLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
+import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDate;
 
 /**
  * This class does the orchestration for the pulling of grant and user data. The basic steps are to read in all of the
@@ -63,6 +64,7 @@ class CoeusGrantLoaderApp {
 
     private File appHome;
     private String startDate;
+    private String awardEndDate;
     private File updateTimestampsFile;
     private boolean email;
     private String mode;
@@ -80,9 +82,10 @@ class CoeusGrantLoaderApp {
      *               version to a file, or just taking serialized data in a file and loading it into PASS
      * @param dataFileName - a String representing the path to an output file for a pull, or input for a load
      */
-    CoeusGrantLoaderApp(String startDate, boolean email, String mode, String action, String dataFileName) {
+    CoeusGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
+        this.awardEndDate = awardEndDate;
         this.email = email;
         this.mode = mode;
         this.action = action;
@@ -181,19 +184,24 @@ class CoeusGrantLoaderApp {
         if (!action.equals("load")) {//action includes a pull - need to build a result set
             //establish the start dateTime - it is either given as an option, or it is
             //the last entry in the update_timestamps file
+
             if (startDate.length() > 0) {
                 if (!verifyDateTimeFormat(startDate)) {
                     throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
                 }
-                //we need a valid dateTime to start the query
-                if (!verifyDateTimeFormat(startDate)){//the start timestamp is not in valid date time format
-                    throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
-                }
             } else {
                 startDate = getLatestTimestamp();
+                if (!verifyDateTimeFormat(startDate)) {
+                    throw processException(format(ERR_INVALID_TIMESTAMP, startDate),null);
+                }
             }
+
+            if (!verifyDate(awardEndDate)) {
+                throw processException(format(ERR_INVALID_COMMAND_LINE_DATE, awardEndDate), null);
+            }
+
             CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
-            String queryString = coeusConnector.buildQueryString(startDate, mode);
+            String queryString = coeusConnector.buildQueryString(startDate, awardEndDate, mode);
             try {
                 resultSet = coeusConnector.retrieveUpdates(queryString, mode);
             } catch (ClassNotFoundException e) {
