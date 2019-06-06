@@ -39,7 +39,7 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
  *
  * @author jrm@jhu.edu
  */
-public class CoeusConnector {
+public class CoeusConnector implements GrantConnector {
     private static Logger LOG = LoggerFactory.getLogger(CoeusConnector.class);
     //property names
     private static final String COEUS_URL = "coeus.url";
@@ -165,12 +165,11 @@ public class CoeusConnector {
         return mapList;
     }
 
-    public String buildQueryString(String startDate, String mode) {
-        String awardEndLimit = "01/01/2011";
+    public String buildQueryString(String startDate, String awardEndDate, String mode) {
         if (mode.equals("user")) {
             return buildUserQueryString(startDate);
         } else {
-            return buildGrantQueryString(startDate, awardEndLimit);
+            return buildGrantQueryString(startDate, awardEndDate);
         }
     }
 
@@ -194,31 +193,31 @@ public class CoeusConnector {
      * @param startDate - the date we want to start the query against UPDATE_TIMESTAMP
      * @return the SQL query string
      */
-    private String buildGrantQueryString(String startDate, String awardEndLimit){
+    private String buildGrantQueryString(String startDate, String awardEndDate){
 
         String[] viewFields = {
-            "A." + C_GRANT_AWARD_NUMBER,
-            "A." + C_GRANT_AWARD_STATUS,
-            "A." + C_GRANT_LOCAL_KEY,
-            "A." + C_GRANT_PROJECT_NAME,
-            "A." + C_GRANT_AWARD_DATE,
-            "A." + C_GRANT_START_DATE,
-            "A." + C_GRANT_END_DATE,
-            "A." + C_DIRECT_FUNDER_NAME,
-            "A." + C_DIRECT_FUNDER_LOCAL_KEY, //"SPOSNOR_CODE"
-            "A." + C_UPDATE_TIMESTAMP,
+                "A." + C_GRANT_AWARD_NUMBER,
+                "A." + C_GRANT_AWARD_STATUS,
+                "A." + C_GRANT_LOCAL_KEY,
+                "A." + C_GRANT_PROJECT_NAME,
+                "A." + C_GRANT_AWARD_DATE,
+                "A." + C_GRANT_START_DATE,
+                "A." + C_GRANT_END_DATE,
+                "A." + C_DIRECT_FUNDER_NAME,
+                "A." + C_DIRECT_FUNDER_LOCAL_KEY, //"SPOSNOR_CODE"
+                "A." + C_UPDATE_TIMESTAMP,
 
-            "B." + C_ABBREVIATED_ROLE,
+                "B." + C_ABBREVIATED_ROLE,
                 "B." + C_USER_EMPLOYEE_ID,
 
-            "C." + C_USER_FIRST_NAME,
-            "C." + C_USER_MIDDLE_NAME,
-            "C." + C_USER_LAST_NAME,
-            "C." + C_USER_EMAIL,
-            "C." + C_USER_INSTITUTIONAL_ID,
+                "C." + C_USER_FIRST_NAME,
+                "C." + C_USER_MIDDLE_NAME,
+                "C." + C_USER_LAST_NAME,
+                "C." + C_USER_EMAIL,
+                "C." + C_USER_INSTITUTIONAL_ID,
 
                 "D." + C_PRIMARY_FUNDER_NAME,
-            "D." + C_PRIMARY_FUNDER_LOCAL_KEY };
+                "D." + C_PRIMARY_FUNDER_LOCAL_KEY };
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");
@@ -236,7 +235,7 @@ public class CoeusConnector {
         sb.append(" WHERE A.UPDATE_TIMESTAMP > TIMESTAMP '");
         sb.append(startDate);
         sb.append("' ");
-        sb.append("AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('01/01/2011', 'MM/DD/YYYY') ");
+        sb.append("AND TO_DATE(A.AWARD_END, 'MM/DD/YYYY') >= TO_DATE('"+ awardEndDate +"', 'MM/DD/YYYY') ");
         sb.append("AND A.PROPOSAL_STATUS = 'Funded' ");
         sb.append("AND (B.ABBREVIATED_ROLE = 'P' OR B.ABBREVIATED_ROLE = 'C' OR REGEXP_LIKE (UPPER(B.ROLE), '^CO ?-?INVESTIGATOR$')) ");
         sb.append("AND A.GRANT_NUMBER IS NOT NULL");
@@ -250,13 +249,13 @@ public class CoeusConnector {
 
     private String buildUserQueryString(String startDate) {
         String viewFields [] = {
-            C_USER_FIRST_NAME,
-            C_USER_MIDDLE_NAME,
-            C_USER_LAST_NAME,
-            C_USER_EMAIL,
-            C_USER_INSTITUTIONAL_ID,
+                C_USER_FIRST_NAME,
+                C_USER_MIDDLE_NAME,
+                C_USER_LAST_NAME,
+                C_USER_EMAIL,
+                C_USER_INSTITUTIONAL_ID,
                 C_USER_EMPLOYEE_ID,
-            C_UPDATE_TIMESTAMP };
+                C_UPDATE_TIMESTAMP };
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT ");

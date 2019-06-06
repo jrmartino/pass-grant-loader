@@ -17,6 +17,7 @@
 package org.dataconservancy.pass.grant.data;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
@@ -26,17 +27,14 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
-import static org.dataconservancy.pass.grant.data.PassUpdater.returnLaterUpdate;
+import static org.dataconservancy.pass.grant.data.JhuPassUpdater.returnLaterUpdate;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -47,7 +45,7 @@ import static org.mockito.Mockito.when;
  * @author jrm@jhu.edu
  */
 @RunWith(MockitoJUnitRunner.class)
-public class PassUpdaterTest {
+public class JhuPassUpdaterTest {
 
     @Mock
     private PassClient passClientMock;
@@ -158,7 +156,7 @@ public class PassUpdaterTest {
 
         resultSet.add(rowMap);
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
         passUpdater.updatePass(resultSet, "grant");
 
         Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
@@ -189,13 +187,13 @@ public class PassUpdaterTest {
         rowMap.put(C_USER_FIRST_NAME, "Marsha");
         rowMap.put(C_USER_MIDDLE_NAME, null);
         rowMap.put(C_USER_LAST_NAME, "Lartz");
-        rowMap.put(C_USER_EMAIL, "alartz3@jhu.edu");
+        rowMap.put(C_USER_EMAIL, "mlartz3@jhu.edu");
         rowMap.put(C_USER_INSTITUTIONAL_ID, "MLARTZ5");
         rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
         rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
 
-        PassUpdater passUpdater = new PassUpdater(passClientMock);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
         User newUser = passUpdater.buildUser(rowMap);
 
         //unusual fields
@@ -204,6 +202,35 @@ public class PassUpdaterTest {
         assertEquals("johnshopkins.edu:employeeid:0000222", newUser.getLocatorIds().get(0));
         assertEquals("johnshopkins.edu:hopkinsid:A1A1A1", newUser.getLocatorIds().get(1));
         assertEquals("johnshopkins.edu:jhed:mlartz5", newUser.getLocatorIds().get(2));
+    }
+
+
+    @Test (expected = RuntimeException.class)
+    public void testGrantModeCheck() {
+        List<Map<String, String>> grantResultSet = new ArrayList<>();
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY);
+        grantResultSet.add(rowMap);
+
+        PassClient passClient = PassClientFactory.getPassClient();
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+
+        passUpdater.updatePass(grantResultSet, "user");
+
+    }
+
+    @Test (expected = RuntimeException.class)
+    public void testUserModeCheck() {
+        List<Map<String, String>> userResultSet = new ArrayList<>();
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID);
+        userResultSet.add(rowMap);
+
+        PassClient passClient = PassClientFactory.getPassClient();
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+
+        passUpdater.updatePass(userResultSet, "grant");
+
     }
 
 }

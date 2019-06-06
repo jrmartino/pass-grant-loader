@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
@@ -36,21 +37,21 @@ import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.PassUpdater;
+import org.dataconservancy.pass.grant.data.JhuPassUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.lang.String.format;
-import static org.dataconservancy.pass.grant.cli.CoeusGrantLoaderErrors.*;
-import static org.dataconservancy.pass.grant.data.CoeusFieldNames.C_GRANT_LOCAL_KEY;
+import static org.dataconservancy.pass.grant.cli.DataLoaderErrors.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
+import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDate;
 
 /**
- * This class does the orchestration for the pulling of COEUS grant and user data. The basic steps are to read in all of the
- * configuration files needed by the various classes; construct the query string for the COEUS Oracle DB to pull in all
- * of the grants or users updated since the timestamp at the end of the updated timestamps file; execute the query against this
- * database; use a {@code List} representing the {@code ResultSet} to populate a list of {@code Grant}s or {@code User}s in our java
- * model; and finally to push this data into our pass instance via the java pass client.
+ * This class does the orchestration for the pulling of grant and user data. The basic steps are to read in all of the
+ * configuration files needed by the various classes; call the GrantLoader to pull in all
+ * of the grants or users updated since the timestamp at the end of the updated timestamps file;
+ * use the PassLoader to take {@code List} representing the {@code ResultSet} to push this data into our PASS instance
+ * via the java pass client.
  *
  * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated
  * fashion, so care must be taken to log errors, report them to STDOUT, and also send email notifications.
@@ -63,6 +64,7 @@ class CoeusGrantLoaderApp {
 
     private File appHome;
     private String startDate;
+    private String awardEndDate;
     private File updateTimestampsFile;
     private boolean email;
     private String mode;
@@ -80,9 +82,10 @@ class CoeusGrantLoaderApp {
      *               version to a file, or just taking serialized data in a file and loading it into PASS
      * @param dataFileName - a String representing the path to an output file for a pull, or input for a load
      */
-    CoeusGrantLoaderApp(String startDate, boolean email, String mode, String action, String dataFileName) {
+    CoeusGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
+        this.awardEndDate = awardEndDate;
         this.email = email;
         this.mode = mode;
         this.action = action;
@@ -94,9 +97,9 @@ class CoeusGrantLoaderApp {
      * The orchestration method for everything. This is called by the {@code CoeusGrantLoaderCLI}, which only manages the
      * command line interaction.
      *
-     * @throws CoeusCliException if there was any error occurring during the grant loading or updating processes
+     * @throws PassCliException if there was any error occurring during the grant loading or updating processes
      */
-    void run() throws CoeusCliException {
+    void run() throws PassCliException {
         String connectionPropertiesFileName = "connection.properties";
         File connectionPropertiesFile = new File(appHome, connectionPropertiesFileName);
         String mailPropertiesFileName = "mail.properties";
@@ -181,19 +184,24 @@ class CoeusGrantLoaderApp {
         if (!action.equals("load")) {//action includes a pull - need to build a result set
             //establish the start dateTime - it is either given as an option, or it is
             //the last entry in the update_timestamps file
+
             if (startDate.length() > 0) {
                 if (!verifyDateTimeFormat(startDate)) {
                     throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
                 }
-                //we need a valid dateTime to start the query
-                if (!verifyDateTimeFormat(startDate)){//the start timestamp is not in valid date time format
-                    throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
-                }
             } else {
                 startDate = getLatestTimestamp();
+                if (!verifyDateTimeFormat(startDate)) {
+                    throw processException(format(ERR_INVALID_TIMESTAMP, startDate),null);
+                }
             }
+
+            if (!verifyDate(awardEndDate)) {
+                throw processException(format(ERR_INVALID_COMMAND_LINE_DATE, awardEndDate), null);
+            }
+
             CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
-            String queryString = coeusConnector.buildQueryString(startDate, mode);
+            String queryString = coeusConnector.buildQueryString(startDate, awardEndDate, mode);
             try {
                 resultSet = coeusConnector.retrieveUpdates(queryString, mode);
             } catch (ClassNotFoundException e) {
@@ -210,15 +218,6 @@ class CoeusGrantLoaderApp {
                  ObjectInputStream in = new ObjectInputStream(fis)
                 ) {
                 resultSet = (List<Map<String, String>>)in.readObject();
-                //simple heuristic "autodetect" of type of results in data file
-                //in case no mode was specified, or incorrect mode was specified on command line
-                if (resultSet.size() > 0 ) {
-                    if (((List<Map<String,String>>)resultSet).get(0).containsKey(C_GRANT_LOCAL_KEY)) {
-                        mode = "grant";
-                    } else {
-                        mode = "user";
-                    }
-                }
             } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             }
@@ -230,10 +229,10 @@ class CoeusGrantLoaderApp {
 
         //update PASS if required
         if (!action.equals("pull")) {
-            PassUpdater passUpdater;
+            JhuPassUpdater passUpdater;
             PassClient passClient = PassClientFactory.getPassClient();
             try {
-                passUpdater = new PassUpdater(passClient);
+                passUpdater = new JhuPassUpdater(passClient);
                 passUpdater.updatePass(resultSet, mode);
             } catch (RuntimeException e) {
                 throw processException("Runtime Exception", e);
@@ -268,7 +267,7 @@ class CoeusGrantLoaderApp {
             int size = resultSet.size();
             StringBuilder sb = new StringBuilder();
             sb.append("Wrote result set for ");
-            sb.append(Integer.toString(size));
+            sb.append(size);
             sb.append(" ");
             sb.append(mode);
             sb.append(" record");
@@ -289,9 +288,9 @@ class CoeusGrantLoaderApp {
      * This method processes a plain text properties file and returns a {@code Properties} object
      * @param propertiesFile - the properties {@code File} to be read
      * @return the Properties object derived from the supplied {@code File}
-     * @throws CoeusCliException if the properties file could not be accessed.
+     * @throws PassCliException if the properties file could not be accessed.
      */
-    private Properties loadProperties(File propertiesFile) throws CoeusCliException {
+    private Properties loadProperties(File propertiesFile) throws PassCliException {
         Properties properties = new Properties();
         String resource;
         try{
@@ -310,9 +309,9 @@ class CoeusGrantLoaderApp {
     /**
      * Ths method returns  a string representing the timestamp on the last line of the updated timestamps file
      * @return the timestamp string
-     * @throws CoeusCliException if the updated timestamps file could not be accessed
+     * @throws PassCliException if the updated timestamps file could not be accessed
      */
-    private String getLatestTimestamp() throws CoeusCliException {
+    private String getLatestTimestamp() throws PassCliException {
         String lastLine="";
         if (!updateTimestampsFile.exists()) {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, updateTimestampsFileName),null);
@@ -340,7 +339,7 @@ class CoeusGrantLoaderApp {
      */
     private void appendLineToFile(File file, String updateString) throws IOException {
         OutputStreamWriter writer = new OutputStreamWriter(
-                new FileOutputStream(file.getCanonicalPath(), true), "UTF-8");
+                new FileOutputStream(file.getCanonicalPath(), true), StandardCharsets.UTF_8);
         BufferedWriter fbw = new BufferedWriter(writer);
         fbw.write(updateString);
         fbw.newLine();
@@ -353,21 +352,21 @@ class CoeusGrantLoaderApp {
      * in the mail properties file
      * @param message - the error message
      * @param e - the Exception
-     * @return = the {@code CoeusCliException} wrapper
+     * @return = the {@code PassCliException} wrapper
      */
-    private CoeusCliException processException (String message, Exception e){
-        CoeusCliException clie;
+    private PassCliException processException (String message, Exception e){
+        PassCliException clie;
 
         String errorSubject = "COEUS Data Loader ERROR";
         if(e != null) {
-            clie = new CoeusCliException(message, e);
+            clie = new PassCliException(message, e);
             LOG.error(message, e);
             e.printStackTrace();
             if (email) {
                 emailService.sendEmailMessage(errorSubject, clie.getMessage());
             }
         } else {
-            clie = new CoeusCliException(message);
+            clie = new PassCliException(message);
             LOG.error(message);
             System.err.println(message);
             if(email) {

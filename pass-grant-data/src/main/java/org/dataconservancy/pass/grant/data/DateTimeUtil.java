@@ -19,6 +19,9 @@ package org.dataconservancy.pass.grant.data;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,5 +82,21 @@ public class DateTimeUtil {
         Matcher matcher = pattern.matcher(date);
         return matcher.matches();
     }
+
+    /**
+     * Date must be in the form "mm/dd/yyyy"
+     */
+
+    public static boolean verifyDate(String date) {
+        DateFormat format = new SimpleDateFormat("MM/dd/yyyy");
+        format.setLenient(false);
+        try {
+            format.parse(date);
+        } catch (ParseException e) {
+            return false;
+        }
+        return true;
+    }
+
 
 }
