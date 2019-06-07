@@ -15,10 +15,12 @@
  */
 package org.dataconservancy.pass.grant.data;
 
+import com.sun.org.apache.xpath.internal.functions.FuncSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -50,9 +52,11 @@ public class CoeusConnector implements GrantConnector {
     private String coeusUser;
     private String coeusPassword;
 
+    private Properties funderPolicyProperties;
+
     private DirectoryServiceUtil directoryServiceUtil;
 
-    public CoeusConnector(Properties connectionProperties) {
+    public CoeusConnector(Properties connectionProperties, Properties funderPolicyProperties) {
         if (connectionProperties != null) {
 
             if (connectionProperties.getProperty(COEUS_URL) != null) {
@@ -66,11 +70,17 @@ public class CoeusConnector implements GrantConnector {
             }
             this.directoryServiceUtil = new DirectoryServiceUtil(connectionProperties);
         }
+
+        if (funderPolicyProperties != null) {
+            this.funderPolicyProperties = funderPolicyProperties;
+        }
     }
 
     public List<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException, IOException {
         if (mode.equals("user")) {
             return retrieveUserUpdates(queryString);
+        } else if (mode.equals("funder")) {
+            return retrieveFunderUpdates(queryString);
         } else {
             return retrieveGrantUpdates(queryString);
         }
@@ -119,6 +129,7 @@ public class CoeusConnector implements GrantConnector {
                 if (employeeId != null) {
                     rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
                 }
+                rowMap.put(C_FUNDER_POLICY, policyForFunder(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
                 LOG.debug("Record processed: " + rowMap.toString());
                 if (!mapList.contains(rowMap)) {
                     mapList.add(rowMap);
@@ -126,6 +137,28 @@ public class CoeusConnector implements GrantConnector {
             }
         }
         LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
+        return mapList;
+    }
+
+    private List<Map<String, String>> retrieveFunderUpdates (String queryString) throws ClassNotFoundException, SQLException, IOException {
+        List<Map<String, String>> mapList = new ArrayList<>();
+
+        Class.forName("oracle.jdbc.driver.OracleDriver");
+
+        try (
+                Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(queryString)
+        ) {
+            while (rs.next()) {
+                Map<String, String> rowMap = new HashMap<>();
+
+                rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
+                rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
+                rowMap.put(C_FUNDER_POLICY, policyForFunder(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+            }
+
+        }
         return mapList;
     }
 
@@ -271,5 +304,50 @@ public class CoeusConnector implements GrantConnector {
         LOG.debug("Query string is: " + queryString);
         return queryString;
     }
+
+    private String buildFunderQueryString() {
+
+        String viewFields [] = {//doesn't matter whether the funder is promary or direct - these are the column names in the SWIFT_SPONSOR view
+                C_PRIMARY_FUNDER_NAME,
+                C_PRIMARY_FUNDER_LOCAL_KEY };
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(String.join(", ",viewFields));
+        sb.append(" FROM");
+        sb.append(" COEUS.SWIFT_SPONSOR");
+        sb.append(" WHERE");
+        sb.append(" SPONSOR_CODE IN (");
+        sb.append(funderLocalKeys());
+        sb.append(")");
+        String queryString = sb.toString();
+
+        LOG.debug("Query string is: " + queryString);
+        return queryString;
+
+    }
+
+    private String funderLocalKeys() {
+        List<String> codeList = new ArrayList<>();
+        for (String name : System.getProperties().stringPropertyNames()) {
+            String prefix = "johnshopkins.edu:funder:";
+            if (name.startsWith(prefix)) {
+                codeList.add(name.substring(prefix.length()));
+            }
+        }
+        return String.join(", ", codeList);
+    }
+
+    private String policyForFunder (String localKey) {
+        String baseUrl = System.getProperty("pass.fedora.baseurl");
+        baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+        if (funderPolicyProperties.containsKey(localKey)) {
+            return baseUrl + funderPolicyProperties.getProperty(localKey);
+        } else {
+            return null;
+        }
+    }
+
+
 
 }
