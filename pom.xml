@@ -23,7 +23,7 @@
     <groupId>org.dataconservancy.pass</groupId>
     <artifactId>pass-grant-loader</artifactId>
     <packaging>pom</packaging>
-    <version>1.1.0</version>
+    <version>1.2.0-SNAPSHOT</version>
 
     <modules>
         <module>pass-grant-cli</module>
@@ -76,7 +76,7 @@
 
 
         <!-- INDIVIDUAL LOADER IMPLEMENTATION VERSIONS ARE SET HERE-->
-        <jhu.loader.version>1.1.0</jhu.loader.version>
+        <jhu.loader.version>1.2.0-SNAPSHOT</jhu.loader.version>
 
     </properties>
 
