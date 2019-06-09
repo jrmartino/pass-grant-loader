@@ -30,7 +30,7 @@ public class CoeusConnectorTest {
 
     @Before
     public void setup(){
-        connector = new CoeusConnector(null);
+        connector = new CoeusConnector(null, null);
     }
 
     @Test

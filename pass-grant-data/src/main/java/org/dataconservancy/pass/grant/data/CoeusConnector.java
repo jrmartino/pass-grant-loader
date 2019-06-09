@@ -15,12 +15,10 @@
  */
 package org.dataconservancy.pass.grant.data;
 
-import com.sun.org.apache.xpath.internal.functions.FuncSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
