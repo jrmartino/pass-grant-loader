@@ -306,10 +306,17 @@ public class JhuPassUpdater implements PassUpdater{
 
     private Funder buildFunder(Map<String, String> rowMap) {
         Funder funder = new Funder();
-        funder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
+        if (rowMap.containsKey(C_PRIMARY_FUNDER_NAME)) {
+            funder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
+        }
         funder.setLocalKey((rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY)));
-        funder.setPolicy(URI.create(rowMap.get(C_FUNDER_POLICY)));
-        LOG.debug("Built funder with localKey " + funder.getLocalKey());
+        String policy = rowMap.get(C_FUNDER_POLICY);
+        if (policy != null ) {
+            funder.setPolicy(URI.create(policy));
+            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
+                    " and Policy " + policy);
+        }
+        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
 
         return funder;
     }
@@ -340,8 +347,10 @@ public class JhuPassUpdater implements PassUpdater{
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Funder for this URI - this one is new to Pass
+            if (systemFunder.getName() != null) {//only add if we have a name
                 passFunderURI = passClient.createResource(systemFunder);
                 statistics.addFundersCreated();
+            }
         }
         return passFunderURI;
     }

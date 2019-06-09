@@ -143,21 +143,31 @@ public class CoeusConnector implements GrantConnector {
     private List<Map<String, String>> retrieveFunderUpdates (String queryString) throws ClassNotFoundException, SQLException, IOException {
         List<Map<String, String>> mapList = new ArrayList<>();
 
-        Class.forName("oracle.jdbc.driver.OracleDriver");
+        if (queryString != null) {//we will go to COEUS for the info
 
-        try (
-                Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
-                Statement stmt = con.createStatement();
-                ResultSet rs = stmt.executeQuery(queryString)
-        ) {
-            while (rs.next()) {
-                Map<String, String> rowMap = new HashMap<>();
+            Class.forName("oracle.jdbc.driver.OracleDriver");
 
-                rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
-                rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
-                rowMap.put(C_FUNDER_POLICY, policyForFunder(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+            try (
+                    Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
+                    Statement stmt = con.createStatement();
+                    ResultSet rs = stmt.executeQuery(queryString)
+            ) {
+                while (rs.next()) {
+                    Map<String, String> rowMap = new HashMap<>();
+
+                    rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
+                    rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
+                    rowMap.put(C_FUNDER_POLICY, policyForFunder(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+                }
+
             }
 
+        } else {//we will prepare partial Funder from the properties file
+            Map<String, String> rowMap = new HashMap<>();
+            for (Object localKey : funderPolicyProperties.keySet()) {
+                rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, localKey.toString());
+                rowMap.put(C_FUNDER_POLICY, policyForFunder(localKey.toString()));
+            }
         }
         return mapList;
     }
@@ -347,7 +357,5 @@ public class CoeusConnector implements GrantConnector {
             return null;
         }
     }
-
-
 
 }
