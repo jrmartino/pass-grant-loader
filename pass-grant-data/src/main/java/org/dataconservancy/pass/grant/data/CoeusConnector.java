@@ -209,6 +209,8 @@ public class CoeusConnector implements GrantConnector {
     public String buildQueryString(String startDate, String awardEndDate, String mode) {
         if (mode.equals("user")) {
             return buildUserQueryString(startDate);
+        } else if (mode.equals("funder")) {
+            return buildFunderQueryString();
         } else {
             return buildGrantQueryString(startDate, awardEndDate);
         }
@@ -337,10 +339,10 @@ public class CoeusConnector implements GrantConnector {
 
     private String funderLocalKeys() {
         List<String> codeList = new ArrayList<>();
-        for (String name : System.getProperties().stringPropertyNames()) {
+        for (Object name : funderPolicyProperties.keySet()) {
             String prefix = "johnshopkins.edu:funder:";
-            if (name.startsWith(prefix)) {
-                codeList.add(name.substring(prefix.length()));
+            if (name.toString().startsWith(prefix)) {
+                codeList.add(name.toString().substring(prefix.length()));
             }
         }
         return String.join(", ", codeList);
