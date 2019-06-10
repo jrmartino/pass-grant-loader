@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -127,7 +128,8 @@ public class CoeusConnector implements GrantConnector {
                 if (employeeId != null) {
                     rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
                 }
-                rowMap.put(C_FUNDER_POLICY, policyForFunder(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+                rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+                rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_DIRECT_FUNDER_LOCAL_KEY)));
                 LOG.debug("Record processed: " + rowMap.toString());
                 if (!mapList.contains(rowMap)) {
                     mapList.add(rowMap);
@@ -150,12 +152,11 @@ public class CoeusConnector implements GrantConnector {
                     Statement stmt = con.createStatement();
                     ResultSet rs = stmt.executeQuery(queryString)
             ) {
-                while (rs.next()) {
+                while (rs.next()) {//these are the field names in the swift sponsor view
                     Map<String, String> rowMap = new HashMap<>();
-
                     rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
                     rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
-                    rowMap.put(C_FUNDER_POLICY, policyForFunder(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+                    rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
                 }
 
             }
@@ -164,7 +165,7 @@ public class CoeusConnector implements GrantConnector {
             Map<String, String> rowMap = new HashMap<>();
             for (Object localKey : funderPolicyProperties.keySet()) {
                 rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, localKey.toString());
-                rowMap.put(C_FUNDER_POLICY, policyForFunder(localKey.toString()));
+                rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(localKey.toString()));
             }
         }
         return mapList;
@@ -317,7 +318,7 @@ public class CoeusConnector implements GrantConnector {
 
     private String buildFunderQueryString() {
 
-        String viewFields [] = {//doesn't matter whether the funder is promary or direct - these are the column names in the SWIFT_SPONSOR view
+        String viewFields [] = {//doesn't matter whether the funder is primary or direct - these are the column names in the SWIFT_SPONSOR view
                 C_PRIMARY_FUNDER_NAME,
                 C_PRIMARY_FUNDER_LOCAL_KEY };
 
@@ -328,7 +329,8 @@ public class CoeusConnector implements GrantConnector {
         sb.append(" COEUS.SWIFT_SPONSOR");
         sb.append(" WHERE");
         sb.append(" SPONSOR_CODE IN (");
-        sb.append(funderLocalKeys());
+        List<String> keyList = new ArrayList<>();
+        sb.append(String.join(", ", (funderPolicyProperties.stringPropertyNames())));
         sb.append(")");
         String queryString = sb.toString();
 
@@ -336,26 +338,4 @@ public class CoeusConnector implements GrantConnector {
         return queryString;
 
     }
-
-    private String funderLocalKeys() {
-        List<String> codeList = new ArrayList<>();
-        for (Object name : funderPolicyProperties.keySet()) {
-            String prefix = "johnshopkins.edu:funder:";
-            if (name.toString().startsWith(prefix)) {
-                codeList.add(name.toString().substring(prefix.length()));
-            }
-        }
-        return String.join(", ", codeList);
-    }
-
-    private String policyForFunder (String localKey) {
-        String baseUrl = System.getProperty("pass.fedora.baseurl");
-        baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-        if (funderPolicyProperties.containsKey(localKey)) {
-            return baseUrl + funderPolicyProperties.getProperty(localKey);
-        } else {
-            return null;
-        }
-    }
-
 }

@@ -159,7 +159,7 @@ public class JhuPassUpdater implements PassUpdater{
                 if (funderMap.containsKey(directFunderLocalKey)) {
                     grant.setDirectFunder(funderMap.get(directFunderLocalKey));
                 } else {
-                    Funder updatedFunder = buildFunder(rowMap);
+                    Funder updatedFunder = buildDirectFunder(rowMap);
 
                     URI passFunderURI =  updateFunderInPass(updatedFunder);
                     funderMap.put(directFunderLocalKey, passFunderURI);
@@ -169,7 +169,7 @@ public class JhuPassUpdater implements PassUpdater{
                 if(funderMap.containsKey(primaryFunderLocalKey)) {
                     grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
                 } else {
-                    Funder updatedFunder = buildFunder(rowMap);
+                    Funder updatedFunder = buildPrimaryFunder(rowMap);
 
                     URI passFunderURI =  updateFunderInPass(updatedFunder);
                     funderMap.put(primaryFunderLocalKey, passFunderURI);
@@ -253,21 +253,25 @@ public class JhuPassUpdater implements PassUpdater{
 
     }
 
+    /**
+     * This method is called for the "funder" mode - the column names will have the values for primary funders
+     * @param results
+     */
     private void updateFunders(Collection<Map<String, String>> results) {
 
         boolean modeChecked = false;
-
+        LOG.info("Processing result set with " + results.size() + " rows");
         for (Map<String, String> rowMap : results) {
 
             if (!modeChecked) {
-                if (!rowMap.containsKey(C_FUNDER_POLICY)) {//we always have this for grants
+                if (!rowMap.containsKey(C_PRIMARY_FUNDER_POLICY)) {//we always have this for funders
                     throw new RuntimeException("Mode of funder was supplied, but data does not seem to match.");
                 } else {
                     modeChecked = true;
                 }
             }
-            LOG.info("Processing result set with " + results.size() + " rows");
-            Funder updatedFunder = buildFunder(rowMap);
+
+            Funder updatedFunder = buildPrimaryFunder(rowMap);
             updateFunderInPass(updatedFunder);
 
         }
@@ -304,15 +308,23 @@ public class JhuPassUpdater implements PassUpdater{
         return user;
     }
 
-    private Funder buildFunder(Map<String, String> rowMap) {
+    /**
+     * this method gets called on a grant mode process if the primary funder is different from direct, and also
+     * any time the updater is called in funder mode
+     * @param rowMap
+     * @return
+     */
+    private Funder buildPrimaryFunder(Map<String, String> rowMap) {
         Funder funder = new Funder();
         if (rowMap.containsKey(C_PRIMARY_FUNDER_NAME)) {
             funder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
         }
         funder.setLocalKey((rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY)));
-        String policy = rowMap.get(C_FUNDER_POLICY);
+        String policy = rowMap.get(C_PRIMARY_FUNDER_POLICY);
         if (policy != null ) {
-            funder.setPolicy(URI.create(policy));
+            String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
+            fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
+            funder.setPolicy(URI.create(fedoraBaseUrl + policy));
             LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
                     " and Policy " + policy);
         }
@@ -320,6 +332,26 @@ public class JhuPassUpdater implements PassUpdater{
 
         return funder;
     }
+
+    private Funder buildDirectFunder(Map<String, String> rowMap) {
+        Funder funder = new Funder();
+        if (rowMap.containsKey(C_DIRECT_FUNDER_NAME)) {
+            funder.setName(rowMap.get(C_DIRECT_FUNDER_NAME));
+        }
+        funder.setLocalKey((rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY)));
+        String policy = rowMap.get(C_DIRECT_FUNDER_POLICY);
+        if (policy != null ) {
+            String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
+            fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
+            funder.setPolicy(URI.create(fedoraBaseUrl + policy));
+            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
+                    " and Policy " + policy);
+        }
+        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
+
+        return funder;
+    }
+
 
     /**
      * Take a new Funder object populated as fully as possible from the COEUS pull, and use this

@@ -178,7 +178,7 @@ class CoeusGrantLoaderApp {
 
         //get policy properties - if there is not a user-space defined clear text file,
         //use the one in resources
-        if (!policyPropertiesFile.exists()) {
+        if (policyPropertiesFileName==null || !policyPropertiesFile.exists()) {
             policyPropertiesFile = new File(getClass().getClassLoader().getResource("policy.properties").getFile());
         }
 
@@ -304,7 +304,7 @@ class CoeusGrantLoaderApp {
      * @return the Properties object derived from the supplied {@code File}
      * @throws PassCliException if the properties file could not be accessed.
      */
-    private Properties loadProperties(File propertiesFile) throws PassCliException {
+    protected Properties loadProperties(File propertiesFile) throws PassCliException {
         Properties properties = new Properties();
         String resource;
         try{
