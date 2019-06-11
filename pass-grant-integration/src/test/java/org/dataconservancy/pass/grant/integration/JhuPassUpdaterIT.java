@@ -24,6 +24,7 @@ import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 
+import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
 import org.junit.Before;
 import org.junit.Rule;
@@ -62,6 +63,14 @@ public class JhuPassUpdaterIT {
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
     private static String jhedPrefix = "johnshopkins.edu:jhed:";
     private CoeusPassEntityUtil coeusPassEntityUtil = new CoeusPassEntityUtil();
+    private Map<String, URI> funderPolicyUriMap = new HashMap<>();
+    private String prefix;
+
+    private String directFunderPolicyUriString1;
+    private String primaryFunderPolicyUriString1;
+
+
+    private PassClient passClient = PassClientFactory.getPassClient();
 
     @Rule
     public TemporaryFolder folder= new TemporaryFolder();
@@ -70,6 +79,30 @@ public class JhuPassUpdaterIT {
     public void setup() {
 
         for (int i = 0; i < 10; i++) {
+
+            String prefix = System.getProperty("pass.fedora.baseurl");
+            if (!prefix.endsWith("/")) {
+                prefix = prefix + "/";
+            }
+
+            Policy policy = new Policy();
+            policy.setTitle("Primary Policy" + i);
+            policy.setDescription("MOO");
+            URI policyURI = passClient.createResource(policy);
+            String primaryPolicyUriString = policyURI.toString().substring(prefix.length());
+            funderPolicyUriMap.put("PrimaryFunderPolicy"+i, policyURI);
+
+            policy = new Policy();
+            policy.setTitle("Direct Policy" + i);
+            policy.setDescription("MOO");
+            policyURI = passClient.createResource(policy);
+            String directPolicyUriString =  policyURI.toString().substring(prefix.length());
+            funderPolicyUriMap.put("DirectFunderPolicy"+i, policyURI);
+
+            if(i==1) {
+                directFunderPolicyUriString1 = directPolicyUriString;
+                primaryFunderPolicyUriString1 = primaryPolicyUriString;
+            }
 
             Map<String, String> rowMap = new HashMap<>();
             rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + i);
@@ -95,6 +128,8 @@ public class JhuPassUpdaterIT {
 
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + i + ":00:00.0");
             rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
+            rowMap.put(C_DIRECT_FUNDER_POLICY, directPolicyUriString );
+            rowMap.put(C_PRIMARY_FUNDER_POLICY, primaryPolicyUriString);
 
             resultSet.add(rowMap);
         }
@@ -112,7 +147,6 @@ public class JhuPassUpdaterIT {
     @Test
     public void updateGrantsIT() throws InterruptedException {
 
-        PassClient passClient = PassClientFactory.getPassClient();
         JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
         passUpdater.updatePass(resultSet, "grant");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
@@ -173,6 +207,10 @@ public class JhuPassUpdaterIT {
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, ("C"));
 
+        rowMap.put(C_DIRECT_FUNDER_POLICY, directFunderPolicyUriString1);
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, primaryFunderPolicyUriString1);
+
+
         resultSet.clear();
         resultSet.add(rowMap);
 
@@ -217,6 +255,7 @@ public class JhuPassUpdaterIT {
             String funderIdPrefix = "johnshopkins.edu:funder:";
             directFunder.setLocalKey(funderIdPrefix + C_DIRECT_FUNDER_LOCAL_KEY + i);
             directFunder.setName(C_DIRECT_FUNDER_NAME + i);
+            directFunder.setPolicy(funderPolicyUriMap.get("DirectFunderPolicy" + i));
 
             URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
             Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
@@ -231,12 +270,14 @@ public class JhuPassUpdaterIT {
             Funder primaryFunder = new Funder();
             primaryFunder.setLocalKey(funderIdPrefix + C_PRIMARY_FUNDER_LOCAL_KEY + i);
             primaryFunder.setName(C_PRIMARY_FUNDER_NAME + i);
+            primaryFunder.setPolicy(funderPolicyUriMap.get("PrimaryFunderPolicy" + i));
 
             URI primaryFunderUri = passClient.findByAttribute(Funder.class, "localKey", primaryFunder.getLocalKey());
             Funder passPrimaryFunder = passClient.readResource(primaryFunderUri, Funder.class);
             assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
             assertEquals(passPrimaryFunder.getId(), passGrant.getPrimaryFunder());
             assertEquals(primaryFunder.getLocalKey(), passPrimaryFunder.getLocalKey());
+            assertEquals(primaryFunder.getPolicy(), passPrimaryFunder.getPolicy());
 
             User user = new User();
 
@@ -294,7 +335,6 @@ public class JhuPassUpdaterIT {
         user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
         user10.setLastName(C_USER_LAST_NAME + 10);
 
-        PassClient passClient = PassClientFactory.getPassClient();
         JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
 
         URI passUserURI = passUpdater.getPassClient().createResource(user10);
@@ -333,7 +373,6 @@ public class JhuPassUpdaterIT {
 
         assertNotNull(passUserURI);
         User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
-
 
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());

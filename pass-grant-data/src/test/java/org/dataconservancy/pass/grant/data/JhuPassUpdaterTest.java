@@ -214,24 +214,17 @@ public class JhuPassUpdaterTest {
 
     @Test
     public void testPrimaryFunderBuilding() {
-        List<Map<String, String>> resultSet = new ArrayList<>();
         Map<String, String> rowMap = new HashMap<>();
         rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name");
         rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "8675309");
         rowMap.put(C_PRIMARY_FUNDER_POLICY, "policy1");
 
-        resultSet.add(rowMap);
-
-        rowMap = new HashMap<>();
-        rowMap.put(C_PRIMARY_FUNDER_NAME, "Another Funder Name");
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "8675310");
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, "policy2");
-
-        resultSet.add(rowMap);
-
         JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
+        Funder newFunder = passUpdater.buildPrimaryFunder(rowMap);
 
-        passUpdater.updatePass(resultSet, "funder");
+        assertEquals("Funder Name", newFunder.getName());
+        assertEquals("8675309",newFunder.getLocalKey());
+        assertEquals("https://localhost:8080/fcrepo/rest/policy1", newFunder.getPolicy().toString());
 
     }
 

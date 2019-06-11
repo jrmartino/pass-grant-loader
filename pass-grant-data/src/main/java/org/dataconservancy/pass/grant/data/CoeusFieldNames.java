@@ -48,8 +48,6 @@ public class CoeusFieldNames {
     public static final String C_USER_HOPKINS_ID = "HOPKINS_ID";
     //also not a field name, but something provided in a properties file
     public static final String C_PRIMARY_FUNDER_POLICY = "PRIMARY_FUNDER_POLICY";
-    public static String C_DIRECT_FUNDER_POLICY = "DIRECT_FUNDER_POLICY";
-
-
+    public static final String C_DIRECT_FUNDER_POLICY = "DIRECT_FUNDER_POLICY";
 
 }

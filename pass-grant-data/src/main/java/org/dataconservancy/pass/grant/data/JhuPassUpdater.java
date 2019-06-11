@@ -230,7 +230,7 @@ public class JhuPassUpdater implements PassUpdater{
         for(Map<String,String> rowMap : results) {
 
             if (!modeChecked) {
-                if (!rowMap.containsKey(C_USER_EMPLOYEE_ID)) {//we always have this for grants
+                if (!rowMap.containsKey(C_USER_EMPLOYEE_ID)) {//we always have this for users
                     throw new RuntimeException("Mode of user was supplied, but data does not seem to match.");
                 } else {
                     modeChecked = true;
@@ -314,7 +314,7 @@ public class JhuPassUpdater implements PassUpdater{
      * @param rowMap
      * @return
      */
-    private Funder buildPrimaryFunder(Map<String, String> rowMap) {
+     Funder buildPrimaryFunder(Map<String, String> rowMap) {
         Funder funder = new Funder();
         if (rowMap.containsKey(C_PRIMARY_FUNDER_NAME)) {
             funder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
