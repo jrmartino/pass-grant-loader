@@ -26,6 +26,7 @@ import org.dataconservancy.pass.model.Grant;
 
 import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
+import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.junit.Assert.assertTrue;
@@ -58,6 +60,8 @@ import java.util.Map;
  */
 @RunWith(MockitoJUnitRunner.class)
 public class JhuPassUpdaterIT {
+
+    private final String DOMAIN = "johnshopkins.edu";
 
     private List<Map<String, String>> resultSet = new ArrayList<>();
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
@@ -381,6 +385,77 @@ public class JhuPassUpdaterIT {
         assertTrue(updatedUser.getLocatorIds().contains(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + 10));
 
         assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
+    }
+
+    /**
+     * Create some policies, deposit them into Fedora
+     * Then create a java data object linking funders to them
+     */
+    @Test
+    public void updateFundersIT() throws InterruptedException {
+        Policy policy1 = new Policy();
+        policy1. setTitle("Policy One");
+        policy1. setDescription("Policy one Description");
+        Policy policy2 = new Policy();
+        policy2. setTitle("Policy Two");
+        policy2. setDescription("Policy Two Description");
+
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+        URI policy1Uri = passClient.createResource(policy1);
+        URI policy2Uri = passClient.createResource(policy2);
+
+        assertNotNull(passClient.readResource(policy1Uri, Policy.class));
+        assertNotNull(passClient.readResource(policy2Uri, Policy.class));
+
+        Funder funder1 = new Funder();
+        String fullLocalKey = new Identifier(DOMAIN, "funder", "22229999").serialize();
+        funder1.setLocalKey(fullLocalKey);
+        funder1.setName("Funder One");
+        Funder funder2 = new Funder();
+        fullLocalKey = new Identifier(DOMAIN, "funder", "33330000").serialize();
+        funder2.setLocalKey(fullLocalKey);//use full localKey
+        funder2.setName("Funder Two");
+
+        URI funder1Uri = passClient.createResource(funder1);
+        URI funder2Uri = passClient.createResource(funder2);
+
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
+
+
+        String policyString1 = policy1Uri.getPath().substring("/fcrepo/rest/".length());
+        assertTrue(policyString1.startsWith("policies"));
+        String policyString2 = policy2Uri.getPath().substring("/fcrepo/rest/".length());
+        assertTrue(policyString2.startsWith("policies"));
+
+        List<Map<String, String>> funderResultSet = new ArrayList<>();
+
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "22229999");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString1);
+        funderResultSet.add(rowMap);
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "33330000");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
+
+
+        sleep(6000); //allow indexer to index stuff - java client has to use elasticsearch
+
+        passUpdater.updatePass(funderResultSet, "funder");
+        PassUpdateStatistics statistics = passUpdater.getStatistics();
+
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class).getPolicy());
+        assertEquals(policy1Uri, passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertEquals(policy2Uri, passClient.readResource(funder2Uri, Funder.class).getPolicy());
+
+        assertEquals(0, statistics.getFundersCreated());
+        assertEquals(2, statistics.getFundersUpdated());
+
     }
 
     @Test

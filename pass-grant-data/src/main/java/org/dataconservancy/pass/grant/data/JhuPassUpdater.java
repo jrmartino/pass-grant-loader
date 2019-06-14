@@ -319,7 +319,7 @@ public class JhuPassUpdater implements PassUpdater{
         if (rowMap.containsKey(C_PRIMARY_FUNDER_NAME)) {
             funder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
         }
-        funder.setLocalKey((rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY)));
+        funder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
         String policy = rowMap.get(C_PRIMARY_FUNDER_POLICY);
         if (policy != null ) {
             String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
@@ -338,7 +338,7 @@ public class JhuPassUpdater implements PassUpdater{
         if (rowMap.containsKey(C_DIRECT_FUNDER_NAME)) {
             funder.setName(rowMap.get(C_DIRECT_FUNDER_NAME));
         }
-        funder.setLocalKey((rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY)));
+        funder.setLocalKey(rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY));
         String policy = rowMap.get(C_DIRECT_FUNDER_POLICY);
         if (policy != null ) {
             String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
