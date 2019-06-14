@@ -390,6 +390,8 @@ public class JhuPassUpdaterIT {
     /**
      * Create some policies, deposit them into Fedora
      * Then create a java data object linking funders to them
+     * this basically tests what happens when pulling in data from a policy properties file first,
+     * or from a coeus pull second
      */
     @Test
     public void updateFundersIT() throws InterruptedException {
@@ -440,8 +442,13 @@ public class JhuPassUpdaterIT {
         rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
         funderResultSet.add(rowMap);
 
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "88888888"); // this one does not exist in pass
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
 
-        sleep(6000); //allow indexer to index stuff - java client has to use elasticsearch
+
+        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
 
         passUpdater.updatePass(funderResultSet, "funder");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
@@ -455,6 +462,54 @@ public class JhuPassUpdaterIT {
 
         assertEquals(0, statistics.getFundersCreated());
         assertEquals(2, statistics.getFundersUpdated());
+
+        //coeus pulls will have the funder names, we should be able to add one we don't know about
+
+        funderResultSet = new ArrayList<>();
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "22229999");
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 1");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2); //let's change policies for this one
+        funderResultSet.add(rowMap);
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "33330000");
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 2");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "88888888"); // this one does not exist in pass
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 3");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
+
+        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
+
+        passUpdater.updatePass(funderResultSet, "funder");
+        statistics = passUpdater.getStatistics();
+
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class).getPolicy());
+        assertEquals(policy2Uri, passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertEquals(policy2Uri, passClient.readResource(funder2Uri, Funder.class).getPolicy());
+
+        assertEquals(1, statistics.getFundersCreated());
+        assertEquals(2, statistics.getFundersUpdated());
+
+
+        //DO AGAIN!! DO AGAIN!!
+
+        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
+
+        passUpdater.updatePass(funderResultSet, "funder");
+        statistics = passUpdater.getStatistics();
+
+        assertEquals(0, statistics.getFundersCreated());
+        assertEquals(0, statistics.getFundersUpdated());
 
     }
 
