@@ -65,6 +65,12 @@ public class PassUpdateStatistics {
             sb.append("\n\n");
             sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
             sb.append("\n");
+        } else if (type.equals("funder")) {
+            sb.append(format("%s funder records processed",
+                    resultSetSize));
+            sb.append("\n\n");
+            sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
+            sb.append("\n");
         }
         this.report = sb.toString();
     }

@@ -70,9 +70,8 @@ public class CoeusConnector implements GrantConnector {
             this.directoryServiceUtil = new DirectoryServiceUtil(connectionProperties);
         }
 
-        if (funderPolicyProperties != null) {
-            this.funderPolicyProperties = funderPolicyProperties;
-        }
+        this.funderPolicyProperties = funderPolicyProperties;
+
     }
 
     public List<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException, IOException {
@@ -140,7 +139,8 @@ public class CoeusConnector implements GrantConnector {
         return mapList;
     }
 
-    private List<Map<String, String>> retrieveFunderUpdates (String queryString) throws ClassNotFoundException, SQLException, IOException {
+    private List<Map<String, String>> retrieveFunderUpdates (String queryString) throws ClassNotFoundException, SQLException {
+
         List<Map<String, String>> mapList = new ArrayList<>();
 
         if (queryString != null) {//we will go to COEUS for the info
@@ -157,17 +157,21 @@ public class CoeusConnector implements GrantConnector {
                     rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
                     rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
                     rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+                    mapList.add(rowMap);
                 }
 
             }
 
         } else {//we will prepare partial Funder from the properties file
-            Map<String, String> rowMap = new HashMap<>();
+
             for (Object localKey : funderPolicyProperties.keySet()) {
+                Map<String, String> rowMap = new HashMap<>();
                 rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, localKey.toString());
                 rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(localKey.toString()));
+                mapList.add(rowMap);
             }
         }
+
         return mapList;
     }
 

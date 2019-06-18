@@ -57,9 +57,6 @@ public class CoeusGrantLoaderCLI {
             "dateTime listed in the updates file.")
     private static String startDate = "";
 
-    /** Specfies a policy properties file */
-    @Option(name = "-p", aliases = { "-policies"}, usage = "File containing a map of Funder localKeys to associated Policy URIs")
-    private static String policyPropertyFileName = "policy.propeties";
 
     /** Specifies an award end date for basing the database query */
     @Option(name = "-z", aliases = { "-awardEndDate", "--awardEndDate" }, usage = "Date for the AWARD_END to start the query against COEUS. This will cause " +
@@ -116,7 +113,7 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName, policyPropertyFileName);
+            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

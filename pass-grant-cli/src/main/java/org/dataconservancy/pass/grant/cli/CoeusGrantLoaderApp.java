@@ -70,9 +70,9 @@ class CoeusGrantLoaderApp {
     private String mode;
     private String action;
     private String dataFileName;
+    private boolean local = false;
 
     private String updateTimestampsFileName;
-    private String policyPropertiesFileName;
 
     /**
      * Constructor for this class
@@ -83,16 +83,20 @@ class CoeusGrantLoaderApp {
      *               version to a file, or just taking serialized data in a file and loading it into PASS
      * @param dataFileName - a String representing the path to an output file for a pull, or input for a load
      */
-    CoeusGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName, String policyPropertyFileName) {
+    CoeusGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
         this.awardEndDate = awardEndDate;
         this.email = email;
-        this.mode = mode;
+        if (mode.equals("localFunder")) {
+            this.mode = "funder";
+            local = true;
+        } else {
+            this.mode = mode;
+        }
         this.action = action;
         this.dataFileName = dataFileName;
         this.updateTimestampsFileName = mode + "_update_timestamps";
-        this.policyPropertiesFileName = policyPropertyFileName;
         }
 
     /**
@@ -108,6 +112,7 @@ class CoeusGrantLoaderApp {
         File mailPropertiesFile = new File(appHome, mailPropertiesFileName);
         String systemPropertiesFileName = "system.properties";
         File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
+        String policyPropertiesFileName = "policy.properties";
         File policyPropertiesFile = new File(appHome, policyPropertiesFileName);
         File dataFile = new File(dataFileName);
 
@@ -178,8 +183,8 @@ class CoeusGrantLoaderApp {
 
         //get policy properties - if there is not a user-space defined clear text file,
         //use the one in resources
-        if (policyPropertiesFileName==null || !policyPropertiesFile.exists()) {
-            policyPropertiesFile = new File(getClass().getClassLoader().getResource("policy.properties").getFile());
+        if (!policyPropertiesFile.exists()) {
+            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, policyPropertiesFileName), null);
         }
 
         try {
@@ -216,6 +221,13 @@ class CoeusGrantLoaderApp {
 
             CoeusConnector coeusConnector = new CoeusConnector(connectionProperties, policyProperties);
             String queryString = coeusConnector.buildQueryString(startDate, awardEndDate, mode);
+
+            //special case for when we process funders, but do not want to consult COEUS -
+            //just use local properties file to map funders to policies
+            if (mode.equals("funder") && local) {
+                queryString = null;
+            }
+
             try {
                 resultSet = coeusConnector.retrieveUpdates(queryString, mode);
             } catch (ClassNotFoundException e) {

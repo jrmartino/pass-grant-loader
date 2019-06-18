@@ -275,6 +275,7 @@ public class JhuPassUpdater implements PassUpdater{
             updateFunderInPass(updatedFunder);
 
         }
+        statistics.setReport(results.size(), results.size());
     }
 
     User buildUser(Map<String, String> rowMap) {
@@ -423,7 +424,7 @@ public class JhuPassUpdater implements PassUpdater{
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else if (! mode.equals("user")) {//don't have a stored User for this URI - this one is new to Pass
-            //but don't update if we are in user mode - jus update existing users
+            //but don't update if we are in user mode - just update existing users
                 passUserUri = passClient.createResource(systemUser);
                 statistics.addUsersCreated();
         }
