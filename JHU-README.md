@@ -87,6 +87,35 @@ We note that we (arbitrarily) have populated our grant data only with those havi
 This mode (`-m user`) is similar to the `grant` mode, but updates existing PASS users only. Grant updates will update associated users
 (and funders) automatically. This mode is used to perform data updates related to model changes, for example.
 
+### Funder mode 
+
+The Funder mode (`-m fundoer ` or `-m localFunder`) is not intended to simply update/create Funder objects from COEUS. Rather, it is intended to supply the 
+association from Funders to their Policies. Becaue this association is not tracked in COEUS, it must be developed by hand,
+ and stored in a file named `policy.properties` in the COEUS_HOME directory. Because of the way data is processed, it is 
+ most convenient to use the COEUS version of the Funder's SPONSOR_CODE (our un-localized locakKey for this Funder - so 
+ for example, `8675309` rather than `johnshopkins.edu:funder8675309`), and the policy URI with the PASS_FEDORA_BASEURL 
+ prefix stripped off. Since this base URL ends in fcrepo/rest/, the value of a property will start with the string 
+ "properties".
+
+An example entry in the policy.properties file linking a Funder with PASS localKey "johnshopkins.edu:funder:8675309 
+with a Policy with URI http://localhost:8080/fcrepo/rest/policies/e7/3f/26/70/e73f2670-6ef6-4201-bbcd-04631a93d852 
+will therefore look like this:
+
+`8675309:policies/e7/3f/26/70/e73f2670-6ef6-4201-bbcd-04631a93d852`
+
+The policy.proerties file will have to be kept up to date if additional funders are assigned policies. A different 
+mechanism will be needed to add additional policies, as we require the policies reference in the properties file to be 
+already present in the system.
+
+Once we have a properties file supplying the associations, there are two modes of operation for Funders - "funder" and 
+"localFunder". The first of these will construct a query string for COEUS which will pull every Funder mentioned in the 
+policy.properties file, and create a data object with the localKey, name and policy URI for each entry. This data can 
+then be loaded into PASS similarly to how this is done for Users and Grants by this loader. If there are new Funders to 
+be associated to Policies by this loader, this is the only way to go. The second, "localFunder", will not consult COEUS, 
+but will just update existing Funders in PASS to the Policies referenced in the policy.properties file. The reason that 
+we cannot create new funders in this case is that the policy.properties file does not contain a name for the funder, 
+which is needed for the Funder object.
+
 ### Actions
 The tool can be used to perform a just a pull from COEUS by using the `-a pull` option. This saves a serialized version of
 the COEUS data to be applied to PASS at a later time, into a file specified by a path which is the first (only) command
