@@ -79,7 +79,7 @@ appear many times (Funders or Users for example). We update these only once in t
 After we have processed each record, we save the state of the Grant objects in a List. After all records
 are processed we know that each Grant object on the List is current, and so we update these grants in Pass.
 
-This mode is the default mode, but may ansl be specified using the `-m grant` option.
+This mode is the default mode, but may also be specified using the `-m grant` option.
 
 We note that we (arbitrarily) have populated our grant data only with those having an AWARD_END date on or after 01/01/2011.
 
