@@ -103,7 +103,7 @@ will therefore look like this:
 
 `8675309:policies/e7/3f/26/70/e73f2670-6ef6-4201-bbcd-04631a93d852`
 
-The policy.proerties file will have to be kept up to date if additional funders are assigned policies. A different 
+The `policy.proerties` file will have to be kept up to date if additional funders are assigned policies. A different 
 mechanism will be needed to add additional policies, as we require the policies reference in the properties file to be 
 already present in the system.
 
@@ -136,21 +136,24 @@ when invoking the application to process all grant updates occurring after the s
 
 For example:
 
-`java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -s "2018-03-29 14:30:00.0"`
+`java -DCOEUS_HOME="/home/luser/coeus" -jar jhu-grant-loader-<version>.jar -s "2018-03-29 14:30:00.0"`
 
 For specific actions, we use the `-a option`, and a file path command line argument.
 
 We can perform a pull of grants from COEUS, and store it in a file, by:
 
-`java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -s "2018-03-29 14:30:00.0" -a pull /home/luser/coeus/pulls/thisPull.data`
+`java -DCOEUS_HOME="/home/luser/coeus" -jar jhu-grant-loader-<version>.jar -s "2018-03-29 14:30:00.0" -a pull /home/luser/coeus/pulls/thisPull.data`
 
 this data pull can be applied to the PASS repository by a subsequent invocation
 
-`java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -a load /home/luser/coeus/pulls/thisPull.data`
+`java -DCOEUS_HOME="/home/luser/coeus" -jar jhu-grant-loader-<version>.jar -a load /home/luser/coeus/pulls/thisPull.data`
 
 We note that when a load is being done into PASS, the application will figure out the mode that was used for pulling the data on the fly.
 So, it isn't necessary to supply a mode or a start date to the application - these will be ignored.
 
+For Funders, to simply apply the `policy.properties` file data to existing funders, a command line might look like this:
+
+`java -DCOEUS_HOME=/home/luser/coeus -jar jhu-grant-loader-<version>.jar  -m "localFunder"`
 ### Email Notification
 We may add the command line option -e to enable the use of the email server to send email messages after
 each execution which involves a load into PASS. This will report information on the successful run of the application, or information
