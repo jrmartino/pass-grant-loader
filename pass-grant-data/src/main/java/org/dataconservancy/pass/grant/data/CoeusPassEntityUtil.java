@@ -88,8 +88,10 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      */
     private boolean coeusFundersEqual(Funder system, Funder stored) {
 
-        if (system.getName() != null ? !system.getName().equals(stored.getName()) : stored.getName() != null) return false;
+        //this adjustment handles the case where we take data from policy.properties file, which has no name info
+        if (system.getName() != null && !system.getName().equals(stored.getName())) return false;
         if (system.getLocalKey() != null ? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
+        if (system.getPolicy() != null ? !system.getPolicy().equals(stored.getPolicy()) : stored.getPolicy() != null) return false;
         return true;
     }
 
@@ -102,7 +104,8 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      */
     private Funder updateFunder (Funder system, Funder stored) {
         stored.setLocalKey(system.getLocalKey());
-        stored.setName(system.getName());
+        if (system.getName() != null) {  stored.setName(system.getName()); }
+        if (system.getPolicy() != null) { stored.setPolicy(system.getPolicy()); }
         return stored;
     }
 

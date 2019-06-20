@@ -54,6 +54,8 @@ public class JhuPassUpdaterTest {
 
     @Before
     public void setup() {
+        System.setProperty("pass.fedora.baseurl", "https://localhost:8080/fcrepo/rest/");
+
         grantUri = URI.create("grantUri");
         URI userUri1 = URI.create("piUri");
         URI useruri2 = URI.create("coPiUri");
@@ -100,6 +102,8 @@ public class JhuPassUpdaterTest {
         String directFunderName =  "JHU Department of Synergy";
         String primaryFunderId = "8675309";
         String primaryFunderName = "J. L. Gotrocks Foundation";
+        String primaryFunderPolicy = "policy1";
+        String directFunderPolicy = "policy2";
 
         Map<String, String> rowMap = new HashMap<>();
         rowMap.put(C_GRANT_AWARD_NUMBER, awardNumber);
@@ -153,6 +157,9 @@ public class JhuPassUpdaterTest {
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "C");
 
+        rowMap.put(C_DIRECT_FUNDER_POLICY, primaryFunderPolicy);
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, directFunderPolicy);
+
 
         resultSet.add(rowMap);
 
@@ -204,6 +211,22 @@ public class JhuPassUpdaterTest {
         assertEquals("johnshopkins.edu:jhed:mlartz5", newUser.getLocatorIds().get(2));
     }
 
+
+    @Test
+    public void testPrimaryFunderBuilding() {
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name");
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "8675309");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, "policy1");
+
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
+        Funder newFunder = passUpdater.buildPrimaryFunder(rowMap);
+
+        assertEquals("Funder Name", newFunder.getName());
+        assertEquals("8675309",newFunder.getLocalKey());
+        assertEquals("https://localhost:8080/fcrepo/rest/policy1", newFunder.getPolicy().toString());
+
+    }
 
     @Test (expected = RuntimeException.class)
     public void testGrantModeCheck() {

@@ -70,6 +70,7 @@ class CoeusGrantLoaderApp {
     private String mode;
     private String action;
     private String dataFileName;
+    private boolean local = false;
 
     private String updateTimestampsFileName;
 
@@ -87,7 +88,12 @@ class CoeusGrantLoaderApp {
         this.startDate = startDate;
         this.awardEndDate = awardEndDate;
         this.email = email;
-        this.mode = mode;
+        if (mode.equals("localFunder")) {
+            this.mode = "funder";
+            local = true;
+        } else {
+            this.mode = mode;
+        }
         this.action = action;
         this.dataFileName = dataFileName;
         this.updateTimestampsFileName = mode + "_update_timestamps";
@@ -106,6 +112,8 @@ class CoeusGrantLoaderApp {
         File mailPropertiesFile = new File(appHome, mailPropertiesFileName);
         String systemPropertiesFileName = "system.properties";
         File systemPropertiesFile = new File(appHome, systemPropertiesFileName);
+        String policyPropertiesFileName = "policy.properties";
+        File policyPropertiesFile = new File(appHome, policyPropertiesFileName);
         File dataFile = new File(dataFileName);
 
         //let's be careful about overwriting system properties
@@ -115,9 +123,10 @@ class CoeusGrantLoaderApp {
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
         Properties connectionProperties;
         Properties mailProperties;
+        Properties policyProperties;
 
         //check that we have a good value for mode
-        if (!mode.equals("grant") && !mode.equals("user")) {
+        if (!mode.equals("grant") && !mode.equals("user") && !mode.equals("funder")) {
             throw processException(format(ERR_MODE_NOT_VALID,mode), null);
         }
 
@@ -172,11 +181,19 @@ class CoeusGrantLoaderApp {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
         }
 
+        //get policy properties - if there is not a user-space defined clear text file,
+        //use the one in resources
+        if (!policyPropertiesFile.exists()) {
+            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, policyPropertiesFileName), null);
+        }
+
         try {
             connectionProperties = loadProperties(connectionPropertiesFile);
+            policyProperties = loadProperties(policyPropertiesFile);
             } catch (RuntimeException e) {
                 throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
             }
+
 
         List<Map<String,String>> resultSet = null;
 
@@ -185,23 +202,32 @@ class CoeusGrantLoaderApp {
             //establish the start dateTime - it is either given as an option, or it is
             //the last entry in the update_timestamps file
 
-            if (startDate.length() > 0) {
-                if (!verifyDateTimeFormat(startDate)) {
-                    throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate),null);
+            if (mode.equals("grant") || mode.equals("user")) {//these aren't used for "funder"
+                if (startDate.length() > 0) {
+                    if (!verifyDateTimeFormat(startDate)) {
+                        throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate), null);
+                    }
+                } else {
+                    startDate = getLatestTimestamp();
+                    if (!verifyDateTimeFormat(startDate)) {
+                        throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
+                    }
                 }
-            } else {
-                startDate = getLatestTimestamp();
-                if (!verifyDateTimeFormat(startDate)) {
-                    throw processException(format(ERR_INVALID_TIMESTAMP, startDate),null);
+
+                if (!verifyDate(awardEndDate)) {
+                    throw processException(format(ERR_INVALID_COMMAND_LINE_DATE, awardEndDate), null);
                 }
             }
 
-            if (!verifyDate(awardEndDate)) {
-                throw processException(format(ERR_INVALID_COMMAND_LINE_DATE, awardEndDate), null);
-            }
-
-            CoeusConnector coeusConnector = new CoeusConnector(connectionProperties);
+            CoeusConnector coeusConnector = new CoeusConnector(connectionProperties, policyProperties);
             String queryString = coeusConnector.buildQueryString(startDate, awardEndDate, mode);
+
+            //special case for when we process funders, but do not want to consult COEUS -
+            //just use local properties file to map funders to policies
+            if (mode.equals("funder") && local) {
+                queryString = null;
+            }
+
             try {
                 resultSet = coeusConnector.retrieveUpdates(queryString, mode);
             } catch (ClassNotFoundException e) {
@@ -290,7 +316,7 @@ class CoeusGrantLoaderApp {
      * @return the Properties object derived from the supplied {@code File}
      * @throws PassCliException if the properties file could not be accessed.
      */
-    private Properties loadProperties(File propertiesFile) throws PassCliException {
+    protected Properties loadProperties(File propertiesFile) throws PassCliException {
         Properties properties = new Properties();
         String resource;
         try{

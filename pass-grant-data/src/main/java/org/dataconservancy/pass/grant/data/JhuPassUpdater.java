@@ -78,10 +78,16 @@ public class JhuPassUpdater implements PassUpdater{
         funderMap.clear();
         statistics.reset();
         statistics.setType(mode);
-        if (mode.equals("grant")) {
-            updateGrants(results);
-        } else if (mode.equals("user")) {
-            updateUsers(results);
+        switch (mode) {
+            case "grant":
+                updateGrants(results);
+                break;
+            case "user":
+                updateUsers(results);
+                break;
+            case "funder":
+                updateFunders(results);
+                break;
         }
     }
 
@@ -153,9 +159,8 @@ public class JhuPassUpdater implements PassUpdater{
                 if (funderMap.containsKey(directFunderLocalKey)) {
                     grant.setDirectFunder(funderMap.get(directFunderLocalKey));
                 } else {
-                    Funder updatedFunder = new Funder();
-                    updatedFunder.setLocalKey(rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY));
-                    updatedFunder.setName(rowMap.get(C_DIRECT_FUNDER_NAME));
+                    Funder updatedFunder = buildDirectFunder(rowMap);
+
                     URI passFunderURI =  updateFunderInPass(updatedFunder);
                     funderMap.put(directFunderLocalKey, passFunderURI);
                     grant.setDirectFunder(passFunderURI);
@@ -164,9 +169,8 @@ public class JhuPassUpdater implements PassUpdater{
                 if(funderMap.containsKey(primaryFunderLocalKey)) {
                     grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
                 } else {
-                    Funder updatedFunder = new Funder();
-                    updatedFunder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
-                    updatedFunder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
+                    Funder updatedFunder = buildPrimaryFunder(rowMap);
+
                     URI passFunderURI =  updateFunderInPass(updatedFunder);
                     funderMap.put(primaryFunderLocalKey, passFunderURI);
                     grant.setPrimaryFunder(passFunderURI);
@@ -226,7 +230,7 @@ public class JhuPassUpdater implements PassUpdater{
         for(Map<String,String> rowMap : results) {
 
             if (!modeChecked) {
-                if (!rowMap.containsKey(C_USER_EMPLOYEE_ID)) {//we always have this for grants
+                if (!rowMap.containsKey(C_USER_EMPLOYEE_ID)) {//we always have this for users
                     throw new RuntimeException("Mode of user was supplied, but data does not seem to match.");
                 } else {
                     modeChecked = true;
@@ -247,6 +251,31 @@ public class JhuPassUpdater implements PassUpdater{
             System.out.println("No records were processed in this update");
         }
 
+    }
+
+    /**
+     * This method is called for the "funder" mode - the column names will have the values for primary funders
+     * @param results
+     */
+    private void updateFunders(Collection<Map<String, String>> results) {
+
+        boolean modeChecked = false;
+        LOG.info("Processing result set with " + results.size() + " rows");
+        for (Map<String, String> rowMap : results) {
+
+            if (!modeChecked) {
+                if (!rowMap.containsKey(C_PRIMARY_FUNDER_POLICY)) {//we always have this for funders
+                    throw new RuntimeException("Mode of funder was supplied, but data does not seem to match.");
+                } else {
+                    modeChecked = true;
+                }
+            }
+
+            Funder updatedFunder = buildPrimaryFunder(rowMap);
+            updateFunderInPass(updatedFunder);
+
+        }
+        statistics.setReport(results.size(), results.size());
     }
 
     User buildUser(Map<String, String> rowMap) {
@@ -281,6 +310,51 @@ public class JhuPassUpdater implements PassUpdater{
     }
 
     /**
+     * this method gets called on a grant mode process if the primary funder is different from direct, and also
+     * any time the updater is called in funder mode
+     * @param rowMap
+     * @return
+     */
+     Funder buildPrimaryFunder(Map<String, String> rowMap) {
+        Funder funder = new Funder();
+        if (rowMap.containsKey(C_PRIMARY_FUNDER_NAME)) {
+            funder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
+        }
+        funder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
+        String policy = rowMap.get(C_PRIMARY_FUNDER_POLICY);
+        if (policy != null ) {
+            String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
+            fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
+            funder.setPolicy(URI.create(fedoraBaseUrl + policy));
+            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
+                    " and Policy " + policy);
+        }
+        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
+
+        return funder;
+    }
+
+    private Funder buildDirectFunder(Map<String, String> rowMap) {
+        Funder funder = new Funder();
+        if (rowMap.containsKey(C_DIRECT_FUNDER_NAME)) {
+            funder.setName(rowMap.get(C_DIRECT_FUNDER_NAME));
+        }
+        funder.setLocalKey(rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY));
+        String policy = rowMap.get(C_DIRECT_FUNDER_POLICY);
+        if (policy != null ) {
+            String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
+            fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
+            funder.setPolicy(URI.create(fedoraBaseUrl + policy));
+            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
+                    " and Policy " + policy);
+        }
+        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
+
+        return funder;
+    }
+
+
+    /**
      * Take a new Funder object populated as fully as possible from the COEUS pull, and use this
      * new information to update an object for the same Funder in Pass (if it exists)
      *
@@ -306,8 +380,10 @@ public class JhuPassUpdater implements PassUpdater{
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Funder for this URI - this one is new to Pass
+            if (systemFunder.getName() != null) {//only add if we have a name
                 passFunderURI = passClient.createResource(systemFunder);
                 statistics.addFundersCreated();
+            }
         }
         return passFunderURI;
     }
@@ -348,7 +424,7 @@ public class JhuPassUpdater implements PassUpdater{
             }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
              //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
         } else if (! mode.equals("user")) {//don't have a stored User for this URI - this one is new to Pass
-            //but don't update if we are in user mode - jus update existing users
+            //but don't update if we are in user mode - just update existing users
                 passUserUri = passClient.createResource(systemUser);
                 statistics.addUsersCreated();
         }

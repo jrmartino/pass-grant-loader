@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
@@ -50,9 +51,11 @@ public class CoeusConnector implements GrantConnector {
     private String coeusUser;
     private String coeusPassword;
 
+    private Properties funderPolicyProperties;
+
     private DirectoryServiceUtil directoryServiceUtil;
 
-    public CoeusConnector(Properties connectionProperties) {
+    public CoeusConnector(Properties connectionProperties, Properties funderPolicyProperties) {
         if (connectionProperties != null) {
 
             if (connectionProperties.getProperty(COEUS_URL) != null) {
@@ -66,11 +69,16 @@ public class CoeusConnector implements GrantConnector {
             }
             this.directoryServiceUtil = new DirectoryServiceUtil(connectionProperties);
         }
+
+        this.funderPolicyProperties = funderPolicyProperties;
+
     }
 
     public List<Map<String, String>> retrieveUpdates(String queryString, String mode) throws ClassNotFoundException, SQLException, IOException {
         if (mode.equals("user")) {
             return retrieveUserUpdates(queryString);
+        } else if (mode.equals("funder")) {
+            return retrieveFunderUpdates(queryString);
         } else {
             return retrieveGrantUpdates(queryString);
         }
@@ -119,6 +127,8 @@ public class CoeusConnector implements GrantConnector {
                 if (employeeId != null) {
                     rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
                 }
+                rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+                rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_DIRECT_FUNDER_LOCAL_KEY)));
                 LOG.debug("Record processed: " + rowMap.toString());
                 if (!mapList.contains(rowMap)) {
                     mapList.add(rowMap);
@@ -126,6 +136,42 @@ public class CoeusConnector implements GrantConnector {
             }
         }
         LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
+        return mapList;
+    }
+
+    private List<Map<String, String>> retrieveFunderUpdates (String queryString) throws ClassNotFoundException, SQLException {
+
+        List<Map<String, String>> mapList = new ArrayList<>();
+
+        if (queryString != null) {//we will go to COEUS for the info
+
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+
+            try (
+                    Connection con = DriverManager.getConnection(coeusUrl, coeusUser, coeusPassword);
+                    Statement stmt = con.createStatement();
+                    ResultSet rs = stmt.executeQuery(queryString)
+            ) {
+                while (rs.next()) {//these are the field names in the swift sponsor view
+                    Map<String, String> rowMap = new HashMap<>();
+                    rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
+                    rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
+                    rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
+                    mapList.add(rowMap);
+                }
+
+            }
+
+        } else {//we will prepare partial Funder from the properties file
+
+            for (Object localKey : funderPolicyProperties.keySet()) {
+                Map<String, String> rowMap = new HashMap<>();
+                rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, localKey.toString());
+                rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(localKey.toString()));
+                mapList.add(rowMap);
+            }
+        }
+
         return mapList;
     }
 
@@ -168,6 +214,8 @@ public class CoeusConnector implements GrantConnector {
     public String buildQueryString(String startDate, String awardEndDate, String mode) {
         if (mode.equals("user")) {
             return buildUserQueryString(startDate);
+        } else if (mode.equals("funder")) {
+            return buildFunderQueryString();
         } else {
             return buildGrantQueryString(startDate, awardEndDate);
         }
@@ -272,4 +320,26 @@ public class CoeusConnector implements GrantConnector {
         return queryString;
     }
 
+    private String buildFunderQueryString() {
+
+        String viewFields [] = {//doesn't matter whether the funder is primary or direct - these are the column names in the SWIFT_SPONSOR view
+                C_PRIMARY_FUNDER_NAME,
+                C_PRIMARY_FUNDER_LOCAL_KEY };
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT ");
+        sb.append(String.join(", ",viewFields));
+        sb.append(" FROM");
+        sb.append(" COEUS.SWIFT_SPONSOR");
+        sb.append(" WHERE");
+        sb.append(" SPONSOR_CODE IN (");
+        List<String> keyList = new ArrayList<>();
+        sb.append(String.join(", ", (funderPolicyProperties.stringPropertyNames())));
+        sb.append(")");
+        String queryString = sb.toString();
+
+        LOG.debug("Query string is: " + queryString);
+        return queryString;
+
+    }
 }

@@ -24,7 +24,9 @@ import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 
+import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
+import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,6 +34,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.junit.Assert.assertTrue;
@@ -58,10 +61,20 @@ import java.util.Map;
 @RunWith(MockitoJUnitRunner.class)
 public class JhuPassUpdaterIT {
 
+    private final String DOMAIN = "johnshopkins.edu";
+
     private List<Map<String, String>> resultSet = new ArrayList<>();
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
     private static String jhedPrefix = "johnshopkins.edu:jhed:";
     private CoeusPassEntityUtil coeusPassEntityUtil = new CoeusPassEntityUtil();
+    private Map<String, URI> funderPolicyUriMap = new HashMap<>();
+    private String prefix;
+
+    private String directFunderPolicyUriString1;
+    private String primaryFunderPolicyUriString1;
+
+
+    private PassClient passClient = PassClientFactory.getPassClient();
 
     @Rule
     public TemporaryFolder folder= new TemporaryFolder();
@@ -70,6 +83,30 @@ public class JhuPassUpdaterIT {
     public void setup() {
 
         for (int i = 0; i < 10; i++) {
+
+            String prefix = System.getProperty("pass.fedora.baseurl");
+            if (!prefix.endsWith("/")) {
+                prefix = prefix + "/";
+            }
+
+            Policy policy = new Policy();
+            policy.setTitle("Primary Policy" + i);
+            policy.setDescription("MOO");
+            URI policyURI = passClient.createResource(policy);
+            String primaryPolicyUriString = policyURI.toString().substring(prefix.length());
+            funderPolicyUriMap.put("PrimaryFunderPolicy"+i, policyURI);
+
+            policy = new Policy();
+            policy.setTitle("Direct Policy" + i);
+            policy.setDescription("MOO");
+            policyURI = passClient.createResource(policy);
+            String directPolicyUriString =  policyURI.toString().substring(prefix.length());
+            funderPolicyUriMap.put("DirectFunderPolicy"+i, policyURI);
+
+            if(i==1) {
+                directFunderPolicyUriString1 = directPolicyUriString;
+                primaryFunderPolicyUriString1 = primaryPolicyUriString;
+            }
 
             Map<String, String> rowMap = new HashMap<>();
             rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + i);
@@ -95,6 +132,8 @@ public class JhuPassUpdaterIT {
 
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + i + ":00:00.0");
             rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
+            rowMap.put(C_DIRECT_FUNDER_POLICY, directPolicyUriString );
+            rowMap.put(C_PRIMARY_FUNDER_POLICY, primaryPolicyUriString);
 
             resultSet.add(rowMap);
         }
@@ -112,7 +151,6 @@ public class JhuPassUpdaterIT {
     @Test
     public void updateGrantsIT() throws InterruptedException {
 
-        PassClient passClient = PassClientFactory.getPassClient();
         JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
         passUpdater.updatePass(resultSet, "grant");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
@@ -173,6 +211,10 @@ public class JhuPassUpdaterIT {
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, ("C"));
 
+        rowMap.put(C_DIRECT_FUNDER_POLICY, directFunderPolicyUriString1);
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, primaryFunderPolicyUriString1);
+
+
         resultSet.clear();
         resultSet.add(rowMap);
 
@@ -217,6 +259,7 @@ public class JhuPassUpdaterIT {
             String funderIdPrefix = "johnshopkins.edu:funder:";
             directFunder.setLocalKey(funderIdPrefix + C_DIRECT_FUNDER_LOCAL_KEY + i);
             directFunder.setName(C_DIRECT_FUNDER_NAME + i);
+            directFunder.setPolicy(funderPolicyUriMap.get("DirectFunderPolicy" + i));
 
             URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
             Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
@@ -231,12 +274,14 @@ public class JhuPassUpdaterIT {
             Funder primaryFunder = new Funder();
             primaryFunder.setLocalKey(funderIdPrefix + C_PRIMARY_FUNDER_LOCAL_KEY + i);
             primaryFunder.setName(C_PRIMARY_FUNDER_NAME + i);
+            primaryFunder.setPolicy(funderPolicyUriMap.get("PrimaryFunderPolicy" + i));
 
             URI primaryFunderUri = passClient.findByAttribute(Funder.class, "localKey", primaryFunder.getLocalKey());
             Funder passPrimaryFunder = passClient.readResource(primaryFunderUri, Funder.class);
             assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
             assertEquals(passPrimaryFunder.getId(), passGrant.getPrimaryFunder());
             assertEquals(primaryFunder.getLocalKey(), passPrimaryFunder.getLocalKey());
+            assertEquals(primaryFunder.getPolicy(), passPrimaryFunder.getPolicy());
 
             User user = new User();
 
@@ -294,7 +339,6 @@ public class JhuPassUpdaterIT {
         user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
         user10.setLastName(C_USER_LAST_NAME + 10);
 
-        PassClient passClient = PassClientFactory.getPassClient();
         JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
 
         URI passUserURI = passUpdater.getPassClient().createResource(user10);
@@ -334,7 +378,6 @@ public class JhuPassUpdaterIT {
         assertNotNull(passUserURI);
         User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
 
-
         assertNotNull(updatedUser.getEmail());
         assertNotNull(updatedUser.getDisplayName());
         assertNotNull(updatedUser.getLocatorIds());
@@ -342,6 +385,132 @@ public class JhuPassUpdaterIT {
         assertTrue(updatedUser.getLocatorIds().contains(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + 10));
 
         assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
+    }
+
+    /**
+     * Create some policies, deposit them into Fedora
+     * Then create a java data object linking funders to them
+     * this basically tests what happens when pulling in data from a policy properties file first,
+     * or from a coeus pull second
+     */
+    @Test
+    public void updateFundersIT() throws InterruptedException {
+        Policy policy1 = new Policy();
+        policy1. setTitle("Policy One");
+        policy1. setDescription("Policy one Description");
+        Policy policy2 = new Policy();
+        policy2. setTitle("Policy Two");
+        policy2. setDescription("Policy Two Description");
+
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+        URI policy1Uri = passClient.createResource(policy1);
+        URI policy2Uri = passClient.createResource(policy2);
+
+        assertNotNull(passClient.readResource(policy1Uri, Policy.class));
+        assertNotNull(passClient.readResource(policy2Uri, Policy.class));
+
+        Funder funder1 = new Funder();
+        String fullLocalKey = new Identifier(DOMAIN, "funder", "22229999").serialize();
+        funder1.setLocalKey(fullLocalKey);
+        funder1.setName("Funder One");
+        Funder funder2 = new Funder();
+        fullLocalKey = new Identifier(DOMAIN, "funder", "33330000").serialize();
+        funder2.setLocalKey(fullLocalKey);//use full localKey
+        funder2.setName("Funder Two");
+
+        URI funder1Uri = passClient.createResource(funder1);
+        URI funder2Uri = passClient.createResource(funder2);
+
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
+
+
+        String policyString1 = policy1Uri.getPath().substring("/fcrepo/rest/".length());
+        assertTrue(policyString1.startsWith("policies"));
+        String policyString2 = policy2Uri.getPath().substring("/fcrepo/rest/".length());
+        assertTrue(policyString2.startsWith("policies"));
+
+        List<Map<String, String>> funderResultSet = new ArrayList<>();
+
+        Map<String, String> rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "22229999");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString1);
+        funderResultSet.add(rowMap);
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "33330000");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "88888888"); // this one does not exist in pass
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
+
+
+        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
+
+        passUpdater.updatePass(funderResultSet, "funder");
+        PassUpdateStatistics statistics = passUpdater.getStatistics();
+
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class).getPolicy());
+        assertEquals(policy1Uri, passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertEquals(policy2Uri, passClient.readResource(funder2Uri, Funder.class).getPolicy());
+
+        assertEquals(0, statistics.getFundersCreated());
+        assertEquals(2, statistics.getFundersUpdated());
+
+        //coeus pulls will have the funder names, we should be able to add one we don't know about
+
+        funderResultSet = new ArrayList<>();
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "22229999");
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 1");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2); //let's change policies for this one
+        funderResultSet.add(rowMap);
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "33330000");
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 2");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
+
+        rowMap = new HashMap<>();
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "88888888"); // this one does not exist in pass
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 3");
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
+        funderResultSet.add(rowMap);
+
+        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
+
+        passUpdater.updatePass(funderResultSet, "funder");
+        statistics = passUpdater.getStatistics();
+
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
+        assertNotNull(passClient.readResource(funder2Uri, Funder.class).getPolicy());
+        assertEquals(policy2Uri, passClient.readResource(funder1Uri, Funder.class).getPolicy());
+        assertEquals(policy2Uri, passClient.readResource(funder2Uri, Funder.class).getPolicy());
+
+        assertEquals(1, statistics.getFundersCreated());
+        assertEquals(2, statistics.getFundersUpdated());
+
+
+        //DO AGAIN!! DO AGAIN!!
+
+        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
+
+        passUpdater.updatePass(funderResultSet, "funder");
+        statistics = passUpdater.getStatistics();
+
+        assertEquals(0, statistics.getFundersCreated());
+        assertEquals(0, statistics.getFundersUpdated());
+
     }
 
     @Test

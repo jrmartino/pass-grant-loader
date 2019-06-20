@@ -79,13 +79,42 @@ appear many times (Funders or Users for example). We update these only once in t
 After we have processed each record, we save the state of the Grant objects in a List. After all records
 are processed we know that each Grant object on the List is current, and so we update these grants in Pass.
 
-This mode is the default mode, but may ansl be specified using the `-m grant` option.
+This mode is the default mode, but may also be specified using the `-m grant` option.
 
 We note that we (arbitrarily) have populated our grant data only with those having an AWARD_END date on or after 01/01/2011.
 
 ### User Mode
 This mode (`-m user`) is similar to the `grant` mode, but updates existing PASS users only. Grant updates will update associated users
 (and funders) automatically. This mode is used to perform data updates related to model changes, for example.
+
+### Funder mode 
+
+The Funder mode (`-m fundoer ` or `-m localFunder`) is not intended to simply update/create Funder objects from COEUS. Rather, it is intended to supply the 
+association from Funders to their Policies. Becaue this association is not tracked in COEUS, it must be developed by hand,
+ and stored in a file named `policy.properties` in the COEUS_HOME directory. Because of the way data is processed, it is 
+ most convenient to use the COEUS version of the Funder's SPONSOR_CODE (our un-localized locakKey for this Funder - so 
+ for example, `8675309` rather than `johnshopkins.edu:funder8675309`), and the policy URI with the PASS_FEDORA_BASEURL 
+ prefix stripped off. Since this base URL ends in fcrepo/rest/, the value of a property will start with the string 
+ "properties".
+
+An example entry in the policy.properties file linking a Funder with PASS localKey "johnshopkins.edu:funder:8675309 
+with a Policy with URI http://localhost:8080/fcrepo/rest/policies/e7/3f/26/70/e73f2670-6ef6-4201-bbcd-04631a93d852 
+will therefore look like this:
+
+`8675309:policies/e7/3f/26/70/e73f2670-6ef6-4201-bbcd-04631a93d852`
+
+The `policy.proerties` file will have to be kept up to date if additional funders are assigned policies. A different 
+mechanism will be needed to add additional policies, as we require the policies reference in the properties file to be 
+already present in the system.
+
+Once we have a properties file supplying the associations, there are two modes of operation for Funders - "funder" and 
+"localFunder". The first of these will construct a query string for COEUS which will pull every Funder mentioned in the 
+policy.properties file, and create a data object with the localKey, name and policy URI for each entry. This data can 
+then be loaded into PASS similarly to how this is done for Users and Grants by this loader. If there are new Funders to 
+be associated to Policies by this loader, this is the only way to go. The second, "localFunder", will not consult COEUS, 
+but will just update existing Funders in PASS to the Policies referenced in the policy.properties file. The reason that 
+we cannot create new funders in this case is that the policy.properties file does not contain a name for the funder, 
+which is needed for the Funder object.
 
 ### Actions
 The tool can be used to perform a just a pull from COEUS by using the `-a pull` option. This saves a serialized version of
@@ -107,21 +136,24 @@ when invoking the application to process all grant updates occurring after the s
 
 For example:
 
-`java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -s "2018-03-29 14:30:00.0"`
+`java -DCOEUS_HOME="/home/luser/coeus" -jar jhu-grant-loader-<version>.jar -s "2018-03-29 14:30:00.0"`
 
 For specific actions, we use the `-a option`, and a file path command line argument.
 
 We can perform a pull of grants from COEUS, and store it in a file, by:
 
-`java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -s "2018-03-29 14:30:00.0" -a pull /home/luser/coeus/pulls/thisPull.data`
+`java -DCOEUS_HOME="/home/luser/coeus" -jar jhu-grant-loader-<version>.jar -s "2018-03-29 14:30:00.0" -a pull /home/luser/coeus/pulls/thisPull.data`
 
 this data pull can be applied to the PASS repository by a subsequent invocation
 
-`java -DCOEUS_HOME="/home/luser/coeus" -jar pass-grant-cli-1.0.0-SNAPSHOT-shaded.jar -a load /home/luser/coeus/pulls/thisPull.data`
+`java -DCOEUS_HOME="/home/luser/coeus" -jar jhu-grant-loader-<version>.jar -a load /home/luser/coeus/pulls/thisPull.data`
 
 We note that when a load is being done into PASS, the application will figure out the mode that was used for pulling the data on the fly.
 So, it isn't necessary to supply a mode or a start date to the application - these will be ignored.
 
+For Funders, to simply apply the `policy.properties` file data to existing funders, a command line might look like this:
+
+`java -DCOEUS_HOME=/home/luser/coeus -jar jhu-grant-loader-<version>.jar  -m "localFunder"`
 ### Email Notification
 We may add the command line option -e to enable the use of the email server to send email messages after
 each execution which involves a load into PASS. This will report information on the successful run of the application, or information
