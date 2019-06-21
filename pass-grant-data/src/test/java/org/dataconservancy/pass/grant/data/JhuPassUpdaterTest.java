@@ -50,6 +50,10 @@ public class JhuPassUpdaterTest {
     @Mock
     private PassClient passClientMock;
 
+    private PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
+
+    private String domain = "johnshopkins.edu";
+
     private URI grantUri;
 
     @Before
@@ -163,7 +167,7 @@ public class JhuPassUpdaterTest {
 
         resultSet.add(rowMap);
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock, passEntityUtil, domain);
         passUpdater.updatePass(resultSet, "grant");
 
         Map<URI, Grant> grantMap = passUpdater.getGrantUriMap();
@@ -200,7 +204,7 @@ public class JhuPassUpdaterTest {
         rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock, passEntityUtil, domain);
         User newUser = passUpdater.buildUser(rowMap);
 
         //unusual fields
@@ -219,7 +223,7 @@ public class JhuPassUpdaterTest {
         rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "8675309");
         rowMap.put(C_PRIMARY_FUNDER_POLICY, "policy1");
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClientMock, passEntityUtil, domain);
         Funder newFunder = passUpdater.buildPrimaryFunder(rowMap);
 
         assertEquals("Funder Name", newFunder.getName());
@@ -236,7 +240,7 @@ public class JhuPassUpdaterTest {
         grantResultSet.add(rowMap);
 
         PassClient passClient = PassClientFactory.getPassClient();
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient, passEntityUtil, domain);
 
         passUpdater.updatePass(grantResultSet, "user");
 
@@ -250,7 +254,7 @@ public class JhuPassUpdaterTest {
         userResultSet.add(rowMap);
 
         PassClient passClient = PassClientFactory.getPassClient();
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient, passEntityUtil, domain );
 
         passUpdater.updatePass(userResultSet, "grant");
 

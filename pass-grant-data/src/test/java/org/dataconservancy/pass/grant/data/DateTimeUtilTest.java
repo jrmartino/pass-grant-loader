@@ -81,6 +81,9 @@ public class DateTimeUtilTest {
         // .. but not 4
         date = "2018-01-01 07:59:16.1998";
         Assert.assertFalse(verifyDateTimeFormat(date));
+
+        //check shorter version also passes
+
     }
 
     /**

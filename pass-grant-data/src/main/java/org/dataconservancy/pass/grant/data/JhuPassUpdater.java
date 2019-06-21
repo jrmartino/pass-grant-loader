@@ -45,14 +45,14 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTim
 
 public class JhuPassUpdater implements PassUpdater{
 
-    private final String DOMAIN = "johnshopkins.edu";
+    private final String DOMAIN;
 
     private static Logger LOG = LoggerFactory.getLogger(JhuPassUpdater.class);
     private String latestUpdateString = "";
 
     private PassClient passClient;
     private PassUpdateStatistics statistics = new PassUpdateStatistics();
-    private CoeusPassEntityUtil coeusPassEntityUtil = new CoeusPassEntityUtil();
+    private PassEntityUtil passEntityUtil;
 
     //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
@@ -67,9 +67,11 @@ public class JhuPassUpdater implements PassUpdater{
 
     private String mode;
 
-    public JhuPassUpdater(PassClient passClient)
+    public JhuPassUpdater(PassClient passClient, PassEntityUtil passEntityUtil, String domain)
     {
         this.passClient = passClient;
+        this.passEntityUtil = passEntityUtil;
+        this.DOMAIN = domain;
     }
 
     public void updatePass(Collection<Map<String, String>> results, String mode) {
@@ -374,7 +376,7 @@ public class JhuPassUpdater implements PassUpdater{
                 throw new RuntimeException("Could not read Funder object with URI " + passFunderURI);
             }
             Funder updatedFunder;
-            if ((updatedFunder = coeusPassEntityUtil.update(systemFunder, storedFunder)) != null) {//need to update
+            if ((updatedFunder = passEntityUtil.update(systemFunder, storedFunder)) != null) {//need to update
                 passClient.updateResource(updatedFunder);
                 statistics.addFundersUpdated();
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
@@ -414,7 +416,7 @@ public class JhuPassUpdater implements PassUpdater{
                 throw new RuntimeException("Could not read User object with URI " + passUserUri);
             }
             User updatedUser;
-            if ((updatedUser = coeusPassEntityUtil.update(systemUser, storedUser)) != null){//need to update
+            if ((updatedUser = passEntityUtil.update(systemUser, storedUser)) != null){//need to update
                 //post COEUS processing goes here
                 if(!storedUser.getRoles().contains(User.Role.SUBMITTER)) {
                     storedUser.getRoles().add(User.Role.SUBMITTER);
@@ -453,7 +455,7 @@ public class JhuPassUpdater implements PassUpdater{
                 throw new RuntimeException("Could not read Funder object with URI " + passGrantURI);
             }
             Grant updatedGrant;
-            if ( (updatedGrant = coeusPassEntityUtil.update(systemGrant, storedGrant)) != null) {//need to update
+            if ( (updatedGrant = passEntityUtil.update(systemGrant, storedGrant)) != null) {//need to update
                 LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + systemGrant.getLocalKey());
                 passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();

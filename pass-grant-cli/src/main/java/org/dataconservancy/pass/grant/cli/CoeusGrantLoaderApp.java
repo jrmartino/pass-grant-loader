@@ -36,8 +36,10 @@ import java.util.Properties;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.CoeusConnector;
+import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
 import org.dataconservancy.pass.grant.data.JhuPassUpdater;
+import org.dataconservancy.pass.grant.data.PassEntityUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -257,8 +259,9 @@ class CoeusGrantLoaderApp {
         if (!action.equals("pull")) {
             JhuPassUpdater passUpdater;
             PassClient passClient = PassClientFactory.getPassClient();
+            PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
             try {
-                passUpdater = new JhuPassUpdater(passClient);
+                passUpdater = new JhuPassUpdater(passClient, passEntityUtil, "johnshopkins.edu");
                 passUpdater.updatePass(resultSet, mode);
             } catch (RuntimeException e) {
                 throw processException("Runtime Exception", e);
