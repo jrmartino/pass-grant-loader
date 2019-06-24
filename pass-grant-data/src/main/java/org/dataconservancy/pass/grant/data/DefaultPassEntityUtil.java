@@ -4,7 +4,7 @@ import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 
-public class HarvardPilotPassEntityUtil implements PassEntityUtil {
+public class DefaultPassEntityUtil implements PassEntityUtil {
 
     /**
      *  This method takes a Harvard Pilot Funder, calculates whether it needs to be updated, and if so, returns the updated object

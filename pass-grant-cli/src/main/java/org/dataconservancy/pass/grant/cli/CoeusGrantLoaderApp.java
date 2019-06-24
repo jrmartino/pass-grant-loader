@@ -259,9 +259,9 @@ class CoeusGrantLoaderApp {
         if (!action.equals("pull")) {
             JhuPassUpdater passUpdater;
             PassClient passClient = PassClientFactory.getPassClient();
-            PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
+            //PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
             try {
-                passUpdater = new JhuPassUpdater(passClient, passEntityUtil, "johnshopkins.edu");
+                passUpdater = new JhuPassUpdater(passClient);
                 passUpdater.updatePass(resultSet, mode);
             } catch (RuntimeException e) {
                 throw processException("Runtime Exception", e);

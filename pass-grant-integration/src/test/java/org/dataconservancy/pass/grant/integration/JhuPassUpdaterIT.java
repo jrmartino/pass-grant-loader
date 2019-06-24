@@ -71,8 +71,6 @@ public class JhuPassUpdaterIT {
     private Map<String, URI> funderPolicyUriMap = new HashMap<>();
     private String prefix;
 
-    private String domain = "johnshopkins.edu";
-
     private String directFunderPolicyUriString1;
     private String primaryFunderPolicyUriString1;
 
@@ -155,7 +153,7 @@ public class JhuPassUpdaterIT {
     @Test
     public void updateGrantsIT() throws InterruptedException {
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient, passEntityUtil, domain);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
         passUpdater.updatePass(resultSet, "grant");
         PassUpdateStatistics statistics = passUpdater.getStatistics();
 
@@ -343,7 +341,7 @@ public class JhuPassUpdaterIT {
         user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
         user10.setLastName(C_USER_LAST_NAME + 10);
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient, passEntityUtil, domain);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
 
         URI passUserURI = passUpdater.getPassClient().createResource(user10);
 
@@ -406,7 +404,7 @@ public class JhuPassUpdaterIT {
         policy2. setTitle("Policy Two");
         policy2. setDescription("Policy Two Description");
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient, passEntityUtil, domain);
+        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
         URI policy1Uri = passClient.createResource(policy1);
         URI policy2Uri = passClient.createResource(policy2);
 

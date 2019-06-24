@@ -1,13 +1,14 @@
 package org.dataconservancy.pass.grant.data;
 
-import java.util.Collection;
-import java.util.Map;
+import org.dataconservancy.pass.client.PassClient;
 
-public class HarvardPilotPassUpdater implements PassUpdater {
+public class HarvardPilotPassUpdater extends DefaultPassUpdater {
 
-    public void updatePass(Collection<Map<String, String>> results, String mode) {
+HarvardPilotPassUpdater (PassClient passClient, PassEntityUtil passEntityUtil ) {
+    super(passClient, passEntityUtil);
+    super.setDomain("johnshopkins.edu");
 
-    }
+}
 
 
 }
