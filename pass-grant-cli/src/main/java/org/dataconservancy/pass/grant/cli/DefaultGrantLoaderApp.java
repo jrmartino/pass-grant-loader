@@ -78,7 +78,7 @@ class DefaultGrantLoaderApp {
      * @param startDate - the latest successful update timestamp, occurring as the last line of the update timestamps file
      * @param email - a boolean which indicates whether or not to send email notification of the result of the current run
      * @param mode - a String indicating whether we are updating grants, or existing users in PASS
-     * @param action - a String indicating an optional restriction to just pulling data from COEUS and saving a serialized
+     * @param action - a String indicating an optional restriction to just pulling data from the data source, and saving a serialized
      *               version to a file, or just taking serialized data in a file and loading it into PASS
      * @param dataFileName - a String representing the path to an output file for a pull, or input for a load
      */
@@ -99,7 +99,7 @@ class DefaultGrantLoaderApp {
         }
 
     /**
-     * The orchestration method for everything. This is called by the {@code CoeusGrantLoaderCLI}, which only manages the
+     * The orchestration method for everything. This is called by the CLI which only manages the
      * command line interaction.
      *
      * @throws PassCliException if there was any error occurring during the grant loading or updating processes
@@ -282,7 +282,7 @@ class DefaultGrantLoaderApp {
             LOG.info(message);
             System.out.println(message);
             if (email) {
-                emailService.sendEmailMessage("COEUS Data Pull SUCCESS", message);
+                emailService.sendEmailMessage("Grant Loader Data Pull SUCCESS", message);
             }
         } else {//don't need to update, just write the result set out to the data file
             try (FileOutputStream fos = new FileOutputStream(dataFile);
@@ -308,7 +308,7 @@ class DefaultGrantLoaderApp {
             LOG.info(message);
             System.out.println(message);
             if (email) {
-                emailService.sendEmailMessage("COEUS Data Loader SUCCESS", message);
+                emailService.sendEmailMessage("Grant Data Loader SUCCESS", message);
             }
         }
     }
@@ -408,10 +408,19 @@ class DefaultGrantLoaderApp {
         return clie;
     }
 
+    /**
+     * This method sets whether our data supports incremental updates by consulting data timestamps
+     * @param timestamp
+     */
     void setTimestamp(boolean timestamp) {
         this.timestamp = timestamp;
     }
 
+    /**
+     * This method determines which objects may be uppdated - override in child classes
+     * @param s
+     * @return
+     */
     boolean checkMode(String s) {
         return (s.equals("user") || s.equals("grant") || s.equals("funder"));
     }
