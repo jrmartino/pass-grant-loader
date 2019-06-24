@@ -81,6 +81,7 @@ public class HarvardPilotConnector implements GrantConnector {
                     Map<String, String> rowMap = new HashMap<>();
                     rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, funderLocalKey);
                     rowMap.put(C_DIRECT_FUNDER_NAME, funderNameMap.get(funderLocalKey));
+                    rowMap.put(C_DIRECT_FUNDER_POLICY, funderNameMap.get(funderLocalKey));
                     rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, funderLocalKey);
                     rowMap.put(C_PRIMARY_FUNDER_NAME, funderNameMap.get(funderLocalKey));
                     rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
