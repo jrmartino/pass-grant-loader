@@ -50,7 +50,7 @@ public class JhuPassUpdaterTest {
     @Mock
     private PassClient passClientMock;
 
-    private PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
+//    private PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
 
    // private String domain = "johnshopkins.edu";
 

@@ -113,7 +113,7 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName);
+            JhuGrantLoaderApp app = new JhuGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

@@ -16,6 +16,12 @@
 
 package org.dataconservancy.pass.grant.cli;
 
+import org.dataconservancy.pass.grant.data.CoeusConnector;
+import org.dataconservancy.pass.grant.data.DateTimeUtil;
+import org.dataconservancy.pass.grant.data.JhuPassUpdater;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,20 +39,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.dataconservancy.pass.client.PassClient;
-import org.dataconservancy.pass.client.PassClientFactory;
-import org.dataconservancy.pass.grant.data.CoeusConnector;
-import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
-import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.JhuPassUpdater;
-import org.dataconservancy.pass.grant.data.PassEntityUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static java.lang.String.format;
 import static org.dataconservancy.pass.grant.cli.DataLoaderErrors.*;
-import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDate;
+import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFormat;
 
 /**
  * This class does the orchestration for the pulling of grant and user data. The basic steps are to read in all of the
@@ -60,8 +56,8 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDate;
  *
  * @author jrm@jhu.edu
  */
-class CoeusGrantLoaderApp {
-    private static Logger LOG = LoggerFactory.getLogger(CoeusGrantLoaderApp.class);
+class DefaultGrantLoaderApp {
+    private static Logger LOG = LoggerFactory.getLogger(DefaultGrantLoaderApp.class);
     private EmailService emailService;
 
     private File appHome;
@@ -73,6 +69,7 @@ class CoeusGrantLoaderApp {
     private String action;
     private String dataFileName;
     private boolean local = false;
+    private boolean timestamp = true;
 
     private String updateTimestampsFileName;
 
@@ -85,7 +82,7 @@ class CoeusGrantLoaderApp {
      *               version to a file, or just taking serialized data in a file and loading it into PASS
      * @param dataFileName - a String representing the path to an output file for a pull, or input for a load
      */
-    CoeusGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName) {
+    DefaultGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName) {
         this.appHome = new File(System.getProperty("COEUS_HOME"));
         this.startDate = startDate;
         this.awardEndDate = awardEndDate;
@@ -123,12 +120,12 @@ class CoeusGrantLoaderApp {
         "pass.elasticsearch.url", "pass.elasticsearch.limit"};
 
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
-        Properties connectionProperties;
+        Properties connectionProperties = null;
         Properties mailProperties;
         Properties policyProperties;
 
         //check that we have a good value for mode
-        if (!mode.equals("grant") && !mode.equals("user") && !mode.equals("funder")) {
+        if (!checkMode(mode)) {
             throw processException(format(ERR_MODE_NOT_VALID,mode), null);
         }
 
@@ -178,19 +175,22 @@ class CoeusGrantLoaderApp {
             }
         }
 
-        //create connection properties - check for a user-space defined clear text file
-        if (!connectionPropertiesFile.exists()) {
-            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
-        }
+        //create connection properties - check for a user-space defined clear text file - need this for both pull and loadd
+            if (!connectionPropertiesFile.exists()) {
+                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
+            }
+            try {
+                connectionProperties = loadProperties(connectionPropertiesFile);
+            } catch (RuntimeException e) {
+                throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+            }
 
-        //get policy properties - if there is not a user-space defined clear text file,
-        //use the one in resources
+        //get policy properties
         if (!policyPropertiesFile.exists()) {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, policyPropertiesFileName), null);
         }
 
         try {
-            connectionProperties = loadProperties(connectionPropertiesFile);
             policyProperties = loadProperties(policyPropertiesFile);
             } catch (RuntimeException e) {
                 throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
@@ -267,15 +267,16 @@ class CoeusGrantLoaderApp {
             }
 
             //apparently the hard part has succeeded, let's write the timestamp to our update timestamps file
-            String updateTimestamp = passUpdater.getLatestUpdate();
-            if (DateTimeUtil.verifyDateTimeFormat(updateTimestamp)) {
-                try {
-                    appendLineToFile(updateTimestampsFile, passUpdater.getLatestUpdate());
-                } catch (IOException e) {
-                    throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, passUpdater.getLatestUpdate()), null);
+            if (timestamp) {
+                String updateTimestamp = passUpdater.getLatestUpdate();
+                if (DateTimeUtil.verifyDateTimeFormat(updateTimestamp)) {
+                    try {
+                        appendLineToFile(updateTimestampsFile, passUpdater.getLatestUpdate());
+                    } catch (IOException e) {
+                        throw processException(format(ERR_COULD_NOT_APPEND_UPDATE_TIMESTAMP, passUpdater.getLatestUpdate()), null);
+                    }
                 }
             }
-
             //now everything succeeded - log this result and send email if enabled
             String message = passUpdater.getReport();
             LOG.info(message);
@@ -341,6 +342,9 @@ class CoeusGrantLoaderApp {
      */
     private String getLatestTimestamp() throws PassCliException {
         String lastLine="";
+        if (!timestamp) {
+            return lastLine;
+        }
         if (!updateTimestampsFile.exists()) {
             throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, updateTimestampsFileName),null);
         } else {
@@ -404,5 +408,11 @@ class CoeusGrantLoaderApp {
         return clie;
     }
 
+    void setTimestamp(boolean timestamp) {
+        this.timestamp = timestamp;
+    }
 
+    boolean checkMode(String s) {
+        return (s.equals("user") || s.equals("grant") || s.equals("funder"));
+    }
 }

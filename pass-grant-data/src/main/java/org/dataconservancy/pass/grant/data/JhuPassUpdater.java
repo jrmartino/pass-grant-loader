@@ -46,10 +46,14 @@ public class JhuPassUpdater extends DefaultPassUpdater {
 
     public JhuPassUpdater(PassClient passClient)
     {
-        super(passClient, new CoeusPassEntityUtil());
+        super(new CoeusPassEntityUtil(), passClient);
         super.setDomain("johnshopkins.edu");
     }
 
+    public JhuPassUpdater() {
+        super(new CoeusPassEntityUtil());
+        super.setDomain("johnshopkins.edu");
+    }
 
     @Override
     User buildUser(Map<String, String> rowMap) {

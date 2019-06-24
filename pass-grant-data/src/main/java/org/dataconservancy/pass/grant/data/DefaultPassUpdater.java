@@ -17,6 +17,7 @@
 package org.dataconservancy.pass.grant.data;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
@@ -49,7 +50,7 @@ public class DefaultPassUpdater implements PassUpdater{
     private static Logger LOG = LoggerFactory.getLogger(DefaultPassUpdater.class);
     private String latestUpdateString = "";
 
-    PassClient passClient;
+    PassClient passClient = PassClientFactory.getPassClient();
     PassUpdateStatistics statistics = new PassUpdateStatistics();
     PassEntityUtil passEntityUtil;
 
@@ -66,10 +67,15 @@ public class DefaultPassUpdater implements PassUpdater{
 
     private String mode;
 
-    public DefaultPassUpdater(PassClient passClient)
+    public DefaultPassUpdater(PassEntityUtil passEntityUtil)
     {
+        this.passEntityUtil = passEntityUtil;
+    }
+
+    //used in unit testing for injecting a mock client
+    public DefaultPassUpdater(PassEntityUtil passEntityUtil, PassClient passClient) {
+        this.passEntityUtil = passEntityUtil;
         this.passClient = passClient;
-        this.passEntityUtil = new DefaultPassEntityUtil();
     }
 
     public void updatePass(Collection<Map<String, String>> results, String mode) {
@@ -204,9 +210,10 @@ public class DefaultPassUpdater implements PassUpdater{
             //we are done with this record, let's save the state of this Grant
             grantMap.put(grantLocalKey, grant);
             //see if this is the latest grant updated
-            String grantUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
-            latestUpdateString = latestUpdateString.length()==0 ? grantUpdateString : returnLaterUpdate(grantUpdateString, latestUpdateString);
-
+            if (rowMap.containsKey(C_UPDATE_TIMESTAMP)) {
+                String grantUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
+                latestUpdateString = latestUpdateString.length() == 0 ? grantUpdateString : returnLaterUpdate(grantUpdateString, latestUpdateString);
+            }
         }
 
         //now put updated grant objects in pass
@@ -240,8 +247,10 @@ public class DefaultPassUpdater implements PassUpdater{
             LOG.info("Processing result set with " + results.size() + " rows");
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
-            String userUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
-            latestUpdateString = latestUpdateString.length()==0 ? userUpdateString : returnLaterUpdate(userUpdateString, latestUpdateString);
+            if (rowMap.containsKey(C_UPDATE_TIMESTAMP)) {
+                String userUpdateString = rowMap.get(C_UPDATE_TIMESTAMP);
+                latestUpdateString = latestUpdateString.length() == 0 ? userUpdateString : returnLaterUpdate(userUpdateString, latestUpdateString);
+            }
         }
 
         if (results.size() > 0) {
