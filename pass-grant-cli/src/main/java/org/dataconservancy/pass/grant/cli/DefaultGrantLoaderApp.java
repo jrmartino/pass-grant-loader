@@ -120,7 +120,7 @@ class DefaultGrantLoaderApp {
         "pass.elasticsearch.url", "pass.elasticsearch.limit"};
 
         updateTimestampsFile = new File(appHome, updateTimestampsFileName);
-        Properties connectionProperties = null;
+        Properties connectionProperties;
         Properties mailProperties;
         Properties policyProperties;
 
@@ -319,7 +319,7 @@ class DefaultGrantLoaderApp {
      * @return the Properties object derived from the supplied {@code File}
      * @throws PassCliException if the properties file could not be accessed.
      */
-    protected Properties loadProperties(File propertiesFile) throws PassCliException {
+    private Properties loadProperties(File propertiesFile) throws PassCliException {
         Properties properties = new Properties();
         String resource;
         try{
@@ -410,7 +410,7 @@ class DefaultGrantLoaderApp {
 
     /**
      * This method sets whether our data supports incremental updates by consulting data timestamps
-     * @param timestamp
+     * @param timestamp boolean indicating whether we are supporting timestamps for updates
      */
     void setTimestamp(boolean timestamp) {
         this.timestamp = timestamp;
@@ -418,8 +418,8 @@ class DefaultGrantLoaderApp {
 
     /**
      * This method determines which objects may be uppdated - override in child classes
-     * @param s
-     * @return
+     * @param s the string for the mode
+     * @return whether we support this mode
      */
     boolean checkMode(String s) {
         return (s.equals("user") || s.equals("grant") || s.equals("funder"));
