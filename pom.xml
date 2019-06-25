@@ -78,7 +78,7 @@
 
         <!-- INDIVIDUAL LOADER IMPLEMENTATION VERSIONS ARE SET HERE-->
         <jhu.loader.version>1.2.0</jhu.loader.version>
-        <harvard.loader.version>1.0.0</harvard.loader.version>
+        <harvard.pilot.loader.version>1.0.0-SNAPSHOT</harvard.pilot.loader.version>
 
     </properties>
 

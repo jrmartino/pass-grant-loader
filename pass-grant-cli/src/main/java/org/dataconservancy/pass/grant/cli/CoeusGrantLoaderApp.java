@@ -102,7 +102,7 @@ class CoeusGrantLoaderApp {
         }
 
     /**
-     * The orchestration method for everything. This is called by the {@code CoeusGrantLoaderCLI}, which only manages the
+     * The orchestration method for everything. This is called by the {@code JhuGrantLoaderCLI}, which only manages the
      * command line interaction.
      *
      * @throws PassCliException if there was any error occurring during the grant loading or updating processes

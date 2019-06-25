@@ -15,6 +15,11 @@ class JhuGrantLoaderApp extends DefaultGrantLoaderApp {
     }
 
     @Override
+    boolean checkMode(String s) {
+        return (s.equals("user") || s.equals("grant") || s.equals("funder"));
+    }
+
+    @Override
     GrantConnector configureConnector(Properties connectionProperties, Properties policyProperties) {
         return new CoeusConnector(connectionProperties, policyProperties);
     }

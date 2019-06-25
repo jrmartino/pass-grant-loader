@@ -38,6 +38,7 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>jhu-grant-loader</id>
                         <goals>
                             <goal>shade</goal>
                         </goals>
@@ -47,7 +48,34 @@
                             <transformers>
                                 <transformer implementation=
                                                      "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>org.dataconservancy.pass.grant.cli.CoeusGrantLoaderCLI</mainClass>
+                                    <mainClass>org.dataconservancy.pass.grant.cli.JhuGrantLoaderCLI</mainClass>
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <!-- filter out signature files from signed dependencies, else repackaging fails with security ex -->
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>harvard-pilot-grant-loader</id>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <finalName>harvard-pilot-grant-loader-${harvard.pilot.loader.version}</finalName>
+                            <transformers>
+                                <transformer implementation=
+                                                     "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.dataconservancy.pass.grant.cli.HarvardPilotGrantLoaderCLI</mainClass>
                                 </transformer>
                             </transformers>
                             <filters>

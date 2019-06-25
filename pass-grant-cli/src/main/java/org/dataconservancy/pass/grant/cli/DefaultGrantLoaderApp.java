@@ -424,9 +424,7 @@ abstract class DefaultGrantLoaderApp {
      * @param s the string for the mode
      * @return whether we support this mode
      */
-    boolean checkMode(String s) {
-        return (s.equals("user") || s.equals("grant") || s.equals("funder"));
-    }
+    abstract boolean checkMode(String s);
 
     abstract GrantConnector configureConnector(Properties connectionProperties, Properties policyProperties);
 
