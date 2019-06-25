@@ -35,7 +35,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * employee ID, which is a durable identifier for all Hopkins employees. This lookup service is necessary because we do not
  * have access to the wider identifier in out grants data source.
  */
-public class DirectoryServiceUtil {
+class DirectoryServiceUtil {
 
     static final String DIRECTORY_SERVICE_BASE_URL = "directory.base.url";
     static final String DIRECTORY_SERVICE_CLIENT_ID = "directory.client.id";
@@ -101,7 +101,7 @@ public class DirectoryServiceUtil {
      * @return the user's Hopkins ID - should never be null
      * @throws IOException if the service cannot be reached
      */
-    public String getHopkinsIdForEmployeeId(String employeeId) throws  IOException {
+    String getHopkinsIdForEmployeeId(String employeeId) throws  IOException {
         return askDirectoryForMappedValue(Type.EMPLOYEE2HOPKINS, employeeId);
     }
 
@@ -109,7 +109,7 @@ public class DirectoryServiceUtil {
      *
      * @param hopkinsId the user's Hopkins ID
      * @return the user's employee ID if it exists; null if it does not
-     * @throws IOException
+     * @throws IOException if there is an IO exception
      */
     String getEmployeeIdForHopkinsId(String hopkinsId) throws IOException {
         return askDirectoryForMappedValue(Type.HOPKINS2EMPLOYEE, hopkinsId);

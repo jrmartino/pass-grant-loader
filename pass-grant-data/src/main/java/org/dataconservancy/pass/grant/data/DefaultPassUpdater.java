@@ -50,9 +50,9 @@ public class DefaultPassUpdater implements PassUpdater{
     private static Logger LOG = LoggerFactory.getLogger(DefaultPassUpdater.class);
     private String latestUpdateString = "";
 
-    PassClient passClient = PassClientFactory.getPassClient();
-    PassUpdateStatistics statistics = new PassUpdateStatistics();
-    PassEntityUtil passEntityUtil;
+    private PassClient passClient = PassClientFactory.getPassClient();
+    private PassUpdateStatistics statistics = new PassUpdateStatistics();
+    private PassEntityUtil passEntityUtil;
 
     //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
@@ -67,13 +67,13 @@ public class DefaultPassUpdater implements PassUpdater{
 
     private String mode;
 
-    public DefaultPassUpdater(PassEntityUtil passEntityUtil)
+    DefaultPassUpdater(PassEntityUtil passEntityUtil)
     {
         this.passEntityUtil = passEntityUtil;
     }
 
     //used in unit testing for injecting a mock client
-    public DefaultPassUpdater(PassEntityUtil passEntityUtil, PassClient passClient) {
+    DefaultPassUpdater(PassEntityUtil passEntityUtil, PassClient passClient) {
         this.passEntityUtil = passEntityUtil;
         this.passClient = passClient;
     }
@@ -102,7 +102,7 @@ public class DefaultPassUpdater implements PassUpdater{
      * Because we need to make sure we catch any updates to fields referenced by URIs, we construct
      * these and update these as well
      */
-     void updateGrants(Collection<Map<String, String>> results) {
+    private void updateGrants(Collection<Map<String, String>> results) {
 
         //a grant will have several rows in the ResultSet if there are co-pis. so we put the grant on this
         //Map and add to it as additional rows add information.
@@ -137,7 +137,7 @@ public class DefaultPassUpdater implements PassUpdater{
                 grant = new Grant();
                 grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
 
-                String status = rowMap.get(C_GRANT_AWARD_STATUS);
+                String status = rowMap.getOrDefault(C_GRANT_AWARD_STATUS, null);
 
                 if (status != null) {
                     switch (status) {
@@ -156,9 +156,9 @@ public class DefaultPassUpdater implements PassUpdater{
 
                 grant.setLocalKey(grantLocalKey);
                 grant.setProjectName(rowMap.get(C_GRANT_PROJECT_NAME));
-                grant.setAwardDate(createJodaDateTime(rowMap.get(C_GRANT_AWARD_DATE)));
-                grant.setStartDate(createJodaDateTime(rowMap.get(C_GRANT_START_DATE)));
-                grant.setEndDate(createJodaDateTime(rowMap.get(C_GRANT_END_DATE)));
+                grant.setAwardDate(createJodaDateTime(rowMap.getOrDefault(C_GRANT_AWARD_DATE, null)));
+                grant.setStartDate(createJodaDateTime(rowMap.getOrDefault(C_GRANT_START_DATE, null)));
+                grant.setEndDate(createJodaDateTime(rowMap.getOrDefault(C_GRANT_END_DATE, null)));
 
                 //process direct funder, and primary funder if we have one
                 //update funder(s) in Pass as needed
@@ -166,7 +166,6 @@ public class DefaultPassUpdater implements PassUpdater{
                     grant.setDirectFunder(funderMap.get(directFunderLocalKey));
                 } else {
                     Funder updatedFunder = buildDirectFunder(rowMap);
-
                     URI passFunderURI =  updateFunderInPass(updatedFunder);
                     funderMap.put(directFunderLocalKey, passFunderURI);
                     grant.setDirectFunder(passFunderURI);
@@ -176,7 +175,6 @@ public class DefaultPassUpdater implements PassUpdater{
                     grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
                 } else {
                     Funder updatedFunder = buildPrimaryFunder(rowMap);
-
                     URI passFunderURI =  updateFunderInPass(updatedFunder);
                     funderMap.put(primaryFunderLocalKey, passFunderURI);
                     grant.setPrimaryFunder(passFunderURI);
@@ -230,7 +228,7 @@ public class DefaultPassUpdater implements PassUpdater{
         }
     }
 
-     void updateUsers(Collection<Map<String, String>> results) {
+     private void updateUsers(Collection<Map<String, String>> results) {
 
         boolean modeChecked = false;
 
@@ -264,9 +262,9 @@ public class DefaultPassUpdater implements PassUpdater{
 
     /**
      * This method is called for the "funder" mode - the column names will have the values for primary funders
-     * @param results
+     * @param results the data row map containing funder information
      */
-     void updateFunders(Collection<Map<String, String>> results) {
+    private void updateFunders(Collection<Map<String, String>> results) {
 
         boolean modeChecked = false;
         LOG.info("Processing result set with " + results.size() + " rows");
@@ -290,9 +288,7 @@ public class DefaultPassUpdater implements PassUpdater{
     User buildUser(Map<String, String> rowMap) {
         User user = new User();
         user.setFirstName(rowMap.get(C_USER_FIRST_NAME));
-        if (rowMap.containsKey(C_USER_MIDDLE_NAME)) {
-            user.setMiddleName(rowMap.get(C_USER_MIDDLE_NAME));
-        }
+        user.setMiddleName(rowMap.getOrDefault(C_USER_MIDDLE_NAME, null));
         user.setLastName(rowMap.get(C_USER_LAST_NAME));
         user.setDisplayName(rowMap.get(C_USER_FIRST_NAME) + " " + rowMap.get(C_USER_LAST_NAME));
         user.setEmail(rowMap.get(C_USER_EMAIL));
@@ -310,14 +306,12 @@ public class DefaultPassUpdater implements PassUpdater{
     /**
      * this method gets called on a grant mode process if the primary funder is different from direct, and also
      * any time the updater is called in funder mode
-     * @param rowMap
-     * @return
+     * @param rowMap the funder data map
+     * @return the funder
      */
      Funder buildPrimaryFunder(Map<String, String> rowMap) {
         Funder funder = new Funder();
-        if (rowMap.containsKey(C_PRIMARY_FUNDER_NAME)) {
-            funder.setName(rowMap.get(C_PRIMARY_FUNDER_NAME));
-        }
+        funder.setName(rowMap.getOrDefault(C_PRIMARY_FUNDER_NAME, null));
         funder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
         String policy = rowMap.get(C_PRIMARY_FUNDER_POLICY);
         if (policy != null ) {
@@ -332,7 +326,7 @@ public class DefaultPassUpdater implements PassUpdater{
         return funder;
     }
 
-     Funder buildDirectFunder(Map<String, String> rowMap) {
+     private Funder buildDirectFunder(Map<String, String> rowMap) {
         Funder funder = new Funder();
         if (rowMap.containsKey(C_DIRECT_FUNDER_NAME)) {
             funder.setName(rowMap.get(C_DIRECT_FUNDER_NAME));
@@ -359,7 +353,7 @@ public class DefaultPassUpdater implements PassUpdater{
      * @param systemFunder the new Funder object populated from COEUS
      * @return the URI for the resource representing the updated Funder in Pass
      */
-     URI updateFunderInPass(Funder systemFunder) {
+    private URI updateFunderInPass(Funder systemFunder) {
         String baseLocalKey = systemFunder.getLocalKey();
         String FUNDER_ID_TYPE = "funder";
         String fullLocalKey = new Identifier(DOMAIN, FUNDER_ID_TYPE, baseLocalKey).serialize();
@@ -393,7 +387,7 @@ public class DefaultPassUpdater implements PassUpdater{
      * @param systemUser the new User object populated from COEUS
      * @return the URI for the resource representing the updated User in Pass
      */
-     URI updateUserInPass(User systemUser) {
+    private URI updateUserInPass(User systemUser) {
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
         //last attempt is the JHED ID. this order is specified by the order of the List as constructed on updatedUser
         URI passUserUri = null;
@@ -436,7 +430,7 @@ public class DefaultPassUpdater implements PassUpdater{
      * @param systemGrant the new Grant object populated from COEUS
      * @return the PASS identifier for the Grant object
      */
-     URI updateGrantInPass(Grant systemGrant) {
+    private URI updateGrantInPass(Grant systemGrant) {
         String baseLocalKey = systemGrant.getLocalKey();
         String GRANT_ID_TYPE = "grant";
         String fullLocalKey = new Identifier(DOMAIN, GRANT_ID_TYPE, baseLocalKey).serialize();

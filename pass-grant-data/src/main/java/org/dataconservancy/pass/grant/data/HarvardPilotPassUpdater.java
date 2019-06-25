@@ -1,7 +1,5 @@
 package org.dataconservancy.pass.grant.data;
 
-import org.dataconservancy.pass.client.PassClient;
-
 public class HarvardPilotPassUpdater extends DefaultPassUpdater {
 
     HarvardPilotPassUpdater () {

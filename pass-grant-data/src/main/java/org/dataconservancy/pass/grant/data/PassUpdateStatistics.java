@@ -43,34 +43,38 @@ public class PassUpdateStatistics {
     void setReport(int resultSetSize, int size) {
         StringBuilder sb = new StringBuilder();
 
-        if (type.equals("grant")) {
-            sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
-                    resultSetSize, latestUpdateString));
-            sb.append("\n");
-            sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, size));
-            sb.append("\n\n");
-            sb.append("Pass Activity");
-            sb.append("\n\n");
-            sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
-            sb.append("\n");
-            sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
-            sb.append("\n");
-            sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
-            sb.append("\n");
-        } else if (type.equals("user")) {
-            sb.append(format("%s user records processed; the most recent update in this batch has timestamp %s",
-                    resultSetSize, latestUpdateString));
-            sb.append("\n");
-            sb.append("Pass Activity");
-            sb.append("\n\n");
-            sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
-            sb.append("\n");
-        } else if (type.equals("funder")) {
-            sb.append(format("%s funder records processed",
-                    resultSetSize));
-            sb.append("\n\n");
-            sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
-            sb.append("\n");
+        switch (type) {
+            case "grant":
+                sb.append(format("%s grant records processed; the most recent update in this batch has timestamp %s",
+                        resultSetSize, latestUpdateString));
+                sb.append("\n");
+                sb.append(format("%s Pis and %s Co-Pis were processed on %s grants", pisAdded, coPisAdded, size));
+                sb.append("\n\n");
+                sb.append("Pass Activity");
+                sb.append("\n\n");
+                sb.append(format("%s Grants were created; %s Grants were updated", grantsCreated, grantsUpdated));
+                sb.append("\n");
+                sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
+                sb.append("\n");
+                sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
+                sb.append("\n");
+                break;
+            case "user":
+                sb.append(format("%s user records processed; the most recent update in this batch has timestamp %s",
+                        resultSetSize, latestUpdateString));
+                sb.append("\n");
+                sb.append("Pass Activity");
+                sb.append("\n\n");
+                sb.append(format("%s Users were created; %s Users were updated", usersCreated, usersUpdated));
+                sb.append("\n");
+                break;
+            case "funder":
+                sb.append(format("%s funder records processed",
+                        resultSetSize));
+                sb.append("\n\n");
+                sb.append(format("%s Funders were created; %s Funders were updated", fundersCreated, fundersUpdated));
+                sb.append("\n");
+                break;
         }
         this.report = sb.toString();
     }
