@@ -20,15 +20,21 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
 public class HarvardPilotConnector implements GrantConnector {
 
-    private String FUNDER_CSV_FILE_PATH;
-    private String GRANT_CSV_FILE_PATH;
+    private static final String GRANT_FILE_PATH_PROPERTY = "grant.file.path";
+    private static final String FUNDER_FILE_PATH_PROPERTY = "funder.file.path";
+    private String funderCsvFilePath;
+    private String grantCsvFilePath;
     private Properties funderPolicyProperties;
 
     private static final Logger LOG = LoggerFactory.getLogger(HarvardPilotConnector.class);
 
-    HarvardPilotConnector (String funderCsvFilePath, String grantCsvFilePath, Properties funderPolicyProperties) {
-        this.FUNDER_CSV_FILE_PATH = funderCsvFilePath;
-        this.GRANT_CSV_FILE_PATH = grantCsvFilePath;
+    public HarvardPilotConnector (Properties connectionProperties, Properties funderPolicyProperties) {
+        if (connectionProperties.getProperty(GRANT_FILE_PATH_PROPERTY) != null) {
+            this.grantCsvFilePath = connectionProperties.getProperty(GRANT_FILE_PATH_PROPERTY);
+        }
+        if (connectionProperties.getProperty(FUNDER_FILE_PATH_PROPERTY) != null) {
+            this.funderCsvFilePath = connectionProperties.getProperty(FUNDER_FILE_PATH_PROPERTY);
+        }
         this.funderPolicyProperties = funderPolicyProperties;
     }
 
@@ -41,7 +47,7 @@ public class HarvardPilotConnector implements GrantConnector {
         //First associate funder IDs with their names
         Map<String, String> funderNameMap = new HashMap<>();
         try (
-                Reader reader = Files.newBufferedReader(Paths.get(FUNDER_CSV_FILE_PATH));
+                Reader reader = Files.newBufferedReader(Paths.get(funderCsvFilePath));
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.RFC4180
                         .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()
@@ -69,7 +75,7 @@ public class HarvardPilotConnector implements GrantConnector {
         } else {//"grant" mode is default
 
             try (
-                    Reader reader = Files.newBufferedReader(Paths.get(GRANT_CSV_FILE_PATH));
+                    Reader reader = Files.newBufferedReader(Paths.get(grantCsvFilePath));
                     CSVParser csvParser = new CSVParser(reader, CSVFormat.RFC4180
                             .withFirstRecordAsHeader()
                             .withIgnoreHeaderCase()

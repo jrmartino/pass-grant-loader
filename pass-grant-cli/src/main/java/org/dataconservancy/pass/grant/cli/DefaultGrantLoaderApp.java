@@ -16,9 +16,9 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-import org.dataconservancy.pass.grant.data.CoeusConnector;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.JhuPassUpdater;
+import org.dataconservancy.pass.grant.data.GrantConnector;
+import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
  *
  * @author jrm@jhu.edu
  */
-class DefaultGrantLoaderApp {
+abstract class DefaultGrantLoaderApp {
     private static Logger LOG = LoggerFactory.getLogger(DefaultGrantLoaderApp.class);
     private EmailService emailService;
 
@@ -205,24 +205,27 @@ class DefaultGrantLoaderApp {
             //the last entry in the update_timestamps file
 
             if (mode.equals("grant") || mode.equals("user")) {//these aren't used for "funder"
-                if (startDate.length() > 0) {
-                    if (!verifyDateTimeFormat(startDate)) {
-                        throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate), null);
-                    }
-                } else {
-                    startDate = getLatestTimestamp();
-                    if (!verifyDateTimeFormat(startDate)) {
-                        throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
+                if (startDate != null) {
+                    if (startDate.length() > 0) {
+                        if (!verifyDateTimeFormat(startDate)) {
+                            throw processException(format(ERR_INVALID_COMMAND_LINE_TIMESTAMP, startDate), null);
+                        }
+                    } else {
+                        startDate = getLatestTimestamp();
+                        if (!verifyDateTimeFormat(startDate)) {
+                            throw processException(format(ERR_INVALID_TIMESTAMP, startDate), null);
+                        }
                     }
                 }
-
-                if (!verifyDate(awardEndDate)) {
-                    throw processException(format(ERR_INVALID_COMMAND_LINE_DATE, awardEndDate), null);
+                if (awardEndDate != null) {
+                    if (!verifyDate(awardEndDate)) {
+                        throw processException(format(ERR_INVALID_COMMAND_LINE_DATE, awardEndDate), null);
+                    }
                 }
             }
 
-            CoeusConnector coeusConnector = new CoeusConnector(connectionProperties, policyProperties);
-            String queryString = coeusConnector.buildQueryString(startDate, awardEndDate, mode);
+            GrantConnector connector = configureConnector(connectionProperties, policyProperties);
+            String queryString = connector.buildQueryString(startDate, awardEndDate, mode);
 
             //special case for when we process funders, but do not want to consult COEUS -
             //just use local properties file to map funders to policies
@@ -231,7 +234,7 @@ class DefaultGrantLoaderApp {
             }
 
             try {
-                resultSet = coeusConnector.retrieveUpdates(queryString, mode);
+                resultSet = connector.retrieveUpdates(queryString, mode);
             } catch (ClassNotFoundException e) {
                 throw processException(ERR_ORACLE_DRIVER_NOT_FOUND, e);
             } catch (SQLException e) {
@@ -257,10 +260,10 @@ class DefaultGrantLoaderApp {
 
         //update PASS if required
         if (!action.equals("pull")) {
-            JhuPassUpdater passUpdater;
+            PassUpdater passUpdater = configureUpdater();
             //PassClient passClient = PassClientFactory.getPassClient();
             try {
-                passUpdater = new JhuPassUpdater();
+               // passUpdater = new JhuPassUpdater();
                 passUpdater.updatePass(resultSet, mode);
             } catch (RuntimeException e) {
                 throw processException("Runtime Exception", e);
@@ -424,4 +427,8 @@ class DefaultGrantLoaderApp {
     boolean checkMode(String s) {
         return (s.equals("user") || s.equals("grant") || s.equals("funder"));
     }
+
+    abstract GrantConnector configureConnector(Properties connectionProperties, Properties policyProperties);
+
+    abstract PassUpdater configureUpdater();
 }
