@@ -44,7 +44,7 @@
                         </goals>
                         <configuration>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <finalName>jhu-grant-loader-${jhu.loader.version}</finalName>
+                            <finalName>jhu-grant-loader-${project.parent.version}</finalName>
                             <transformers>
                                 <transformer implementation=
                                                      "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
@@ -70,8 +70,13 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <artifactSet>
+                                <excludes>
+                                 <exclude>com.oracle:*</exclude>
+                                </excludes>
+                            </artifactSet>
                             <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <finalName>harvard-pilot-grant-loader-${harvard.pilot.loader.version}</finalName>
+                            <finalName>harvard-pilot-grant-loader-${project.parent.version}</finalName>
                             <transformers>
                                 <transformer implementation=
                                                      "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">

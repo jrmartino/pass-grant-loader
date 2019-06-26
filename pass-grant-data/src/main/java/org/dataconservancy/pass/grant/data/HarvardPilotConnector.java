@@ -20,6 +20,18 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
 public class HarvardPilotConnector implements GrantConnector {
 
+    private static final String H_FUNDER_ID = "Funder ID";//harvard's local key
+    private static final String H_GRANT_ID = "Harvard grant ID";// harvard's local key
+    private static final String H_FUNDER_GRANT_ID = "Funder grant ID";//ID assigned by funder
+    private static final String H_GRANT_NAME = "Grant name";
+    private static final String H_INV_FIRST_NAME = "PI First Name";
+    private static final String H_INV_LAST_NAME ="PI Last Name";
+    private static final String H_INV_ID = "PI Harvard ID";//guaranteed to be in grant data
+    private static final String H_INV_EMAIL = "PI Email";
+    //private static final String H_INV_ROLE =
+    private static final String H_GRANT_START_DATE = "Grant start date";
+    private static final String H_GRANT_END_DATE = "Grant end date";
+
     private static final String GRANT_FILE_PATH_PROPERTY = "grant.file.path";
     private static final String FUNDER_FILE_PATH_PROPERTY = "funder.file.path";
     private String funderCsvFilePath;
@@ -83,7 +95,7 @@ public class HarvardPilotConnector implements GrantConnector {
             ) {
                 for (CSVRecord csvRecord : csvParser) {
                     LOG.debug("Processing grant csv record ...");
-                    String funderLocalKey = csvRecord.get("Funder ID");
+                    String funderLocalKey = csvRecord.get(H_FUNDER_ID);
                     Map<String, String> rowMap = new HashMap<>();
                     rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, funderLocalKey);
                     rowMap.put(C_DIRECT_FUNDER_NAME, funderNameMap.get(funderLocalKey));
@@ -91,15 +103,15 @@ public class HarvardPilotConnector implements GrantConnector {
                     rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, funderLocalKey);
                     rowMap.put(C_PRIMARY_FUNDER_NAME, funderNameMap.get(funderLocalKey));
                     rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
-                    rowMap.put(C_GRANT_LOCAL_KEY, csvRecord.get("Harvard grant ID"));
-                    rowMap.put(C_GRANT_AWARD_NUMBER, csvRecord.get("Funder grant ID"));
-                    rowMap.put(C_GRANT_PROJECT_NAME, csvRecord.get("Grant name"));
-                    rowMap.put(C_USER_FIRST_NAME, csvRecord.get("PI First Name"));
-                    rowMap.put(C_USER_LAST_NAME, csvRecord.get("PI Last Name"));
-                    rowMap.put(C_USER_EMPLOYEE_ID, csvRecord.get("PI Harvard ID"));
-                    rowMap.put(C_USER_EMAIL, csvRecord.get("PI Email"));
-                    rowMap.put(C_GRANT_START_DATE, csvRecord.get("Grant start date").split(" ")[0]);//just want mm/dd/yyyy
-                    rowMap.put(C_GRANT_END_DATE, csvRecord.get("Grant end date").split(" ")[0]);//just want mm/dd/yyyy
+                    rowMap.put(C_GRANT_LOCAL_KEY, csvRecord.get(H_GRANT_ID));
+                    rowMap.put(C_GRANT_AWARD_NUMBER, csvRecord.get(H_FUNDER_GRANT_ID));
+                    rowMap.put(C_GRANT_PROJECT_NAME, csvRecord.get(H_GRANT_NAME));
+                    rowMap.put(C_USER_FIRST_NAME, csvRecord.get(H_INV_FIRST_NAME));
+                    rowMap.put(C_USER_LAST_NAME, csvRecord.get(H_INV_LAST_NAME));
+                    rowMap.put(C_USER_EMPLOYEE_ID, csvRecord.get(H_INV_ID));
+                    rowMap.put(C_USER_EMAIL, csvRecord.get(H_INV_EMAIL));
+                    rowMap.put(C_GRANT_START_DATE, csvRecord.get(H_GRANT_START_DATE).split(" ")[0]);//just want mm/dd/yyyy
+                    rowMap.put(C_GRANT_END_DATE, csvRecord.get(H_GRANT_END_DATE).split(" ")[0]);//just want mm/dd/yyyy
 
                     resultSet.add(rowMap);
                 }
