@@ -16,7 +16,6 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-import org.dataconservancy.pass.grant.data.DateTimeUtil;
 import org.dataconservancy.pass.grant.data.GrantConnector;
 import org.dataconservancy.pass.grant.data.PassUpdater;
 import org.slf4j.Logger;
