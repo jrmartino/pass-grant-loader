@@ -64,10 +64,11 @@ public class JhuPassUpdaterIT {
 
     private final String DOMAIN = "johnshopkins.edu";
 
+
     private List<Map<String, String>> resultSet = new ArrayList<>();
     private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
     private static String jhedPrefix = "johnshopkins.edu:jhed:";
-    private CoeusPassEntityUtil coeusPassEntityUtil = new CoeusPassEntityUtil();
+    private CoeusPassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
     private Map<String, URI> funderPolicyUriMap = new HashMap<>();
     private String prefix;
 
@@ -76,7 +77,6 @@ public class JhuPassUpdaterIT {
 
 
     private PassClient passClient = PassClientFactory.getPassClient();
-    private PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
 
     @Rule
     public TemporaryFolder folder= new TemporaryFolder();
@@ -172,7 +172,7 @@ public class JhuPassUpdaterIT {
         for (URI grantUri : passUpdater.getGrantUriMap().keySet()) {
             Grant grant = passUpdater.getGrantUriMap().get(grantUri);
             Grant passGrant = passUpdater.getPassClient().readResource(grantUri, Grant.class);
-            assertNull(coeusPassEntityUtil.update(grant, passGrant)); //this means grants are "coeus-equal"
+            assertNull(passEntityUtil.update(grant, passGrant)); //this means grants are "coeus-equal"
 
         }
 

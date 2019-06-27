@@ -271,7 +271,7 @@ public class DefaultPassUpdater implements PassUpdater{
         for (Map<String, String> rowMap : results) {
 
             if (!modeChecked) {
-                if (!rowMap.containsKey(C_PRIMARY_FUNDER_POLICY)) {//we always have this for funders
+                if (!rowMap.containsKey(C_PRIMARY_FUNDER_LOCAL_KEY) && !rowMap.containsKey(C_PRIMARY_FUNDER_NAME)) {
                     throw new RuntimeException("Mode of funder was supplied, but data does not seem to match.");
                 } else {
                     modeChecked = true;
@@ -469,6 +469,7 @@ public class DefaultPassUpdater implements PassUpdater{
     static String returnLaterUpdate(String currentUpdateString, String latestUpdateString) {
         DateTime grantUpdateTime = createJodaDateTime(currentUpdateString);
         DateTime previousLatestUpdateTime = createJodaDateTime(latestUpdateString);
+        System.err.println(currentUpdateString + "   " + latestUpdateString);
         return grantUpdateTime.isAfter(previousLatestUpdateTime)? currentUpdateString : latestUpdateString;
     }
 

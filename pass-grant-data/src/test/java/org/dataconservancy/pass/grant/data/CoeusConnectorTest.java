@@ -49,10 +49,6 @@ public class CoeusConnectorTest {
                 null, policyProperties);
     }
 
-    @Test
-    public void testCoeusConnector() {
-
-    }
 
     /**
      * Test that the query string produces is as expected

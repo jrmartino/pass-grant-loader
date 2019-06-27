@@ -55,6 +55,7 @@
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-codec.version>1.12</commons-codec.version>
         <commons.csv.version>1.6</commons.csv.version>
+        <poi.version>4.1.0</poi.version>
         <docker-maven-plugin.version>0.30.0</docker-maven-plugin.version>
         <greenmail.version>1.5.10</greenmail.version>
         <javax.mail.version>1.6.2</javax.mail.version>
@@ -183,6 +184,12 @@
                 <artifactId>commons-csv</artifactId>
                 <version>${commons.csv.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.poi</groupId>
+                <artifactId>poi-ooxml</artifactId>
+                <version>${poi.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.icegreen</groupId>
                 <artifactId>greenmail</artifactId>
