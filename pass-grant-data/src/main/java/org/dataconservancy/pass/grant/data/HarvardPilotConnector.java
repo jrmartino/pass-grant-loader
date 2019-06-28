@@ -123,10 +123,12 @@ public class HarvardPilotConnector implements GrantConnector {
                     if (funderLocalKey != null) {
                         rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, funderLocalKey);
                         rowMap.put(C_DIRECT_FUNDER_NAME, funderNameMap.get(funderLocalKey));
-                        rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
                         rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, funderLocalKey);
                         rowMap.put(C_PRIMARY_FUNDER_NAME, funderNameMap.get(funderLocalKey));
-                        rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
+                        if (funderPolicyProperties.stringPropertyNames().contains(funderLocalKey)) {
+                            rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
+                            rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
+                        }
                     }
                     rowMap.put(C_GRANT_START_DATE, stringifyDate(cells.getCell(8))); //I: Grant Start Date
                     rowMap.put(C_GRANT_END_DATE, stringifyDate(cells.getCell(9))); //J: Grant End Date
