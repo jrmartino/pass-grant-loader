@@ -469,7 +469,6 @@ public class DefaultPassUpdater implements PassUpdater{
     static String returnLaterUpdate(String currentUpdateString, String latestUpdateString) {
         DateTime grantUpdateTime = createJodaDateTime(currentUpdateString);
         DateTime previousLatestUpdateTime = createJodaDateTime(latestUpdateString);
-        System.err.println(currentUpdateString + "   " + latestUpdateString);
         return grantUpdateTime.isAfter(previousLatestUpdateTime)? currentUpdateString : latestUpdateString;
     }
 

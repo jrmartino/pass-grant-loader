@@ -111,9 +111,9 @@ public class CoeusConnector implements GrantConnector {
                 rowMap.put(C_GRANT_AWARD_DATE, rs.getString(C_GRANT_AWARD_DATE));
                 rowMap.put(C_GRANT_START_DATE, rs.getString(C_GRANT_START_DATE));
                 rowMap.put(C_GRANT_END_DATE, rs.getString(C_GRANT_END_DATE));
-                rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, rs.getString(C_DIRECT_FUNDER_LOCAL_KEY));
+
                 rowMap.put(C_DIRECT_FUNDER_NAME, rs.getString(C_DIRECT_FUNDER_NAME));
-                rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY));
+
                 rowMap.put(C_PRIMARY_FUNDER_NAME, rs.getString(C_PRIMARY_FUNDER_NAME));
                 rowMap.put(C_USER_FIRST_NAME, rs.getString(C_USER_FIRST_NAME));
                 rowMap.put(C_USER_MIDDLE_NAME, rs.getString(C_USER_MIDDLE_NAME));
@@ -123,12 +123,25 @@ public class CoeusConnector implements GrantConnector {
                 rowMap.put(C_USER_INSTITUTIONAL_ID, rs.getString(C_USER_INSTITUTIONAL_ID));
                 rowMap.put(C_UPDATE_TIMESTAMP, rs.getString(C_UPDATE_TIMESTAMP));
                 rowMap.put(C_ABBREVIATED_ROLE, rs.getString(C_ABBREVIATED_ROLE));
+
                 String employeeId = rs.getString(C_USER_EMPLOYEE_ID);
                 if (employeeId != null) {
                     rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
                 }
-                rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY)));
-                rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(rs.getString(C_DIRECT_FUNDER_LOCAL_KEY)));
+
+                String primaryFunderLocalKey = rs.getString(C_PRIMARY_FUNDER_LOCAL_KEY);
+                rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, primaryFunderLocalKey);
+                if (primaryFunderLocalKey != null &&
+                        funderPolicyProperties.stringPropertyNames().contains(primaryFunderLocalKey)) {
+                    rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(primaryFunderLocalKey));
+                }
+
+                String directFunderLocalKey = rs.getString(C_DIRECT_FUNDER_LOCAL_KEY);
+                rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, directFunderLocalKey);
+                if (directFunderLocalKey != null &&
+                        funderPolicyProperties.stringPropertyNames().contains(directFunderLocalKey)) {
+                    rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(directFunderLocalKey));
+                }
                 LOG.debug("Record processed: " + rowMap.toString());
                 if (!mapList.contains(rowMap)) {
                     mapList.add(rowMap);
