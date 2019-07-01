@@ -16,6 +16,34 @@ artifact. Because different jars will have different revision schedules, we cont
 for each implementation at the end of the `<properties>` section of the main pom file for the project. This is reflected in the `<finalName>` element in the configuration
 for the corresponding `<execution>` section for the implementation in the pass-grant-cli pom file.
 
+The code has been factored to ease development for multiple institutions. The nain components are the CLI, the App, the 
+Connector and the Updater. In addition, there is an institution-specific PassEntityUtility Class which contains the logic for 
+deciding when an entity needs to be updated.
+
+#### CLI
+
+The CLI class defines which options or files need to be supplied to the App. This needs to be written for each implementation.
+
+#### App
+
+The App setup has a BaseGrantLoaderApp class which contains a few abstract methods to be implemented in child classes 
+for each institution. These methods essentially configure the App class for each institution by supplying a Connector and an 
+Updater implementation. We also let the App know if the implementation has anough data in its feed to enable updating (requres some 
+kind of latest update timestamp in the data).
+
+#### Connector
+
+The Connector class connects to the data store for an institution's implementation, and operates on the data to supply, 
+in as standard a form as possible, the data to be consumed by the Updater.
+
+#### Updater
+
+The Updater class takes the data supplied by the Connector and creates or updates the corresponding objects in the PASS 
+repository accordingly. There is a Default class whose children may override certain substantive methods if the local
+policies require. In most cases, the child classes will simply supply a PassEntityUtil class which has been tuned for the institution, 
+and also a domain string for constructing identifiers.
+
+
 ## Implementations
 
 ### JHU
@@ -26,3 +54,8 @@ with user and funder information associated with the grant, and then use this in
 The JHU implementation also treats the COEUS database as authoritative for certain fields in the data - the logic about whether
 updates are required is contained in the PassEntityUtil implementation for JHU. Details about operation are available at
 [JHU COEUS Loader](JHU-README.md)
+
+### Harvard Pilot
+
+The Harvard Pilot implementation pulls data from an xlsx file which contains sheets for both grants and funders. We can also supply 
+a properties file for associating policies to funders.
