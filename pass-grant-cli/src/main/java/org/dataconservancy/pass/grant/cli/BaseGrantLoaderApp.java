@@ -174,15 +174,15 @@ abstract class BaseGrantLoaderApp {
             }
         }
 
-        //create connection properties - check for a user-space defined clear text file - need this for both pull and loadd
-            if (!connectionPropertiesFile.exists()) {
-                throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
-            }
-            try {
-                connectionProperties = loadProperties(connectionPropertiesFile);
-            } catch (RuntimeException e) {
-                throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
-            }
+        //create connection properties - check for a user-space defined clear text file - need this for both pull and load
+        if (!connectionPropertiesFile.exists()) {
+            throw processException(format(ERR_REQUIRED_CONFIGURATION_FILE_MISSING, connectionPropertiesFileName), null);
+        }
+        try {
+            connectionProperties = loadProperties(connectionPropertiesFile);
+        } catch (RuntimeException e) {
+            throw processException(ERR_COULD_NOT_OPEN_CONFIGURATION_FILE, e);
+        }
 
         //get policy properties
         if (!policyPropertiesFile.exists()) {

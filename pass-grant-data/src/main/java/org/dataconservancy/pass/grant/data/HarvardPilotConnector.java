@@ -117,9 +117,14 @@ public class HarvardPilotConnector implements GrantConnector {
                     rowMap.put(C_GRANT_PROJECT_NAME, stringify(cells.getCell(2))); //C: Grant Name
                     rowMap.put(C_USER_FIRST_NAME, stringify(cells.getCell(3))); //D: PI First Name
                     rowMap.put(C_USER_LAST_NAME, stringify(cells.getCell(4))); //E: PI Last Name
-                    rowMap.put(C_USER_EMPLOYEE_ID, stringify(cells.getCell(5))); //F: PI Harvard ID
-                    rowMap.put(C_USER_EMAIL, stringify(cells.getCell(6))); //G: PI Email
-                    String funderLocalKey = stringify(cells.getCell(7)); //H: Funder ID
+
+                    String role = stringify(cells.getCell(5)); //F: Role
+                    rowMap.put(C_ABBREVIATED_ROLE, sortRole(role));
+
+                    rowMap.put(C_USER_EMPLOYEE_ID, stringify(cells.getCell(6))); //G: PI Harvard ID
+                    rowMap.put(C_USER_EMAIL, stringify(cells.getCell(7))); //H: PI Email
+
+                    String funderLocalKey = stringify(cells.getCell(8)); //I: Funder ID
                     if (funderLocalKey != null) {
                         rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, funderLocalKey);
                         rowMap.put(C_DIRECT_FUNDER_NAME, funderNameMap.get(funderLocalKey));
@@ -130,9 +135,9 @@ public class HarvardPilotConnector implements GrantConnector {
                             rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
                         }
                     }
-                    rowMap.put(C_GRANT_START_DATE, stringifyDate(cells.getCell(8))); //I: Grant Start Date
-                    rowMap.put(C_GRANT_END_DATE, stringifyDate(cells.getCell(9))); //J: Grant End Date
-                    rowMap.put(C_ABBREVIATED_ROLE, "P"); //for now, until we get this data , everyone's a PI
+
+                    rowMap.put(C_GRANT_START_DATE, stringifyDate(cells.getCell(9))); //J: Grant Start Date
+                    rowMap.put(C_GRANT_END_DATE, stringifyDate(cells.getCell(10))); //K: Grant End Date
                     resultSet.add(rowMap);
                 }
             }
@@ -169,5 +174,12 @@ public class HarvardPilotConnector implements GrantConnector {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
         return simpleDateFormat.format(cell.getDateCellValue());
     }
+
+    private String sortRole(String role) {
+        if ("Principal Investigator".equals(role)) {
+            return "P";
+        }
+        return "C";
+        }
 
 }

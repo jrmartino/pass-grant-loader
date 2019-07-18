@@ -198,8 +198,13 @@ public class DefaultPassUpdater implements PassUpdater{
 
                 //now our User URI is on the map - let's process:
                 if (abbreviatedRole.equals("P")) {
-                    grant.setPi(userMap.get(employeeId));
-                    statistics.addPi();
+                    if (grant.getPi() == null) {
+                        grant.setPi(userMap.get(employeeId));
+                        statistics.addPi();
+                    } else {// handle data with duplicate PIs
+                        grant.getCoPis().add(userMap.get(employeeId));
+                        statistics.addCoPi();
+                    }
                 } else if ((abbreviatedRole.equals("C") || abbreviatedRole.equals("K")) && !grant.getCoPis().contains(userMap.get(employeeId))) {
                     grant.getCoPis().add(userMap.get(employeeId));
                     statistics.addCoPi();
