@@ -110,35 +110,40 @@ public class HarvardPilotConnector implements GrantConnector {
                 if (cells.getRowNum() > 0) {//skip header
                     LOG.debug("Processing grant record  ...");
 
-                    Map<String, String> rowMap = new HashMap<>();
+                    //we only process rows with a Harvard ID
+                    String employeeId = stringify(cells.getCell(6)); //G: user Harvard ID
 
-                    rowMap.put(C_GRANT_LOCAL_KEY, stringify(cells.getCell(0))); //A: Harvard grant ID
-                    rowMap.put(C_GRANT_AWARD_NUMBER, stringify(cells.getCell(1))); //B: Funder grant ID
-                    rowMap.put(C_GRANT_PROJECT_NAME, stringify(cells.getCell(2))); //C: Grant Name
-                    rowMap.put(C_USER_FIRST_NAME, stringify(cells.getCell(3))); //D: PI First Name
-                    rowMap.put(C_USER_LAST_NAME, stringify(cells.getCell(4))); //E: PI Last Name
+                    if(employeeId != null && employeeId.length()>0)  {
+                        Map<String, String> rowMap = new HashMap<>();
 
-                    String role = stringify(cells.getCell(5)); //F: Role
-                    rowMap.put(C_ABBREVIATED_ROLE, sortRole(role));
+                        rowMap.put(C_GRANT_LOCAL_KEY, stringify(cells.getCell(0))); //A: Harvard grant ID
+                        rowMap.put(C_GRANT_AWARD_NUMBER, stringify(cells.getCell(1))); //B: Funder grant ID
+                        rowMap.put(C_GRANT_PROJECT_NAME, stringify(cells.getCell(2))); //C: Grant Name
+                        rowMap.put(C_USER_FIRST_NAME, stringify(cells.getCell(3))); //D: PI First Name
+                        rowMap.put(C_USER_LAST_NAME, stringify(cells.getCell(4))); //E: PI Last Name
 
-                    rowMap.put(C_USER_EMPLOYEE_ID, stringify(cells.getCell(6))); //G: PI Harvard ID
-                    rowMap.put(C_USER_EMAIL, stringify(cells.getCell(7))); //H: PI Email
+                        String role = stringify(cells.getCell(5)); //F: Role
+                        rowMap.put(C_ABBREVIATED_ROLE, sortRole(role));
 
-                    String funderLocalKey = stringify(cells.getCell(8)); //I: Funder ID
-                    if (funderLocalKey != null) {
-                        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, funderLocalKey);
-                        rowMap.put(C_DIRECT_FUNDER_NAME, funderNameMap.get(funderLocalKey));
-                        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, funderLocalKey);
-                        rowMap.put(C_PRIMARY_FUNDER_NAME, funderNameMap.get(funderLocalKey));
-                        if (funderPolicyProperties.stringPropertyNames().contains(funderLocalKey)) {
-                            rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
-                            rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
+                        rowMap.put(C_USER_EMPLOYEE_ID, employeeId);
+                        rowMap.put(C_USER_EMAIL, stringify(cells.getCell(7))); //H: PI Email
+
+                        String funderLocalKey = stringify(cells.getCell(8)); //I: Funder ID
+                        if (funderLocalKey != null) {
+                            rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, funderLocalKey);
+                            rowMap.put(C_DIRECT_FUNDER_NAME, funderNameMap.get(funderLocalKey));
+                            rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, funderLocalKey);
+                            rowMap.put(C_PRIMARY_FUNDER_NAME, funderNameMap.get(funderLocalKey));
+                            if (funderPolicyProperties.stringPropertyNames().contains(funderLocalKey)) {
+                                rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
+                                rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(funderLocalKey));
+                            }
                         }
-                    }
 
-                    rowMap.put(C_GRANT_START_DATE, stringifyDate(cells.getCell(9))); //J: Grant Start Date
-                    rowMap.put(C_GRANT_END_DATE, stringifyDate(cells.getCell(10))); //K: Grant End Date
-                    resultSet.add(rowMap);
+                        rowMap.put(C_GRANT_START_DATE, stringifyDate(cells.getCell(9))); //J: Grant Start Date
+                        rowMap.put(C_GRANT_END_DATE, stringifyDate(cells.getCell(10))); //K: Grant End Date
+                        resultSet.add(rowMap);
+                    }
                 }
             }
         }
