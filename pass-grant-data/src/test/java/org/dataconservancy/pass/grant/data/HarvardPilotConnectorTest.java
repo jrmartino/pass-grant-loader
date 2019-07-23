@@ -153,7 +153,7 @@ public class HarvardPilotConnectorTest {
         };
 
         for (int i=0; i< grantResultSet.size(); i++) {
-            int j = i>4?i+1:i; // we skip over 6th row in the data because ther eis no employee id
+            int j = i>4?i+1:i; // we skip over 6th row in the data because there is no employee id
             assertEquals(grantIds[j], grantResultSet.get(i).get(C_GRANT_LOCAL_KEY));
             assertEquals(funderGrantIds[j], grantResultSet.get(i).get(C_GRANT_AWARD_NUMBER));
             assertEquals(grantNames[j], grantResultSet.get(i).get(C_GRANT_PROJECT_NAME));
