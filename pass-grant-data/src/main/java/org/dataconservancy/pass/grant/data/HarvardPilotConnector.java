@@ -46,7 +46,7 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 public class HarvardPilotConnector implements GrantConnector {
 
 
-    private static final String HARVARD_DATA_FILE_PATH_PROPERTY = "harvard.data.file.path";
+    protected static final String HARVARD_DATA_FILE_PATH_PROPERTY = "harvard.data.file.path";
 
     private String xlsxDataFilePath;
     private Properties funderPolicyProperties;
