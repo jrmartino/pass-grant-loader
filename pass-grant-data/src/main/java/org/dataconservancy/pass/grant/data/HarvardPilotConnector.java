@@ -160,6 +160,7 @@ public class HarvardPilotConnector implements GrantConnector {
      * @return a string representing a cell's contents
      */
     private String stringify(Cell cell) {
+        if (cell == null) { return null;}
         if (cell.getCellType().equals(CellType.STRING)) {
             return cell.getStringCellValue().trim();
         } else if (cell.getCellType().equals(CellType.NUMERIC)) {

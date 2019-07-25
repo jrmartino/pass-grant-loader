@@ -48,13 +48,13 @@ public class HarvardPilotGrantLoaderCLI {
     private static String mode = "grant";
 
     /** Specifies an optional action - either "pull" or "load" - to restrict the operation of the application to only pull data
-     * from COEUS to store in a file, or to only load into PASS data taken from a stored file, respectively. In either case, the path to
+     * to store in a file, or to only load into PASS data taken from a stored file, respectively. In either case, the path to
      * the file in question is the first command line argument after all options. If no action is specified, the default is to perform
      * a pull followed directly by a load.
      */
-    @Option(name = "-a", aliases = { "-action", "--action" }, usage = "Action to be taken - 'pull' is for COEUS pull only," +
+    @Option(name = "-a", aliases = { "-action", "--action" }, usage = "Action to be taken - 'pull' is for the data pull only," +
             "'load' is for Fedora load only. Either option requires a file path specified as an argument after all options - an" +
-            "output file in the case of 'pull', and an input file in the case of 'load'. If no action is specified, " +
+            " output file in the case of 'pull', and an input file in the case of 'load'. If no action is specified, " +
             "the data will be pulled from COEUS and loaded directly into PASS")
     private static String action = "";
 
@@ -63,7 +63,7 @@ public class HarvardPilotGrantLoaderCLI {
 
     /**
      * The main method which parses the command line arguments and options; also reports errors and exit statuses
-     * when the {@code CoeusGrantLoaderApp} executes
+     * when the {@code HarvardPilotGrantLoaderApp} executes
      * @param args the command line arguments
      */
     public static void main(String[] args) {
