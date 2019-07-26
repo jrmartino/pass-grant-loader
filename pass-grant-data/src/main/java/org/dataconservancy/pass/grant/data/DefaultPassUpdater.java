@@ -319,7 +319,7 @@ public class DefaultPassUpdater implements PassUpdater{
         funder.setName(rowMap.getOrDefault(C_PRIMARY_FUNDER_NAME, null));
         funder.setLocalKey(rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY));
         String policy = rowMap.get(C_PRIMARY_FUNDER_POLICY);
-        if (policy != null ) {
+        if (policy != null && policy.length()>0) {
             String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
             fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
             funder.setPolicy(URI.create(fedoraBaseUrl + policy));

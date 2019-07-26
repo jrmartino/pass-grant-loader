@@ -104,8 +104,8 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
          */
         private Funder updateFunder (Funder system, Funder stored) {
             stored.setLocalKey(system.getLocalKey());
-            if (system.getName() != null) {  stored.setName(system.getName()); }
-            if (system.getPolicy() != null) { stored.setPolicy(system.getPolicy()); }
+            stored.setName(system.getName());
+            stored.setPolicy(system.getPolicy());
             return stored;
         }
 
