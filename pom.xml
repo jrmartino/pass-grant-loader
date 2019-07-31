@@ -288,7 +288,7 @@
         <repository>
             <id>dc.private.snapshots</id>
             <name>Data Conservancy Private Maven Repository (snapshots)</name>
-            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/snapshots/</url>
+            <url>http://maven.dataconservancy.org/private/snapshots/</url>
             <releases>
                 <enabled>false</enabled>
             </releases>
@@ -303,7 +303,7 @@
         <repository>
             <id>dc.private.releases</id>
             <name>Data Conservancy Private Maven Repository (releases)</name>
-            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/releases/</url>
+            <url>http://maven.dataconservancy.org/private/releases/</url>
         </repository>
 
         <snapshotRepository>
