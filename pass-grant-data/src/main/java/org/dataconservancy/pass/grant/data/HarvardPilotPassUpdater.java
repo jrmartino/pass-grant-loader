@@ -13,25 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.dataconservancy.pass.grant.data;
 
-import org.dataconservancy.pass.client.PassClient;
-import org.dataconservancy.pass.model.Grant;
+public class HarvardPilotPassUpdater extends DefaultPassUpdater {
 
-import java.net.URI;
-import java.util.Collection;
-import java.util.Map;
+    public HarvardPilotPassUpdater () {
+        super(new HarvardPilotPassEntityUtil());
+        super.setDomain("harvard.edu");
+    }
 
-public interface PassUpdater {
-    void updatePass(Collection<Map<String, String>> results, String mode);
-
-    String getLatestUpdate();
-
-    String getReport();
-
-    PassUpdateStatistics getStatistics();
-
-    Map<URI, Grant> getGrantUriMap();
-
-    PassClient getPassClient();
 }

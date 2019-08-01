@@ -50,6 +50,10 @@ public class JhuPassUpdaterTest {
     @Mock
     private PassClient passClientMock;
 
+//    private PassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
+
+   // private String domain = "johnshopkins.edu";
+
     private URI grantUri;
 
     @Before
@@ -127,7 +131,7 @@ public class JhuPassUpdaterTest {
         rowMap.put(C_USER_EMPLOYEE_ID, "0000333");
         rowMap.put(C_USER_HOPKINS_ID, "B2B2B2");
 
-        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
+        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 00:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "P");
 
         resultSet.add(rowMap);
@@ -154,7 +158,7 @@ public class JhuPassUpdaterTest {
         rowMap.put(C_USER_EMPLOYEE_ID,"0000222");
         rowMap.put(C_USER_HOPKINS_ID, "A1A1A1");
 
-        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0:00:00.0");
+        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 00:00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, "C");
 
         rowMap.put(C_DIRECT_FUNDER_POLICY, primaryFunderPolicy);

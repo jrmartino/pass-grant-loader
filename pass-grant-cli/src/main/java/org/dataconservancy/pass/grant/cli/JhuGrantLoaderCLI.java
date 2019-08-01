@@ -31,7 +31,7 @@ import static java.lang.String.format;
  *
  * @author jrm@jhu.edu
  */
-public class CoeusGrantLoaderCLI {
+public class JhuGrantLoaderCLI {
 
     /*
      * General Options
@@ -86,7 +86,7 @@ public class CoeusGrantLoaderCLI {
      */
     public static void main(String[] args) {
 
-        final CoeusGrantLoaderCLI application = new CoeusGrantLoaderCLI();
+        final JhuGrantLoaderCLI application = new JhuGrantLoaderCLI();
         CmdLineParser parser = new CmdLineParser(application);
         String dataFileName = "";
 
@@ -113,7 +113,7 @@ public class CoeusGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            CoeusGrantLoaderApp app = new CoeusGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName);
+            JhuGrantLoaderApp app = new JhuGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

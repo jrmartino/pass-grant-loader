@@ -81,6 +81,8 @@ public class DateTimeUtilTest {
         // .. but not 4
         date = "2018-01-01 07:59:16.1998";
         Assert.assertFalse(verifyDateTimeFormat(date));
+        
+
     }
 
     /**
@@ -121,12 +123,15 @@ public class DateTimeUtilTest {
      * Test that verifyDate works
      *
      */
+    @Test
     public void testDateVerify() {
         String date = "01/01/2011";
         Assert.assertTrue(DateTimeUtil.verifyDate(date));
 
-        date = "02/20/1999";
+        date = "02/30/1999";
         Assert.assertFalse(DateTimeUtil.verifyDate(date));
+
+        Assert.assertFalse(DateTimeUtil.verifyDate(null));
     }
 
 }
