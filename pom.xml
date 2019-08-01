@@ -303,7 +303,7 @@
         <repository>
             <id>dc.private.releases</id>
             <name>Data Conservancy Private Maven Repository (releases)</name>
-            <url>scp://maven.dataconservancy.org:{scp,port}/data/maven-dc/private/releases/</url>
+            <url>scp://maven.dataconservancy.org:{scp.port}/data/maven-dc/private/releases/</url>
         </repository>
 
         <snapshotRepository>
