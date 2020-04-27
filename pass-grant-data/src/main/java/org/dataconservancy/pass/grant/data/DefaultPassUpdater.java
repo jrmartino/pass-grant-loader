@@ -111,9 +111,7 @@ public class DefaultPassUpdater implements PassUpdater{
         LOG.info("Processing result set with " + results.size() + " rows");
         boolean modeChecked = false;
 
-        for(Map<String,String> rowMap : results){
-
-            String grantLocalKey;
+        for(Map<String,String> rowMap : results) {
 
             if (!modeChecked) {
                 if (!rowMap.containsKey(C_GRANT_LOCAL_KEY)) {//we always have this for grants
@@ -123,19 +121,101 @@ public class DefaultPassUpdater implements PassUpdater{
                 }
             }
 
-            grantLocalKey = rowMap.get(C_GRANT_LOCAL_KEY);
+            String grantLocalKey = rowMap.get(C_GRANT_LOCAL_KEY);
 
+            //get funder local keys. if a primary funder is not specified, we set it to the direct funder
             String directFunderLocalKey = rowMap.get(C_DIRECT_FUNDER_LOCAL_KEY);
             String primaryFunderLocalKey = rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY);
             primaryFunderLocalKey = (primaryFunderLocalKey == null? directFunderLocalKey: primaryFunderLocalKey);
-            Grant grant;
+
+            //we will need funder PASS URIs - retrieve or create them,
+            //updating the info on them if necessary
+            if ( !funderMap.containsKey(directFunderLocalKey)) {
+                Funder updatedFunder = buildDirectFunder(rowMap);
+                URI passFunderURI =  updateFunderInPass(updatedFunder);
+                funderMap.put(directFunderLocalKey, passFunderURI);
+            }
+
+            if( !funderMap.containsKey(primaryFunderLocalKey)) {
+                Funder updatedFunder = buildPrimaryFunder(rowMap);
+                URI passFunderURI =  updateFunderInPass(updatedFunder);
+                funderMap.put(primaryFunderLocalKey, passFunderURI);
+            }
+
+            //same for any users
+            String employeeId = rowMap.get(C_USER_EMPLOYEE_ID);
+            String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
+            if (!userMap.containsKey(employeeId)) {
+                User updatedUser = buildUser(rowMap);
+                URI passUserURI = updateUserInPass(updatedUser);
+                userMap.put(employeeId, passUserURI);
+            }
+
+            //now we know all about our user and funders for this record
+
+
             LOG.debug("Processing grant with localKey " + grantLocalKey);
+
             //if this is the first record for this Grant, it will not be on the Map
-            //we process all data which is common to every record for this grant
-            //i.e., everything except the investigator(s)
+            Grant grant;
             if(!grantMap.containsKey(grantLocalKey)) {
                 grant = new Grant();
+                grant.setLocalKey(grantLocalKey);
+                grant.setCoPis(new ArrayList<>());
+                grantMap.put(grantLocalKey, grant);
+            }
+
+            grant = grantMap.get(grantLocalKey);
+
+            //anybody who was ever a co-pi in an iteration will be in this list
+            if ( abbreviatedRole.equals("C") || abbreviatedRole.equals("K") ) {
+                URI userId=userMap.get( employeeId );
+                if ( !grant.getCoPis().contains( userId ) ) {
+                    grant.getCoPis().add( userId );
+                    statistics.addCoPi();
+                }
+            }
+
+            //now do things which may depend on the date
+            DateTime awardDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_AWARD_DATE, null));
+            DateTime startDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_START_DATE, null));
+            DateTime endDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_END_DATE, null));
+
+            //set values that should match earliest iteration of the grant
+            //these are used only for the initial grant load
+            //we test for both award date and start date in case one is missing - belt and suspenders
+            if (startDate != null && (grant.getStartDate() == null || startDate.isBefore(grant.getStartDate())) ||
+                    awardDate != null && (grant.getAwardDate() == null || awardDate.isBefore(grant.getAwardDate()))) {
+                grant.setAwardDate(awardDate);
+                grant.setProjectName(rowMap.get(C_GRANT_PROJECT_NAME));
                 grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
+                grant.setDirectFunder(funderMap.get(directFunderLocalKey));
+                grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
+                grant.setAwardDate(awardDate);
+                grant.setStartDate(startDate);
+            }
+
+            //set values that should match the latest iteration of the grant
+            //use !isBefore in case more than one PI is specified, need to process more than one
+            if (endDate != null && (grant.getEndDate() == null || !endDate.isBefore(grant.getEndDate()))) {
+                grant.setEndDate(endDate);
+
+                //we want the PI to be the one listed on the most recent grant iteration
+                if ( abbreviatedRole.equals("P") ) {
+                    URI userId=userMap.get(employeeId);
+                    URI oldPiId=grant.getPi();
+                    if ( oldPiId == null ) {
+                        grant.setPi(userId);
+                        statistics.addPi();
+                    } else {
+                        if ( !oldPiId.equals(userId) ) {
+                            if ( !grant.getCoPis().contains(oldPiId) ) {
+                                grant.getCoPis().add(oldPiId);
+                                statistics.addCoPi();
+                            }
+                        }
+                    }
+                }
 
                 String status = rowMap.getOrDefault(C_GRANT_AWARD_STATUS, null);
 
@@ -153,63 +233,8 @@ public class DefaultPassUpdater implements PassUpdater{
                 } else {
                     grant.setAwardStatus(null);
                 }
-
-                grant.setLocalKey(grantLocalKey);
-                grant.setProjectName(rowMap.get(C_GRANT_PROJECT_NAME));
-                grant.setAwardDate(createJodaDateTime(rowMap.getOrDefault(C_GRANT_AWARD_DATE, null)));
-                grant.setStartDate(createJodaDateTime(rowMap.getOrDefault(C_GRANT_START_DATE, null)));
-                grant.setEndDate(createJodaDateTime(rowMap.getOrDefault(C_GRANT_END_DATE, null)));
-
-                //process direct funder, and primary funder if we have one
-                //update funder(s) in Pass as needed
-                if (funderMap.containsKey(directFunderLocalKey)) {
-                    grant.setDirectFunder(funderMap.get(directFunderLocalKey));
-                } else {
-                    Funder updatedFunder = buildDirectFunder(rowMap);
-                    URI passFunderURI =  updateFunderInPass(updatedFunder);
-                    funderMap.put(directFunderLocalKey, passFunderURI);
-                    grant.setDirectFunder(passFunderURI);
-                }
-
-                if(funderMap.containsKey(primaryFunderLocalKey)) {
-                    grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
-                } else {
-                    Funder updatedFunder = buildPrimaryFunder(rowMap);
-                    URI passFunderURI =  updateFunderInPass(updatedFunder);
-                    funderMap.put(primaryFunderLocalKey, passFunderURI);
-                    grant.setPrimaryFunder(passFunderURI);
-                }
-
-                grant.setCoPis(new ArrayList<>());//we will build this from scratch in either case
-                grantMap.put(grantLocalKey, grant);//save the state of this Grant
             }
 
-            //now we process the User (investigator)
-            grant = grantMap.get(grantLocalKey);
-            String employeeId = rowMap.get(C_USER_EMPLOYEE_ID);
-            String abbreviatedRole = rowMap.get(C_ABBREVIATED_ROLE);
-
-            if(abbreviatedRole.equals("C") || abbreviatedRole.equals("K") || grant.getPi() == null) {
-                if (!userMap.containsKey(employeeId)) {
-                    User updatedUser = buildUser(rowMap);
-                    URI passUserURI = updateUserInPass(updatedUser);
-                    userMap.put(employeeId, passUserURI);
-                }
-
-                //now our User URI is on the map - let's process:
-                if (abbreviatedRole.equals("P")) {
-                    if (grant.getPi() == null) {
-                        grant.setPi(userMap.get(employeeId));
-                        statistics.addPi();
-                    } else {// handle data with duplicate PIs
-                        grant.getCoPis().add(userMap.get(employeeId));
-                        statistics.addCoPi();
-                    }
-                } else if ((abbreviatedRole.equals("C") || abbreviatedRole.equals("K")) && !grant.getCoPis().contains(userMap.get(employeeId))) {
-                    grant.getCoPis().add(userMap.get(employeeId));
-                    statistics.addCoPi();
-                }
-            }
             //we are done with this record, let's save the state of this Grant
             grantMap.put(grantLocalKey, grant);
             //see if this is the latest grant updated

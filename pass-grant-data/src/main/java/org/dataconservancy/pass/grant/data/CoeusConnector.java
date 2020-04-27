@@ -285,11 +285,11 @@ public class CoeusConnector implements GrantConnector {
         sb.append(String.join(", ",viewFields));
         sb.append(" FROM");
         sb.append(" COEUS.JHU_FACULTY_FORCE_PROP A");
-        sb.append(" INNER JOIN ");
-        sb.append(" (SELECT GRANT_NUMBER, MAX(UPDATE_TIMESTAMP) AS MAX_UPDATE_TIMESTAMP");
-        sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP GROUP BY GRANT_NUMBER) LATEST");
-        sb.append(" ON A.UPDATE_TIMESTAMP = LATEST.MAX_UPDATE_TIMESTAMP");
-        sb.append(" AND A.GRANT_NUMBER = LATEST.GRANT_NUMBER");
+       // sb.append(" INNER JOIN ");
+       // sb.append(" (SELECT GRANT_NUMBER, MAX(UPDATE_TIMESTAMP) AS MAX_UPDATE_TIMESTAMP");
+       // sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP GROUP BY GRANT_NUMBER) LATEST");
+       // sb.append(" ON A.UPDATE_TIMESTAMP = LATEST.MAX_UPDATE_TIMESTAMP");
+       // sb.append(" AND A.GRANT_NUMBER = LATEST.GRANT_NUMBER");
         sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL");
         sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.EMPLOYEE_ID = C.EMPLOYEE_ID");
         sb.append(" LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE");

@@ -18,7 +18,6 @@ package org.dataconservancy.pass.grant.integration;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.PassEntityUtil;
 import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.grant.data.JhuPassUpdater;
 import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
@@ -35,7 +34,6 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.junit.Assert.assertTrue;
@@ -62,21 +60,17 @@ import java.util.Map;
 @RunWith(MockitoJUnitRunner.class)
 public class JhuPassUpdaterIT {
 
-    private final String DOMAIN = "johnshopkins.edu";
-
-
-    private List<Map<String, String>> resultSet = new ArrayList<>();
-    private static String employeeidPrefix = "johnshopkins.edu:employeeid:";
-    private static String jhedPrefix = "johnshopkins.edu:jhed:";
-    private CoeusPassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
-    private Map<String, URI> funderPolicyUriMap = new HashMap<>();
-    private String prefix;
+    private final List<Map<String, String>> resultSet = new ArrayList<>();
+    private static final String employeeidPrefix = "johnshopkins.edu:employeeid:";
+    private static final String jhedPrefix = "johnshopkins.edu:jhed:";
+    private final CoeusPassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
+    private final Map<String, URI> funderPolicyUriMap = new HashMap<>();
 
     private String directFunderPolicyUriString1;
     private String primaryFunderPolicyUriString1;
 
 
-    private PassClient passClient = PassClientFactory.getPassClient();
+    private final PassClient passClient = PassClientFactory.getPassClient();
 
     @Rule
     public TemporaryFolder folder= new TemporaryFolder();
@@ -188,13 +182,14 @@ public class JhuPassUpdaterIT {
         assertEquals(0, statistics.getUsersUpdated());
 
         //now let's monkey with a few things; we expect to update the changed objects
+        //first change all tehthings that shouldn't matter
         Map<String, String> rowMap = new HashMap<>();
-        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + 1);
+        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + 1 + "MOO");
         rowMap.put(C_GRANT_AWARD_STATUS, "Active");
         rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + 1);
-        rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + 1 + "MOOO");
-        rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
-        rowMap.put(C_GRANT_START_DATE, "01/01/2001");
+        rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + 1 + "MOO");
+        rowMap.put(C_GRANT_AWARD_DATE, "01/01/1999");
+        rowMap.put(C_GRANT_START_DATE, "01/01/1999");
         rowMap.put(C_GRANT_END_DATE, "01/01/2002");
 
         rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + 1);
@@ -224,7 +219,7 @@ public class JhuPassUpdaterIT {
         assertEquals(0, statistics.getFundersCreated());
         assertEquals(1, statistics.getFundersUpdated());
         assertEquals(0, statistics.getGrantsCreated());
-        assertEquals(1, statistics.getGrantsUpdated());
+        assertEquals(0, statistics.getGrantsUpdated());
         assertEquals(0, statistics.getUsersCreated());
         assertEquals(1, statistics.getUsersUpdated());
 
@@ -247,11 +242,7 @@ public class JhuPassUpdaterIT {
             assertEquals(grant.getAwardNumber(), passGrant.getAwardNumber());
             assertEquals(grant.getAwardStatus(), passGrant.getAwardStatus());
             assertEquals(grant.getLocalKey(), passGrant.getLocalKey());
-            if (i == 1) {
-                assertEquals(grant.getProjectName() + "MOOO", passGrant.getProjectName());
-            } else {
-                assertEquals(grant.getProjectName(), passGrant.getProjectName());
-            }
+            assertEquals(grant.getProjectName(), passGrant.getProjectName());
             assertEquals(grant.getAwardDate(), passGrant.getAwardDate());
             assertEquals(grant.getStartDate(), passGrant.getStartDate());
             assertEquals(grant.getEndDate(), passGrant.getEndDate());
@@ -298,7 +289,7 @@ public class JhuPassUpdaterIT {
             user.setEmail(C_USER_EMAIL + i);
 
             URI userUri = null;
-            ListIterator idIterator = user.getLocatorIds().listIterator();
+            ListIterator<String> idIterator = user.getLocatorIds().listIterator();
 
             while (userUri == null && idIterator.hasNext()) {
                 String id = String.valueOf(idIterator.next());
@@ -412,6 +403,7 @@ public class JhuPassUpdaterIT {
         assertNotNull(passClient.readResource(policy2Uri, Policy.class));
 
         Funder funder1 = new Funder();
+        String DOMAIN = "johnshopkins.edu";
         String fullLocalKey = new Identifier(DOMAIN, "funder", "22229999").serialize();
         funder1.setLocalKey(fullLocalKey);
         funder1.setName("Funder One");
@@ -527,7 +519,7 @@ public class JhuPassUpdaterIT {
             e.printStackTrace();
         }
 
-        List input = null;
+        List<Map<String, String>> input = null;
         try (FileInputStream fis = new FileInputStream(serialized);
             ObjectInputStream in = new ObjectInputStream(fis)
             ){

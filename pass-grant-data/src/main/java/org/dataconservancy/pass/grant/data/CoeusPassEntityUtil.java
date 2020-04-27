@@ -20,7 +20,7 @@ import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 
-
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -165,16 +165,16 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return a boolean which asserts whether the two supplied Grants are "COEUS equal"
      */
     private boolean coeusGrantsEqual(Grant system, Grant stored) {
-        if (system.getAwardNumber() != null ? !system.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return false;
+       // if (system.getAwardNumber() != null ? !system.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return false;
         if (system.getAwardStatus() != null? !system.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return false;
-        if (system.getLocalKey() != null? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-        if (system.getProjectName() != null? !system.getProjectName().equals(stored.getProjectName()) : stored.getProjectName() != null) return false;
-        if (system.getPrimaryFunder() != null? !system.getPrimaryFunder().equals(stored.getPrimaryFunder()) : stored.getPrimaryFunder() != null) return false;
-        if (system.getDirectFunder() != null? !system.getDirectFunder().equals(stored.getDirectFunder()) : stored.getDirectFunder() != null) return false;
+       // if (system.getLocalKey() != null? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
+       // if (system.getProjectName() != null? !system.getProjectName().equals(stored.getProjectName()) : stored.getProjectName() != null) return false;
+       // if (system.getPrimaryFunder() != null? !system.getPrimaryFunder().equals(stored.getPrimaryFunder()) : stored.getPrimaryFunder() != null) return false;
+       //  if (system.getDirectFunder() != null? !system.getDirectFunder().equals(stored.getDirectFunder()) : stored.getDirectFunder() != null) return false;
         if (system.getPi() != null? !system.getPi().equals(stored.getPi()) : stored.getPi() != null) return false;
         if (system.getCoPis() != null? !new HashSet(system.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return false;
-        if (system.getAwardDate() != null? !system.getAwardDate().equals(stored.getAwardDate()) : stored.getAwardDate() != null) return false;
-        if (system.getStartDate() != null? !system.getStartDate().equals(stored.getStartDate()) : stored.getStartDate() != null) return false;
+       // if (system.getAwardDate() != null? !system.getAwardDate().equals(stored.getAwardDate()) : stored.getAwardDate() != null) return false;
+       // if (system.getStartDate() != null? !system.getStartDate().equals(stored.getStartDate()) : stored.getStartDate() != null) return false;
         if (system.getEndDate() != null? !system.getEndDate().equals(stored.getEndDate()) : stored.getEndDate() != null) return false;
         return true;
     }
@@ -187,16 +187,20 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return the Grant object which represents the Pass object, with any new information from COEUS merged in
      */
     private Grant updateGrant(Grant system, Grant stored) {
-        stored.setAwardNumber(system.getAwardNumber());
+        //stored.setAwardNumber(system.getAwardNumber());
         stored.setAwardStatus(system.getAwardStatus());
-        stored.setLocalKey(system.getLocalKey());
-        stored.setProjectName(system.getProjectName());
-        stored.setPrimaryFunder(system.getPrimaryFunder());
-        stored.setDirectFunder(system.getDirectFunder());
-        stored.setPi(system.getPi());
-        stored.setCoPis(system.getCoPis());
-        stored.setAwardDate(system.getAwardDate());
-        stored.setStartDate(system.getStartDate());
+        //stored.setLocalKey(system.getLocalKey());
+        //stored.setProjectName(system.getProjectName());
+        //stored.setPrimaryFunder(system.getPrimaryFunder());
+        //stored.setDirectFunder(system.getDirectFunder());
+        for( URI uri : stored.getCoPis() ) {
+            if ( !system.getCoPis().contains(uri) ) {
+                system.getCoPis().add(uri);
+            }
+        }
+        stored.setCoPis( system.getCoPis() );
+        //stored.setAwardDate(system.getAwardDate());
+        //stored.setStartDate(system.getStartDate());
         stored.setEndDate(system.getEndDate());
         return stored;
     }
