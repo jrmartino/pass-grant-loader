@@ -476,16 +476,15 @@ public class DefaultPassUpdater implements PassUpdater{
             }
             Grant updatedGrant;
             if ( (updatedGrant = passEntityUtil.update(systemGrant, storedGrant)) != null) {//need to update
-                LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + systemGrant.getLocalKey());
                 passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();
-                LOG.debug("Updating grant with award number " + systemGrant.getLocalKey());
+                LOG.debug("Updating grant with local key " + systemGrant.getLocalKey());
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
              //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Pass
                 passGrantURI = passClient.createResource(systemGrant);
                 statistics.addGrantsCreated();
-                LOG.debug("Creating grant with award number " + systemGrant.getLocalKey());
+                LOG.debug("Creating grant with local key " + systemGrant.getLocalKey());
         }
         return passGrantURI;
     }

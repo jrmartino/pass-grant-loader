@@ -16,19 +16,18 @@
 
 package org.dataconservancy.pass.grant.cli;
 
-import org.dataconservancy.pass.grant.data.CoeusConnector;
-import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.GrantConnector;
-import org.dataconservancy.pass.grant.data.JhuPassUpdater;
-import org.dataconservancy.pass.grant.data.PassUpdater;
+import org.dataconservancy.pass.grant.data.*;
 
 import java.util.Properties;
 
 class JhuGrantLoaderApp extends BaseGrantLoaderApp {
 
-    JhuGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName) {
+    boolean init = false;
+
+    JhuGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName, boolean init) {
         super(startDate, awardEndDate, email, mode, action, dataFileName);
         super.setTimestamp(true);
+        this.init = init;
     }
 
     @Override
@@ -43,6 +42,9 @@ class JhuGrantLoaderApp extends BaseGrantLoaderApp {
 
     @Override
     PassUpdater configureUpdater() {
+        if ( init ) {
+            return new JhuPassInitUpdater();
+        }
         return new JhuPassUpdater();
     }
 

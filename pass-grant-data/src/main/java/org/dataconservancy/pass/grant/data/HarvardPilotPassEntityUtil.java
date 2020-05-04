@@ -123,7 +123,7 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
             //if (system.getMiddleName() != null ? !system.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
             if (system.getLastName() != null ? !system.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
             if (system.getLocatorIds() != null? !stored.getLocatorIds().containsAll(system.getLocatorIds()): stored.getLocatorIds() != null) return false;
-            //next, other fields which require some reasoning to decide whether an system is necessary
+            //next, other fields which require some reasoning to decide whether an update is necessary
             if (system.getEmail() != null && stored.getEmail() == null) return false;
             if (system.getDisplayName() != null && stored.getDisplayName() == null) return false;
             return true;

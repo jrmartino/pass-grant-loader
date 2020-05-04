@@ -45,7 +45,7 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return the updated Funder - null if the Funder does not need to be updated
      */
     public Funder update(Funder system, Funder stored) {
-            if (!coeusFundersEqual(system, stored)) {
+            if (funderNeedsUpdate(system, stored)) {
                 return updateFunder(system, stored);
             }
             return null;
@@ -59,7 +59,7 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return the updated User - null if the User does not need to be updated
      */
     public User update(User system, User stored) {
-        if (!coeusUsersEqual(system, stored)) {
+        if (userNeedsUpdate(system, stored)) {
             return updateUser(system, stored);
         }
         return null;
@@ -73,7 +73,7 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return the updated object - null if the Grant does not need to be updated
      */
     public Grant update(Grant system, Grant stored) {
-        if (!coeusGrantsEqual(system, stored)) {
+        if (grantNeedsUpdate(system, stored)) {
             return updateGrant(system, stored);
         }
         return null;
@@ -86,13 +86,13 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @param stored the version of the Funder as read from Pass
      * @return a boolean which asserts whether the two supplied Funders are "COEUS equal"
      */
-    private boolean coeusFundersEqual(Funder system, Funder stored) {
+    private boolean funderNeedsUpdate(Funder system, Funder stored) {
 
         //this adjustment handles the case where we take data from policy.properties file, which has no name info
-        if (system.getName() != null && !system.getName().equals(stored.getName())) return false;
-        if (system.getLocalKey() != null ? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-        if (system.getPolicy() != null ? !system.getPolicy().equals(stored.getPolicy()) : stored.getPolicy() != null) return false;
-        return true;
+        if (system.getName() != null && !system.getName().equals(stored.getName())) return true;
+        if (system.getLocalKey() != null ? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return true;
+        if (system.getPolicy() != null ? !system.getPolicy().equals(stored.getPolicy()) : stored.getPolicy() != null) return true;
+        return false;
     }
 
     /**
@@ -117,16 +117,16 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @param stored the version of the User as read from Pass
      * @return a boolean which asserts whether the two supplied Users are "COEUS equal"
      */
-    private  boolean coeusUsersEqual(User system, User stored) {
+    private  boolean userNeedsUpdate(User system, User stored) {
         //first the fields for which COEUS is authoritative
-        if (system.getFirstName() != null ? !system.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
-        if (system.getMiddleName() != null ? !system.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
-        if (system.getLastName() != null ? !system.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
-        if (system.getLocatorIds() != null? !stored.getLocatorIds().containsAll(system.getLocatorIds()): stored.getLocatorIds() != null) return false;
-        //next, other fields which require some reasoning to decide whether an system is necessary
-        if (system.getEmail() != null && stored.getEmail() == null) return false;
-        if (system.getDisplayName() != null && stored.getDisplayName() == null) return false;
-        return true;
+        if (system.getFirstName() != null ? !system.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return true;
+        if (system.getMiddleName() != null ? !system.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return true;
+        if (system.getLastName() != null ? !system.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return true;
+        if (system.getLocatorIds() != null? !stored.getLocatorIds().containsAll(system.getLocatorIds()): stored.getLocatorIds() != null) return true;
+        //next, other fields which require some reasoning to decide whether an update is necessary
+        if (system.getEmail() != null && stored.getEmail() == null) return true;
+        if (system.getDisplayName() != null && stored.getDisplayName() == null) return true;
+        return false;
     }
 
     /**
@@ -160,23 +160,16 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
 
     /**
      * Compare two Grant objects. Note that the Lists of Co-Pis are compared as Sets
-     * @param system the version of the Grant as seen in the COEUS system pull
+     * @param system the version of the Grant as seen in the COES system pull
      * @param stored the version of the Grant as read from Pass
      * @return a boolean which asserts whether the two supplied Grants are "COEUS equal"
      */
-    private boolean coeusGrantsEqual(Grant system, Grant stored) {
-       // if (system.getAwardNumber() != null ? !system.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return false;
-        if (system.getAwardStatus() != null? !system.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return false;
-       // if (system.getLocalKey() != null? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-       // if (system.getProjectName() != null? !system.getProjectName().equals(stored.getProjectName()) : stored.getProjectName() != null) return false;
-       // if (system.getPrimaryFunder() != null? !system.getPrimaryFunder().equals(stored.getPrimaryFunder()) : stored.getPrimaryFunder() != null) return false;
-       //  if (system.getDirectFunder() != null? !system.getDirectFunder().equals(stored.getDirectFunder()) : stored.getDirectFunder() != null) return false;
-        if (system.getPi() != null? !system.getPi().equals(stored.getPi()) : stored.getPi() != null) return false;
-        if (system.getCoPis() != null? !new HashSet(system.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return false;
-       // if (system.getAwardDate() != null? !system.getAwardDate().equals(stored.getAwardDate()) : stored.getAwardDate() != null) return false;
-       // if (system.getStartDate() != null? !system.getStartDate().equals(stored.getStartDate()) : stored.getStartDate() != null) return false;
-        if (system.getEndDate() != null? !system.getEndDate().equals(stored.getEndDate()) : stored.getEndDate() != null) return false;
-        return true;
+    private boolean grantNeedsUpdate(Grant system, Grant stored) {
+        if (system.getAwardStatus() != null? !system.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return true;
+        if (system.getPi() != null? !system.getPi().equals(stored.getPi()) : stored.getPi() != null) return true;
+        if (system.getCoPis() != null? !new HashSet(system.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return true;
+        if (system.getEndDate() != null? !system.getEndDate().equals(stored.getEndDate()) : stored.getEndDate() != null) return true;
+        return false;
     }
 
     /**
@@ -187,20 +180,23 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return the Grant object which represents the Pass object, with any new information from COEUS merged in
      */
     private Grant updateGrant(Grant system, Grant stored) {
-        //stored.setAwardNumber(system.getAwardNumber());
         stored.setAwardStatus(system.getAwardStatus());
-        //stored.setLocalKey(system.getLocalKey());
-        //stored.setProjectName(system.getProjectName());
-        //stored.setPrimaryFunder(system.getPrimaryFunder());
-        //stored.setDirectFunder(system.getDirectFunder());
+
+        //adjust the system view of co-pis  by merging in the stored view
         for( URI uri : stored.getCoPis() ) {
             if ( !system.getCoPis().contains(uri) ) {
                 system.getCoPis().add(uri);
             }
         }
+        URI storedPi = stored.getPi();
+        if ( !system.getPi().equals( storedPi )) {
+            if ( !system.getCoPis().contains( storedPi )) {
+                system.getCoPis().add ( storedPi );
+            }
+        }
+
+        stored.setPi( system.getPi() );
         stored.setCoPis( system.getCoPis() );
-        //stored.setAwardDate(system.getAwardDate());
-        //stored.setStartDate(system.getStartDate());
         stored.setEndDate(system.getEndDate());
         return stored;
     }

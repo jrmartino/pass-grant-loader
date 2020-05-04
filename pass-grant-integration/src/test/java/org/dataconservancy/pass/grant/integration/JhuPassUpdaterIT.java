@@ -531,4 +531,33 @@ public class JhuPassUpdaterIT {
         assertEquals(resultSet, input);
     }
 
+    @Test
+    public void testCreateAndUpdateGrantsWithSeveralDates() {
+        String firstAwardDate="01/01/2000";
+        String secondAwardDate="06/01/2002";
+        String thirdAwardDate="08/15/2004";
+
+        String[] awardDates = { firstAwardDate, secondAwardDate, thirdAwardDate };
+
+        String firstStartDate="01/01/2001";
+        String secondStartDate="01/01/2003";
+        String thirdStartDate="01/01/2005";
+
+        String[] startDates= { firstStartDate, secondStartDate, thirdStartDate};
+
+        String firstEndDate="12/31/2001";
+        String secondEndDate="12/31/2004";
+        String thirdEndDate="12/31/2007";
+
+        String[] endDates = { firstEndDate, secondEndDate, thirdEndDate };
+
+        String firstAwardNumber="777979";
+        String secondAwardNumber="77111111";
+        String thirdAwardNumber="109111111";
+
+        String[] awardNumbers= {firstAwardNumber, secondAwardNumber, thirdAwardNumber };
+
+        String grantNumber = "M00-8675309";
+    }
+
 }
