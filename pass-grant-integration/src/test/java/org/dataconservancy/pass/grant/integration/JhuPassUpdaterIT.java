@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Johns Hopkins University
+ * Copyright 2020 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,551 +13,206 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.dataconservancy.pass.grant.integration;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
-import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.grant.data.JhuPassUpdater;
-import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
-import org.dataconservancy.pass.model.Funder;
+import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.model.Grant;
-
 import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
-import org.dataconservancy.pass.model.support.Identifier;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.Before;;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
-import static java.lang.Thread.sleep;
-import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 
-/**
- * An integration test class for the JhuPassUpdater.
- */
-@RunWith(MockitoJUnitRunner.class)
+import static java.lang.Thread.sleep;
+import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
+import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTime;
+import static org.junit.Assert.*;
+
+
 public class JhuPassUpdaterIT {
 
-    private final List<Map<String, String>> resultSet = new ArrayList<>();
-    private static final String employeeidPrefix = "johnshopkins.edu:employeeid:";
-    private static final String jhedPrefix = "johnshopkins.edu:jhed:";
-    private final CoeusPassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
-    private final Map<String, URI> funderPolicyUriMap = new HashMap<>();
+    String[] grantAwardNumber = { "B10000000", "B10000001", "B10000002" };
+    String[] grantLocalKey = { "10000001", "10000001","10000001" }; //all the same, different from other ITs tho
+    String[] grantProjectName = {"Stupendous Research Project I", "Stupendous Research Project II", "Stupendous Research Project III" };
+    String[] grantAwardDate = { "01/01/1999",  "01/01/2001", "01/01/2003" };
+    String[] grantStartDate = { "07/01/2000", "07/01/2002", "07/01/2004" };
+    String[] grantEndDate = { "06/30/2002", "06/30/2004", "06/30/2006"};
+    String[] grantUpdateTimestamp = { "2006-03-11 00:00:00.0","2010-04-05 00:00:00.0", "2015-11-11 00:00:00.0" };
+    String[] userEmployeeId= { "31000000", "31000001", "31000002"};
+    String[] userInstitutionalId = {"arecko1", "sclass1", "jgunn1" };
+    String[] userHopkinsId = {"DOMNAR", "NROAD", "ROMAND" };
+    String[] userFirstName = {"Amanda", "Skip", "Janie"};
+    String[] userMiddleName = {"Bea", "Avery", "Gotta" };
+    String[] userLastName = { "Reckondwith", "Class", "Gunn" };
+    String[] userEmail = { "arecko1@jhu.edu", "sclass1@jhu.edu", "jgunn1@jhu.edu" };
 
-    private String directFunderPolicyUriString1;
-    private String primaryFunderPolicyUriString1;
 
+    String primaryFunderPolicyUriString;
+    String directFunderPolicyUriString;
 
-    private final PassClient passClient = PassClientFactory.getPassClient();
+    String grantIdPrefix = "johnshopkins.edu:grant:";
+    //String funderIdPrefix = "johnshopkins.edu:funder:";
+    //String hopkinsidPrefix = "johnshopkins.edu:hopkinsid:";
+    String employeeidPrefix = "johnshopkins.edu:employeeid:";
+    //String jhedidPrefis = "johnshopkins.edu:jhed:";
 
-    @Rule
-    public TemporaryFolder folder= new TemporaryFolder();
+    PassClient passClient = PassClientFactory.getPassClient();
+    JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+    PassUpdateStatistics statistics = passUpdater.getStatistics();
 
     @Before
     public void setup() {
-
-        for (int i = 0; i < 10; i++) {
-
-            String prefix = System.getProperty("pass.fedora.baseurl");
-            if (!prefix.endsWith("/")) {
-                prefix = prefix + "/";
-            }
-
-            Policy policy = new Policy();
-            policy.setTitle("Primary Policy" + i);
-            policy.setDescription("MOO");
-            URI policyURI = passClient.createResource(policy);
-            String primaryPolicyUriString = policyURI.toString().substring(prefix.length());
-            funderPolicyUriMap.put("PrimaryFunderPolicy"+i, policyURI);
-
-            policy = new Policy();
-            policy.setTitle("Direct Policy" + i);
-            policy.setDescription("MOO");
-            policyURI = passClient.createResource(policy);
-            String directPolicyUriString =  policyURI.toString().substring(prefix.length());
-            funderPolicyUriMap.put("DirectFunderPolicy"+i, policyURI);
-
-            if(i==1) {
-                directFunderPolicyUriString1 = directPolicyUriString;
-                primaryFunderPolicyUriString1 = primaryPolicyUriString;
-            }
-
-            Map<String, String> rowMap = new HashMap<>();
-            rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + i);
-            rowMap.put(C_GRANT_AWARD_STATUS, "Active");
-            rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + i);
-            rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + i);
-            rowMap.put(C_GRANT_AWARD_DATE, "01/01/2000");
-            rowMap.put(C_GRANT_START_DATE, "01/01/2001");
-            rowMap.put(C_GRANT_END_DATE, "01/01/2002");
-
-            rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + i);
-            rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + i);
-            rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + i);
-            rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + i);
-
-            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + i);
-            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + i);
-            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + i);
-            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + i);
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
-            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + i);
-            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
-
-            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + i + ":00:00.0");
-            rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
-            rowMap.put(C_DIRECT_FUNDER_POLICY, directPolicyUriString );
-            rowMap.put(C_PRIMARY_FUNDER_POLICY, primaryPolicyUriString);
-
-            resultSet.add(rowMap);
+        String prefix = System.getProperty("pass.fedora.baseurl");
+        if ( !prefix.endsWith("/") ) {
+            prefix = prefix + "/";
         }
+
+        Policy policy = new Policy();
+        policy.setTitle("Primary Policy 2");
+        policy.setDescription("BAA");
+        URI policyURI = passClient.createResource(policy);
+        primaryFunderPolicyUriString = policyURI.toString().substring(prefix.length());
+
+        policy =new Policy();
+        policy.setTitle("Direct Policy 2");
+        policy.setDescription("BAA");
+        policyURI =passClient.createResource(policy);
+        directFunderPolicyUriString = policyURI.toString().substring(prefix.length());
 
     }
 
     /**
-     * The behavior of PassUpdate's updatePass() method is to compare the data coming in on the ResultSet with
-     * the existing data in Pass, and create objects if Pass does not yet have them, and update them if they exist in Pass but
-     * there are differences in the fields for which COEUS is the authoritative source, or COEUS has a clue about other fields which are null
-     * on the PASS object.
+     * we put an initial award for a grant into fedora, then simulate a pull of all subsequent records
      *
-     * @throws InterruptedException - the exception
+     * We expect to see some fields retained from the initial award, and others updated. The most
+     * interesting fields are the investigator fields: all CO-PIs ever on the grant should stay on the
+     * co-pi field throughout iterations. If a PI is changed, they should appear on the CO-PI field
+     *
+     * @throws InterruptedException
      */
     @Test
-    public void updateGrantsIT() throws InterruptedException {
+    public void  processGrantIT() throws InterruptedException {
+        List<Map<String, String>> resultSet = new ArrayList<>();
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+        //put in initial iteration as a correct existing record - PI is Reckondwith, Co-pi is Class
+        Map<String, String> piRecord0 = makeRowMap(0, 0, "P");
+        Map<String, String> coPiRecord0 = makeRowMap(0, 1, "C");
+
+        resultSet.add(piRecord0);
+        resultSet.add(coPiRecord0);
+
         passUpdater.updatePass(resultSet, "grant");
-        PassUpdateStatistics statistics = passUpdater.getStatistics();
+        sleep(10000);
+        URI passUser0Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[0] );
+        assertNotNull( passUser0Uri );
+        URI passGrantUri = passClient.findByAttribute(Grant.class, "localKey", grantIdPrefix + grantLocalKey[2]);
+        assertNotNull( passGrantUri );
+        URI passUser1Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[1] );
+        assertNotNull( passUser1Uri );
 
-        assertEquals(5, statistics.getPisAdded());
-        assertEquals(5, statistics.getCoPisAdded());
-        assertEquals(20, statistics.getFundersCreated());
-        assertEquals(0, statistics.getFundersUpdated());
-        assertEquals(10, statistics.getGrantsCreated());
-        assertEquals(0, statistics.getGrantsUpdated());
-        assertEquals("2018-01-01 09:00:00.0", statistics.getLatestUpdateString());
-        assertEquals(10, statistics.getUsersCreated());
-        assertEquals(0, statistics.getUsersUpdated());
+        Grant passGrant = passClient.readResource( passGrantUri, Grant.class );
 
-        assertEquals(10, passUpdater.getGrantUriMap().size());
+        assertEquals( grantAwardNumber[0], passGrant.getAwardNumber() );
+        assertEquals( Grant.AwardStatus.ACTIVE, passGrant.getAwardStatus() );
+        assertEquals( grantIdPrefix + grantLocalKey[0], passGrant.getLocalKey() );
+        assertEquals( grantProjectName[0], passGrant.getProjectName() );
+        assertEquals( createJodaDateTime(grantAwardDate[0]), passGrant.getAwardDate() );
+        assertEquals( createJodaDateTime(grantStartDate[0]), passGrant.getStartDate() );
+        assertEquals( createJodaDateTime(grantEndDate[0]), passGrant.getEndDate() );
+        assertEquals( passUser0Uri, passGrant.getPi() ); //Reckondwith
+        assertEquals( 1, passGrant.getCoPis().size() );
+        assertEquals( passUser1Uri, passGrant.getCoPis().get(0));
 
-        for (URI grantUri : passUpdater.getGrantUriMap().keySet()) {
-            Grant grant = passUpdater.getGrantUriMap().get(grantUri);
-            Grant passGrant = passUpdater.getPassClient().readResource(grantUri, Grant.class);
-            assertNull(passEntityUtil.update(grant, passGrant)); //this means grants are "coeus-equal"
+        //check statistics
+        assertEquals(1, statistics.getGrantsCreated());
+        assertEquals(2, statistics.getUsersCreated());
+        assertEquals(1, statistics.getPisAdded());
+        assertEquals(1, statistics.getCoPisAdded());
 
-        }
+        //now simulate an incremental pull since the initial,  adjust the stored grant
+        //we add a new co-pi Jones in the "1" iteration, and change the pi to Einstein in the "2" iteration
+        //we drop co-pi jones in the last iteration
 
-        sleep(20000);
-        //try depositing the exact same resultSet. nothing should happen in Pass
-        passUpdater.updatePass(resultSet, "grant");
+        Map<String, String> piRecord1 = makeRowMap(1, 0, "P");
+        Map<String, String> coPiRecord1 = makeRowMap(1, 1, "C");
+        Map<String, String> newCoPiRecord1 = makeRowMap(1, 2, "C");
+        Map<String, String> piRecord2 = makeRowMap (2, 1, "P");
 
-        assertEquals(0, statistics.getFundersCreated());
-        assertEquals(0, statistics.getFundersUpdated());
-        assertEquals(0, statistics.getGrantsCreated());
-        assertEquals(0, statistics.getGrantsUpdated());
-        assertEquals(0, statistics.getUsersCreated());
-        assertEquals(0, statistics.getUsersUpdated());
-
-        //now let's monkey with a few things; we expect to update the changed objects
-        //first change all the things that shouldn't matter
-        Map<String, String> rowMap = new HashMap<>();
-        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + 1 + "MOO");
-        rowMap.put(C_GRANT_AWARD_STATUS, "Active");
-        rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + 1);
-        rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + 1 + "MOO");
-        rowMap.put(C_GRANT_AWARD_DATE, "01/01/1999");
-        rowMap.put(C_GRANT_START_DATE, "01/01/1999");
-        rowMap.put(C_GRANT_END_DATE, "01/01/2002");
-
-        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + 1);
-        rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + 1 + "MOOOOO");
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + 1);
-        rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + 1);
-
-        rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + 1);
-        rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + 1 + "MOOOO");
-        rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + 1);
-        rowMap.put(C_USER_EMAIL, C_USER_EMAIL + 1);
-        rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + 1);
-        rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + 1);
-        rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + 1);
-
-        rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
-        rowMap.put(C_ABBREVIATED_ROLE, ("C"));
-
-        rowMap.put(C_DIRECT_FUNDER_POLICY, directFunderPolicyUriString1);
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, primaryFunderPolicyUriString1);
-
-
+        //add in everything since the initial pull
         resultSet.clear();
-        resultSet.add(rowMap);
+        resultSet.add(piRecord1);
+        resultSet.add(coPiRecord1);
+        resultSet.add(newCoPiRecord1);
+        resultSet.add(piRecord2);
 
         passUpdater.updatePass(resultSet, "grant");
-        assertEquals(0, statistics.getFundersCreated());
-        assertEquals(1, statistics.getFundersUpdated());
-        assertEquals(0, statistics.getGrantsCreated());
-        assertEquals(0, statistics.getGrantsUpdated());
-        assertEquals(0, statistics.getUsersCreated());
-        assertEquals(1, statistics.getUsersUpdated());
+        sleep(10000);
 
-        sleep(20000);
+        passGrant = passClient.readResource( passGrantUri, Grant.class );
 
-        for (int i = 0; i < 10; i++) {
-            Grant grant = new Grant();
-            grant.setAwardNumber(C_GRANT_AWARD_NUMBER + i);
-            grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
-            String grantIdPrefix = "johnshopkins.edu:grant:";
-            grant.setLocalKey(grantIdPrefix + C_GRANT_LOCAL_KEY + i);
-            grant.setProjectName(C_GRANT_PROJECT_NAME + i);
-            grant.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
-            grant.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
-            grant.setEndDate(DateTimeUtil.createJodaDateTime("01/01/2002"));
+        URI passUser2Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[2] );
+        assertNotNull( passUser2Uri );
 
-            URI passGrantUri = passClient.findByAttribute(Grant.class, "localKey", grant.getLocalKey());
-            Grant passGrant = passClient.readResource(passGrantUri, Grant.class);
-
-            assertEquals(grant.getAwardNumber(), passGrant.getAwardNumber());
-            assertEquals(grant.getAwardStatus(), passGrant.getAwardStatus());
-            assertEquals(grant.getLocalKey(), passGrant.getLocalKey());
-            assertEquals(grant.getProjectName(), passGrant.getProjectName());
-            assertEquals(grant.getAwardDate(), passGrant.getAwardDate());
-            assertEquals(grant.getStartDate(), passGrant.getStartDate());
-            assertEquals(grant.getEndDate(), passGrant.getEndDate());
-
-            //let's check funder stuff
-            Funder directFunder = new Funder();
-            String funderIdPrefix = "johnshopkins.edu:funder:";
-            directFunder.setLocalKey(funderIdPrefix + C_DIRECT_FUNDER_LOCAL_KEY + i);
-            directFunder.setName(C_DIRECT_FUNDER_NAME + i);
-            directFunder.setPolicy(funderPolicyUriMap.get("DirectFunderPolicy" + i));
-
-            URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
-            Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
-            if (i == 1) {
-                assertEquals(directFunder.getName() + "MOOOOO", passDirectFunder.getName());
-                assertEquals(directFunder.getLocalKey(), passDirectFunder.getLocalKey());
-                assertEquals(passDirectFunder.getId(), passGrant.getDirectFunder());
-            } else {
-                assertEquals(directFunder.getName(), passDirectFunder.getName());
-            }
-
-            Funder primaryFunder = new Funder();
-            primaryFunder.setLocalKey(funderIdPrefix + C_PRIMARY_FUNDER_LOCAL_KEY + i);
-            primaryFunder.setName(C_PRIMARY_FUNDER_NAME + i);
-            primaryFunder.setPolicy(funderPolicyUriMap.get("PrimaryFunderPolicy" + i));
-
-            URI primaryFunderUri = passClient.findByAttribute(Funder.class, "localKey", primaryFunder.getLocalKey());
-            Funder passPrimaryFunder = passClient.readResource(primaryFunderUri, Funder.class);
-            assertEquals(primaryFunder.getName(), passPrimaryFunder.getName());
-            assertEquals(passPrimaryFunder.getId(), passGrant.getPrimaryFunder());
-            assertEquals(primaryFunder.getLocalKey(), passPrimaryFunder.getLocalKey());
-            assertEquals(primaryFunder.getPolicy(), passPrimaryFunder.getPolicy());
-
-            User user = new User();
-
-            //institutionalId and localKey were localized by the grant loader
-            user.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + i);
-            String hopkinsidPrefix = "johnshopkins.edu:hopkinsid:";
-            user.getLocatorIds().add(hopkinsidPrefix + C_USER_HOPKINS_ID + i);
-            user.getLocatorIds().add(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + i);
-            user.setFirstName(C_USER_FIRST_NAME + i);
-            user.setMiddleName(C_USER_MIDDLE_NAME + i);
-            user.setLastName(C_USER_LAST_NAME + i);
-            user.setEmail(C_USER_EMAIL + i);
-
-            URI userUri = null;
-            ListIterator<String> idIterator = user.getLocatorIds().listIterator();
-
-            while (userUri == null && idIterator.hasNext()) {
-                String id = String.valueOf(idIterator.next());
-                if (id != null) {
-                    userUri = passClient.findByAttribute(User.class, "locatorIds", id);
-                }
-            }
-
-            User passUser = passClient.readResource(userUri, User.class);
-            assertEquals(user.getFirstName(), passUser.getFirstName());
-            if (i == 1) {
-                assertEquals(user.getMiddleName() + "MOOOO", passUser.getMiddleName());
-            } else {
-                assertEquals(user.getMiddleName(), passUser.getMiddleName());
-            }
-            assertEquals(user.getLastName(), passUser.getLastName());
-            assertEquals(user.getEmail(), passUser.getEmail());
-            assertTrue(user.getLocatorIds().containsAll(passUser.getLocatorIds()));
-            assertTrue(passUser.getLocatorIds().containsAll(user.getLocatorIds()));
-            assertEquals(passUser.getLocatorIds().size(), user.getLocatorIds().size());
-
-            if (i % 2 == 0) {
-                assertNotNull(passGrant.getPi());
-                assertEquals(0, passGrant.getCoPis().size());
-            } else {
-                assertNull(passGrant.getPi());
-                assertEquals(1, passGrant.getCoPis().size());
-            }
-
-        }
-    }
-
-
-    @Test
-    public void updateUsersIT() throws InterruptedException {
-
-        User user10 = new User();
-        user10.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + 10);
-        user10.setFirstName(C_USER_FIRST_NAME + 10);
-        user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
-        user10.setLastName(C_USER_LAST_NAME + 10);
-
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
-
-        URI passUserURI = passUpdater.getPassClient().createResource(user10);
-
-        User passUser = passClient.readResource(passUserURI, User.class);
-        assertNull(passUser.getDisplayName());
-        assertEquals(1, passUser.getLocatorIds().size());
-        assertNull(passUser.getEmail());
-
-        sleep(20000);
-
-        List<Map<String, String>> userResultSet = new ArrayList<>();
-
-        for (int i = 10; i < 12; i++) {
-            Map<String, String> rowMap = new HashMap<>();
-
-            rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + i);
-            rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + i);
-            rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + i);
-            rowMap.put(C_USER_EMAIL, C_USER_EMAIL + i);
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
-            rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + i);
-            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
-            rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
-            userResultSet.add(rowMap);
-        }
-
-
-        passUpdater.updatePass(userResultSet, "user");
-        PassUpdateStatistics statistics = passUpdater.getStatistics();
-
-        //now update from the set of two users - the second one is not in PASS, but is not created
-        //the first (user10) should be updated, with new fields added
-        assertEquals(0, statistics.getUsersCreated());
-        assertEquals(1, statistics.getUsersUpdated());
-
-        assertNotNull(passUserURI);
-        User updatedUser = passUpdater.getPassClient().readResource(passUserURI, User.class);
-
-        assertNotNull(updatedUser.getEmail());
-        assertNotNull(updatedUser.getDisplayName());
-        assertNotNull(updatedUser.getLocatorIds());
-        assertTrue(updatedUser.getLocatorIds().contains(employeeidPrefix + C_USER_EMPLOYEE_ID + 10));
-        assertTrue(updatedUser.getLocatorIds().contains(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + 10));
-
-        assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
+        assertEquals( grantAwardNumber[0], passGrant.getAwardNumber() );//initial
+        assertEquals( Grant.AwardStatus.ACTIVE, passGrant.getAwardStatus() );
+        assertEquals( grantIdPrefix + grantLocalKey[0], passGrant.getLocalKey() );
+        assertEquals( grantProjectName[0], passGrant.getProjectName() );//initial
+        assertEquals( createJodaDateTime(grantAwardDate[0]), passGrant.getAwardDate() );//initial
+        assertEquals( createJodaDateTime(grantStartDate[0]), passGrant.getStartDate() );//initial
+        assertEquals( createJodaDateTime(grantEndDate[2]), passGrant.getEndDate() );//latest
+        assertEquals( passUser1Uri, passGrant.getPi() );//Class
+        assertEquals( 2, passGrant.getCoPis().size() );
+        assertTrue( passGrant.getCoPis().contains(passUser0Uri) );//Reckondwith
+        assertTrue( passGrant.getCoPis().contains(passUser2Uri) );//Gunn
     }
 
     /**
-     * Create some policies, deposit them into Fedora
-     * Then create a java data object linking funders to them
-     * this basically tests what happens when pulling in data from a policy properties file first,
-     * or from a coeus pull second
+     * utility method to produce data as it would look coming from COEUS
+     * @param iteration the iteration of the (multi-award) grant
+     * @param user the user supplied in the record
+     * @param abbrRole the role: Pi ("P") or co-pi (C" or "K")
+     * @return
      */
-    @Test
-    public void updateFundersIT() throws InterruptedException {
-        Policy policy1 = new Policy();
-        policy1. setTitle("Policy One");
-        policy1. setDescription("Policy one Description");
-        Policy policy2 = new Policy();
-        policy2. setTitle("Policy Two");
-        policy2. setDescription("Policy Two Description");
-
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
-        URI policy1Uri = passClient.createResource(policy1);
-        URI policy2Uri = passClient.createResource(policy2);
-
-        assertNotNull(passClient.readResource(policy1Uri, Policy.class));
-        assertNotNull(passClient.readResource(policy2Uri, Policy.class));
-
-        Funder funder1 = new Funder();
-        String DOMAIN = "johnshopkins.edu";
-        String fullLocalKey = new Identifier(DOMAIN, "funder", "22229999").serialize();
-        funder1.setLocalKey(fullLocalKey);
-        funder1.setName("Funder One");
-        Funder funder2 = new Funder();
-        fullLocalKey = new Identifier(DOMAIN, "funder", "33330000").serialize();
-        funder2.setLocalKey(fullLocalKey);//use full localKey
-        funder2.setName("Funder Two");
-
-        URI funder1Uri = passClient.createResource(funder1);
-        URI funder2Uri = passClient.createResource(funder2);
-
-        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
-        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
-
-
-        String policyString1 = policy1Uri.getPath().substring("/fcrepo/rest/".length());
-        assertTrue(policyString1.startsWith("policies"));
-        String policyString2 = policy2Uri.getPath().substring("/fcrepo/rest/".length());
-        assertTrue(policyString2.startsWith("policies"));
-
-        List<Map<String, String>> funderResultSet = new ArrayList<>();
-
+    private Map<String, String> makeRowMap( int iteration, int user, String abbrRole) {
         Map<String, String> rowMap = new HashMap<>();
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "22229999");
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString1);
-        funderResultSet.add(rowMap);
+        rowMap.put(C_GRANT_AWARD_NUMBER, grantAwardNumber[iteration]);
+        rowMap.put(C_GRANT_AWARD_STATUS, "Active");
+        rowMap.put(C_GRANT_LOCAL_KEY, grantLocalKey[iteration]);
+        rowMap.put(C_GRANT_PROJECT_NAME, grantProjectName[iteration]);
+        rowMap.put(C_GRANT_AWARD_DATE, grantAwardDate[iteration]);
+        rowMap.put(C_GRANT_START_DATE, grantStartDate[iteration]);
+        rowMap.put(C_GRANT_END_DATE, grantEndDate[iteration]);
 
-        rowMap = new HashMap<>();
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "33330000");
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
-        funderResultSet.add(rowMap);
+        rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, "20000000");
+        rowMap.put(C_DIRECT_FUNDER_NAME, "Enormous State University");
+        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "20000001");
+        rowMap.put(C_PRIMARY_FUNDER_NAME, "J L Gotrocks Foundation");
 
-        rowMap = new HashMap<>();
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "88888888"); // this one does not exist in pass
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
-        funderResultSet.add(rowMap);
+        rowMap.put(C_USER_FIRST_NAME, userFirstName[user]);
+        rowMap.put(C_USER_MIDDLE_NAME, userMiddleName[user]);
+        rowMap.put(C_USER_LAST_NAME, userLastName[user]);
+        rowMap.put(C_USER_EMAIL, userEmail[user]);
+        rowMap.put(C_USER_INSTITUTIONAL_ID, userInstitutionalId[user]);
+        rowMap.put(C_USER_EMPLOYEE_ID, userEmployeeId[user]);
+        rowMap.put(C_USER_HOPKINS_ID, userHopkinsId[user]);
 
+        rowMap.put(C_UPDATE_TIMESTAMP, grantUpdateTimestamp[iteration]);
+        rowMap.put(C_ABBREVIATED_ROLE, abbrRole);
 
-        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
+        rowMap.put(C_DIRECT_FUNDER_POLICY, directFunderPolicyUriString);
+        rowMap.put(C_PRIMARY_FUNDER_POLICY, primaryFunderPolicyUriString);
 
-        passUpdater.updatePass(funderResultSet, "funder");
-        PassUpdateStatistics statistics = passUpdater.getStatistics();
-
-        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
-        assertNotNull(passClient.readResource(funder1Uri, Funder.class).getPolicy());
-        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
-        assertNotNull(passClient.readResource(funder2Uri, Funder.class).getPolicy());
-        assertEquals(policy1Uri, passClient.readResource(funder1Uri, Funder.class).getPolicy());
-        assertEquals(policy2Uri, passClient.readResource(funder2Uri, Funder.class).getPolicy());
-
-        assertEquals(0, statistics.getFundersCreated());
-        assertEquals(2, statistics.getFundersUpdated());
-
-        //coeus pulls will have the funder names, we should be able to add one we don't know about
-
-        funderResultSet = new ArrayList<>();
-
-        rowMap = new HashMap<>();
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "22229999");
-        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 1");
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2); //let's change policies for this one
-        funderResultSet.add(rowMap);
-
-        rowMap = new HashMap<>();
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "33330000");
-        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 2");
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
-        funderResultSet.add(rowMap);
-
-        rowMap = new HashMap<>();
-        rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, "88888888"); // this one does not exist in pass
-        rowMap.put(C_PRIMARY_FUNDER_NAME, "Funder Name 3");
-        rowMap.put(C_PRIMARY_FUNDER_POLICY, policyString2);
-        funderResultSet.add(rowMap);
-
-        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
-
-        passUpdater.updatePass(funderResultSet, "funder");
-        statistics = passUpdater.getStatistics();
-
-        assertNotNull(passClient.readResource(funder1Uri, Funder.class));
-        assertNotNull(passClient.readResource(funder1Uri, Funder.class).getPolicy());
-        assertNotNull(passClient.readResource(funder2Uri, Funder.class));
-        assertNotNull(passClient.readResource(funder2Uri, Funder.class).getPolicy());
-        assertEquals(policy2Uri, passClient.readResource(funder1Uri, Funder.class).getPolicy());
-        assertEquals(policy2Uri, passClient.readResource(funder2Uri, Funder.class).getPolicy());
-
-        assertEquals(1, statistics.getFundersCreated());
-        assertEquals(2, statistics.getFundersUpdated());
-
-
-        //DO AGAIN!! DO AGAIN!!
-
-        sleep(20000); //allow indexer to index stuff - java client has to use elasticsearch
-
-        passUpdater.updatePass(funderResultSet, "funder");
-        statistics = passUpdater.getStatistics();
-
-        assertEquals(0, statistics.getFundersCreated());
-        assertEquals(0, statistics.getFundersUpdated());
-
+        return  rowMap;
     }
 
-    @Test
-    public void testSerializeAndDeserialize() throws IOException {
-        File serialized= folder.newFile("serializedData");
-
-        try (FileOutputStream fos = new FileOutputStream(serialized);
-              ObjectOutputStream out  = new ObjectOutputStream(fos)
-            ){
-            out.writeObject(resultSet);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        List<Map<String, String>> input = null;
-        try (FileInputStream fis = new FileInputStream(serialized);
-            ObjectInputStream in = new ObjectInputStream(fis)
-            ){
-            input = (List<Map<String,String>>)in.readObject();
-        } catch (IOException | ClassNotFoundException ex) {
-            ex.printStackTrace();
-        }
-
-        assertEquals(resultSet, input);
-    }
-
-    @Test
-    public void testCreateAndUpdateGrantsWithSeveralDates() {
-        String firstAwardDate="01/01/2000";
-        String secondAwardDate="06/01/2002";
-        String thirdAwardDate="08/15/2004";
-
-        String[] awardDates = { firstAwardDate, secondAwardDate, thirdAwardDate };
-
-        String firstStartDate="01/01/2001";
-        String secondStartDate="01/01/2003";
-        String thirdStartDate="01/01/2005";
-
-        String[] startDates= { firstStartDate, secondStartDate, thirdStartDate};
-
-        String firstEndDate="12/31/2001";
-        String secondEndDate="12/31/2004";
-        String thirdEndDate="12/31/2007";
-
-        String[] endDates = { firstEndDate, secondEndDate, thirdEndDate };
-
-        String firstAwardNumber="777979";
-        String secondAwardNumber="77111111";
-        String thirdAwardNumber="109111111";
-
-        String[] awardNumbers= {firstAwardNumber, secondAwardNumber, thirdAwardNumber };
-
-        String grantNumber = "M00-8675309";
-    }
 
 }

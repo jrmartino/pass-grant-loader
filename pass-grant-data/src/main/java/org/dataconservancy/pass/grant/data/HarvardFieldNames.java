@@ -23,7 +23,7 @@ public class HarvardFieldNames {
     public static final String H_GRANT_NAME = "Grant name";
     public static final String H_INV_FIRST_NAME = "PI First Name";
     public static final String H_INV_LAST_NAME ="PI Last Name";
-    public static final String H_INV_ID = "PI Harvard ID";//guaranteed to be in grant data
+    //public static final String H_INV_ID = "PI Harvard ID";//guaranteed to be in grant data
     public static final String H_INV_EMAIL = "PI Email";
     //public static final String H_INV_ROLE =
     public static final String H_GRANT_START_DATE = "Grant start date";

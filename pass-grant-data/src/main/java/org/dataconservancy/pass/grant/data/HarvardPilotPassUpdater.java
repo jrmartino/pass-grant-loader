@@ -16,10 +16,17 @@
 
 package org.dataconservancy.pass.grant.data;
 
+import org.dataconservancy.pass.client.PassClient;
+
 public class HarvardPilotPassUpdater extends DefaultPassUpdater {
 
     public HarvardPilotPassUpdater () {
         super(new HarvardPilotPassEntityUtil());
+        super.setDomain("harvard.edu");
+    }
+
+    public HarvardPilotPassUpdater (PassClient passClient) {
+        super(new HarvardPilotPassEntityUtil(), passClient );
         super.setDomain("harvard.edu");
     }
 

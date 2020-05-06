@@ -111,7 +111,7 @@ public class HarvardPilotConnector implements GrantConnector {
                     LOG.debug("Processing grant record  ...");
 
                     //we only process rows with a Harvard ID
-                    String employeeId = stringify(cells.getCell(6)); //G: user Harvard ID
+                    String employeeId = stringify(cells.getCell(7)); //we use email as employee id
 
                     if(employeeId != null && employeeId.length()>0)  {
                         Map<String, String> rowMap = new HashMap<>();
@@ -125,7 +125,7 @@ public class HarvardPilotConnector implements GrantConnector {
                         String role = stringify(cells.getCell(5)); //F: Role
                         rowMap.put(C_ABBREVIATED_ROLE, sortRole(role));
 
-                        rowMap.put(C_USER_EMPLOYEE_ID, employeeId);
+                        rowMap.put(C_USER_EMPLOYEE_ID, employeeId); //row G used to be Harvard id, is missing now
                         rowMap.put(C_USER_EMAIL, stringify(cells.getCell(7))); //H: PI Email
 
                         String funderLocalKey = stringify(cells.getCell(8)); //I: Funder ID
