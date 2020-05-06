@@ -28,7 +28,7 @@ import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
-import org.junit.Before;
+import org.junit.Before;;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;

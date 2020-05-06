@@ -168,7 +168,7 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
         if (system.getAwardStatus() != null? !system.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return true;
         if (system.getPi() != null? !system.getPi().equals(stored.getPi()) : stored.getPi() != null) return true;
         if (system.getCoPis() != null? !new HashSet(system.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return true;
-        if (system.getEndDate() != null? !system.getEndDate().equals(stored.getEndDate()) : stored.getEndDate() != null) return true;
+        if (system.getEndDate() != null? system.getEndDate().isAfter(stored.getEndDate()) : stored.getEndDate() != null) return true;
         return false;
     }
 
@@ -195,9 +195,15 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
             }
         }
 
+        if (system.getCoPis().contains(system.getPi())) {
+            system.getCoPis().remove(system.getPi());
+        }
+
         stored.setPi( system.getPi() );
         stored.setCoPis( system.getCoPis() );
-        stored.setEndDate(system.getEndDate());
+        if ( system.getEndDate().isAfter(stored.getEndDate())) {
+            stored.setEndDate(system.getEndDate());
+        }
         return stored;
     }
 

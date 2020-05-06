@@ -54,14 +54,11 @@ public class DefaultPassUpdater implements PassUpdater{
     private PassUpdateStatistics statistics = new PassUpdateStatistics();
     private PassEntityUtil passEntityUtil;
 
-    //used in test classes
     private Map<URI, Grant> grantUriMap = new HashMap<>();
 
-    //used in unit test
     //some entities may be referenced many times during an update, but just need to be updated the first time
     //they are encountered. these include Users and Funders. we save the overhead of redundant updates
     //of these by looking them up here; if they are on the Map, they have already been processed
-    //
     private Map<String, URI> funderMap = new HashMap<>();
     private Map<String, URI> userMap = new HashMap<>();
 
@@ -152,8 +149,7 @@ public class DefaultPassUpdater implements PassUpdater{
             }
 
             //now we know all about our user and funders for this record
-
-
+            // let's get to the grant proper
             LOG.debug("Processing grant with localKey " + grantLocalKey);
 
             //if this is the first record for this Grant, it will not be on the Map
@@ -161,7 +157,6 @@ public class DefaultPassUpdater implements PassUpdater{
             if(!grantMap.containsKey(grantLocalKey)) {
                 grant = new Grant();
                 grant.setLocalKey(grantLocalKey);
-                grant.setCoPis(new ArrayList<>());
                 grantMap.put(grantLocalKey, grant);
             }
 
@@ -169,7 +164,7 @@ public class DefaultPassUpdater implements PassUpdater{
 
             //anybody who was ever a co-pi in an iteration will be in this list
             if ( abbreviatedRole.equals("C") || abbreviatedRole.equals("K") ) {
-                URI userId=userMap.get( employeeId );
+                URI userId = userMap.get( employeeId );
                 if ( !grant.getCoPis().contains( userId ) ) {
                     grant.getCoPis().add( userId );
                     statistics.addCoPi();
@@ -209,6 +204,7 @@ public class DefaultPassUpdater implements PassUpdater{
                         statistics.addPi();
                     } else {
                         if ( !oldPiId.equals(userId) ) {
+                            grant.setPi(userId);
                             if ( !grant.getCoPis().contains(oldPiId) ) {
                                 grant.getCoPis().add(oldPiId);
                                 statistics.addCoPi();
@@ -399,8 +395,7 @@ public class DefaultPassUpdater implements PassUpdater{
             if ((updatedFunder = passEntityUtil.update(systemFunder, storedFunder)) != null) {//need to update
                 passClient.updateResource(updatedFunder);
                 statistics.addFundersUpdated();
-            }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
-             //this can happen if the Grant was updated in COEUS only with information we don't consume here
+            }
         } else {//don't have a stored Funder for this URI - this one is new to Pass
             if (systemFunder.getName() != null) {//only add if we have a name
                 passFunderURI = passClient.createResource(systemFunder);
@@ -443,8 +438,7 @@ public class DefaultPassUpdater implements PassUpdater{
                 }
                 passClient.updateResource(updatedUser);
                 statistics.addUsersUpdated();
-            }//if the Pass version is COEUS-equal to our version from the update, and there are no null fields we care about,
-             //we don't have to do anything. this can happen if the User was updated in COEUS only with information we don't consume here
+            }
         } else if (! mode.equals("user")) {//don't have a stored User for this URI - this one is new to Pass
             //but don't update if we are in user mode - just update existing users
                 passUserUri = passClient.createResource(systemUser);
@@ -479,8 +473,7 @@ public class DefaultPassUpdater implements PassUpdater{
                 passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();
                 LOG.debug("Updating grant with local key " + systemGrant.getLocalKey());
-            }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
-             //this can happen if the Grant was updated in COEUS only with information we don't consume here
+            }
         } else {//don't have a stored Grant for this URI - this one is new to Pass
                 passGrantURI = passClient.createResource(systemGrant);
                 statistics.addGrantsCreated();

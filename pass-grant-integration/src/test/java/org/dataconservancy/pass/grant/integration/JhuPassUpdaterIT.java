@@ -182,7 +182,7 @@ public class JhuPassUpdaterIT {
         assertEquals(0, statistics.getUsersUpdated());
 
         //now let's monkey with a few things; we expect to update the changed objects
-        //first change all tehthings that shouldn't matter
+        //first change all the things that shouldn't matter
         Map<String, String> rowMap = new HashMap<>();
         rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + 1 + "MOO");
         rowMap.put(C_GRANT_AWARD_STATUS, "Active");
