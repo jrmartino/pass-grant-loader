@@ -18,7 +18,7 @@ package org.dataconservancy.pass.grant.data;
 
 import org.dataconservancy.pass.client.PassClient;
 
-public class HarvardPilotPassUpdater extends DefaultPassUpdater {
+public class HarvardPilotPassUpdater extends BasicPassUpdater {
 
     public HarvardPilotPassUpdater () {
         super(new HarvardPilotPassEntityUtil());

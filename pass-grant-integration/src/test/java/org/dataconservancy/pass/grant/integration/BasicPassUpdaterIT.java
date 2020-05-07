@@ -17,10 +17,7 @@ package org.dataconservancy.pass.grant.integration;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
-import org.dataconservancy.pass.grant.data.DateTimeUtil;
-import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
-import org.dataconservancy.pass.grant.data.JhuPassUpdater;
-import org.dataconservancy.pass.grant.data.CoeusPassEntityUtil;
+import org.dataconservancy.pass.grant.data.*;
 import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 
@@ -28,7 +25,6 @@ import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.support.Identifier;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -37,6 +33,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import static java.lang.Thread.sleep;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
+import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTime;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -56,15 +53,15 @@ import java.util.ListIterator;
 import java.util.Map;
 
 /**
- * An integration test class for the JhuPassUpdater.
+ * An integration test class for the BasicPassUpdater.
  */
 @RunWith(MockitoJUnitRunner.class)
-@Ignore
 public class BasicPassUpdaterIT {
 
     private final List<Map<String, String>> resultSet = new ArrayList<>();
-    private static final String employeeidPrefix = "johnshopkins.edu:employeeid:";
-    private static final String jhedPrefix = "johnshopkins.edu:jhed:";
+    private static final String DOMAIN = "default.domain";
+    private static final String employeeidPrefix = DOMAIN + ":employeeid:";
+    private static final String jhedPrefix = DOMAIN + ":jhed:";
     private final CoeusPassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
     private final Map<String, URI> funderPolicyUriMap = new HashMap<>();
 
@@ -73,6 +70,8 @@ public class BasicPassUpdaterIT {
 
 
     private final PassClient passClient = PassClientFactory.getPassClient();
+    PassUpdater passUpdater = new BasicPassUpdater(new BasicPassEntityUtil(), passClient);
+    PassUpdateStatistics statistics = passUpdater.getStatistics();
 
     @Rule
     public TemporaryFolder folder= new TemporaryFolder();
@@ -124,9 +123,9 @@ public class BasicPassUpdaterIT {
             rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + i);
             rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + i);
             rowMap.put(C_USER_EMAIL, C_USER_EMAIL + i);
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
+            //rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
             rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + i);
-            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
+            //rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
 
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + i + ":00:00.0");
             rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
@@ -141,7 +140,7 @@ public class BasicPassUpdaterIT {
     /**
      * The behavior of PassUpdate's updateGrants() method is to compare the data coming in on the ResultSet with
      * the existing data in Pass, and create objects if Pass does not yet have them, and update them if they exist in Pass but
-     * there are differences in the fields for which COEUS is the authoritative source, or COEUS has a clue about other fields which are null
+     * there are differences in the fields for which the pull source is the authoritative source, or COEUS has a clue about other fields which are null
      * on the PASS object.
      *
      * @throws InterruptedException - the exception
@@ -149,9 +148,7 @@ public class BasicPassUpdaterIT {
     @Test
     public void updateGrantsIT() throws InterruptedException {
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
         passUpdater.updatePass(resultSet, "grant");
-        PassUpdateStatistics statistics = passUpdater.getStatistics();
 
         assertEquals(5, statistics.getPisAdded());
         assertEquals(5, statistics.getCoPisAdded());
@@ -184,9 +181,8 @@ public class BasicPassUpdaterIT {
         assertEquals(0, statistics.getUsersUpdated());
 
         //now let's monkey with a few things; we expect to update the changed objects
-        //first change all the things that shouldn't matter
         Map<String, String> rowMap = new HashMap<>();
-        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + 1 + "MOO");
+        rowMap.put(C_GRANT_AWARD_NUMBER, C_GRANT_AWARD_NUMBER + 1);
         rowMap.put(C_GRANT_AWARD_STATUS, "Active");
         rowMap.put(C_GRANT_LOCAL_KEY, C_GRANT_LOCAL_KEY + 1);
         rowMap.put(C_GRANT_PROJECT_NAME, C_GRANT_PROJECT_NAME + 1 + "MOO");
@@ -195,17 +191,17 @@ public class BasicPassUpdaterIT {
         rowMap.put(C_GRANT_END_DATE, "01/01/2002");
 
         rowMap.put(C_DIRECT_FUNDER_LOCAL_KEY, C_DIRECT_FUNDER_LOCAL_KEY + 1);
-        rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + 1 + "MOOOOO");
+        rowMap.put(C_DIRECT_FUNDER_NAME, C_DIRECT_FUNDER_NAME + 1 + "MOO");
         rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, C_PRIMARY_FUNDER_LOCAL_KEY + 1);
         rowMap.put(C_PRIMARY_FUNDER_NAME, C_PRIMARY_FUNDER_NAME + 1);
 
         rowMap.put(C_USER_FIRST_NAME, C_USER_FIRST_NAME + 1);
-        rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + 1 + "MOOOO");
-        rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + 1);
+        rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + 1 + "MOOO");
+        rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + 1 + "MOOOOO");
         rowMap.put(C_USER_EMAIL, C_USER_EMAIL + 1);
-        rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + 1);
+        //rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + 1);
         rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + 1);
-        rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + 1);
+        //rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + 1);
 
         rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
         rowMap.put(C_ABBREVIATED_ROLE, ("C"));
@@ -221,8 +217,7 @@ public class BasicPassUpdaterIT {
         assertEquals(0, statistics.getFundersCreated());
         assertEquals(1, statistics.getFundersUpdated());
         assertEquals(0, statistics.getGrantsCreated());
-        assertEquals(0, statistics.getGrantsUpdated());
-        assertEquals(0, statistics.getUsersCreated());
+        assertEquals(1, statistics.getGrantsUpdated());
         assertEquals(1, statistics.getUsersUpdated());
 
         sleep(20000);
@@ -231,12 +226,12 @@ public class BasicPassUpdaterIT {
             Grant grant = new Grant();
             grant.setAwardNumber(C_GRANT_AWARD_NUMBER + i);
             grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
-            String grantIdPrefix = "johnshopkins.edu:grant:";
+            String grantIdPrefix = DOMAIN + ":grant:";
             grant.setLocalKey(grantIdPrefix + C_GRANT_LOCAL_KEY + i);
             grant.setProjectName(C_GRANT_PROJECT_NAME + i);
-            grant.setAwardDate(DateTimeUtil.createJodaDateTime("01/01/2000"));
-            grant.setStartDate(DateTimeUtil.createJodaDateTime("01/01/2001"));
-            grant.setEndDate(DateTimeUtil.createJodaDateTime("01/01/2002"));
+            grant.setAwardDate(createJodaDateTime("01/01/2000"));
+            grant.setStartDate(createJodaDateTime("01/01/2001"));
+            grant.setEndDate(createJodaDateTime("01/01/2002"));
 
             URI passGrantUri = passClient.findByAttribute(Grant.class, "localKey", grant.getLocalKey());
             Grant passGrant = passClient.readResource(passGrantUri, Grant.class);
@@ -244,14 +239,20 @@ public class BasicPassUpdaterIT {
             assertEquals(grant.getAwardNumber(), passGrant.getAwardNumber());
             assertEquals(grant.getAwardStatus(), passGrant.getAwardStatus());
             assertEquals(grant.getLocalKey(), passGrant.getLocalKey());
-            assertEquals(grant.getProjectName(), passGrant.getProjectName());
-            assertEquals(grant.getAwardDate(), passGrant.getAwardDate());
-            assertEquals(grant.getStartDate(), passGrant.getStartDate());
+            if( i==1 ) {
+                assertEquals(grant.getProjectName() + "MOO", passGrant.getProjectName() );
+                assertEquals( createJodaDateTime("01/01/1999"), passGrant.getStartDate());
+                assertEquals( createJodaDateTime("01/01/1999"), passGrant.getStartDate());
+            } else {
+                assertEquals(grant.getProjectName(), passGrant.getProjectName());
+                assertEquals(grant.getAwardDate(), passGrant.getAwardDate());
+                assertEquals(grant.getStartDate(), passGrant.getStartDate());
+            }
             assertEquals(grant.getEndDate(), passGrant.getEndDate());
 
             //let's check funder stuff
             Funder directFunder = new Funder();
-            String funderIdPrefix = "johnshopkins.edu:funder:";
+            String funderIdPrefix = DOMAIN + ":funder:";
             directFunder.setLocalKey(funderIdPrefix + C_DIRECT_FUNDER_LOCAL_KEY + i);
             directFunder.setName(C_DIRECT_FUNDER_NAME + i);
             directFunder.setPolicy(funderPolicyUriMap.get("DirectFunderPolicy" + i));
@@ -259,7 +260,7 @@ public class BasicPassUpdaterIT {
             URI directFunderUri = passClient.findByAttribute(Funder.class, "localKey", directFunder.getLocalKey());
             Funder passDirectFunder = passClient.readResource(directFunderUri, Funder.class);
             if (i == 1) {
-                assertEquals(directFunder.getName() + "MOOOOO", passDirectFunder.getName());
+                assertEquals(directFunder.getName() + "MOO", passDirectFunder.getName());
                 assertEquals(directFunder.getLocalKey(), passDirectFunder.getLocalKey());
                 assertEquals(passDirectFunder.getId(), passGrant.getDirectFunder());
             } else {
@@ -280,11 +281,11 @@ public class BasicPassUpdaterIT {
 
             User user = new User();
 
-            //institutionalId and localKey were localized by the grant loader
+            //employeeId and localKey were localized by the grant loader
             user.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + i);
-            String hopkinsidPrefix = "johnshopkins.edu:hopkinsid:";
-            user.getLocatorIds().add(hopkinsidPrefix + C_USER_HOPKINS_ID + i);
-            user.getLocatorIds().add(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + i);
+            //String hopkinsidPrefix = DOMAIN + ":hopkinsid:";
+            //user.getLocatorIds().add(hopkinsidPrefix + C_USER_HOPKINS_ID + i);
+            //user.getLocatorIds().add(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + i);
             user.setFirstName(C_USER_FIRST_NAME + i);
             user.setMiddleName(C_USER_MIDDLE_NAME + i);
             user.setLastName(C_USER_LAST_NAME + i);
@@ -303,11 +304,13 @@ public class BasicPassUpdaterIT {
             User passUser = passClient.readResource(userUri, User.class);
             assertEquals(user.getFirstName(), passUser.getFirstName());
             if (i == 1) {
-                assertEquals(user.getMiddleName() + "MOOOO", passUser.getMiddleName());
+                assertEquals(user.getMiddleName() + "MOOO", passUser.getMiddleName());
+                assertEquals(user.getLastName() + "MOOOOO", passUser.getLastName());
             } else {
                 assertEquals(user.getMiddleName(), passUser.getMiddleName());
+                assertEquals(user.getLastName(), passUser.getLastName());
             }
-            assertEquals(user.getLastName(), passUser.getLastName());
+
             assertEquals(user.getEmail(), passUser.getEmail());
             assertTrue(user.getLocatorIds().containsAll(passUser.getLocatorIds()));
             assertTrue(passUser.getLocatorIds().containsAll(user.getLocatorIds()));
@@ -334,8 +337,6 @@ public class BasicPassUpdaterIT {
         user10.setMiddleName(C_USER_MIDDLE_NAME + 10);
         user10.setLastName(C_USER_LAST_NAME + 10);
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
-
         URI passUserURI = passUpdater.getPassClient().createResource(user10);
 
         User passUser = passClient.readResource(passUserURI, User.class);
@@ -354,16 +355,14 @@ public class BasicPassUpdaterIT {
             rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + i);
             rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + i);
             rowMap.put(C_USER_EMAIL, C_USER_EMAIL + i);
-            rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
             rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + i);
-            rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
+            //rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + 1 + ":00:00.0");
             userResultSet.add(rowMap);
         }
 
 
         passUpdater.updatePass(userResultSet, "user");
-        PassUpdateStatistics statistics = passUpdater.getStatistics();
 
         //now update from the set of two users - the second one is not in PASS, but is not created
         //the first (user10) should be updated, with new fields added
@@ -377,8 +376,6 @@ public class BasicPassUpdaterIT {
         assertNotNull(updatedUser.getDisplayName());
         assertNotNull(updatedUser.getLocatorIds());
         assertTrue(updatedUser.getLocatorIds().contains(employeeidPrefix + C_USER_EMPLOYEE_ID + 10));
-        assertTrue(updatedUser.getLocatorIds().contains(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + 10));
-
         assertEquals(C_USER_EMAIL + 10, updatedUser.getEmail());
     }
 
@@ -397,7 +394,6 @@ public class BasicPassUpdaterIT {
         policy2. setTitle("Policy Two");
         policy2. setDescription("Policy Two Description");
 
-        JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
         URI policy1Uri = passClient.createResource(policy1);
         URI policy2Uri = passClient.createResource(policy2);
 
@@ -405,7 +401,7 @@ public class BasicPassUpdaterIT {
         assertNotNull(passClient.readResource(policy2Uri, Policy.class));
 
         Funder funder1 = new Funder();
-        String DOMAIN = "johnshopkins.edu";
+        String DOMAIN = "default.domain";
         String fullLocalKey = new Identifier(DOMAIN, "funder", "22229999").serialize();
         funder1.setLocalKey(fullLocalKey);
         funder1.setName("Funder One");
@@ -531,35 +527,6 @@ public class BasicPassUpdaterIT {
         }
 
         assertEquals(resultSet, input);
-    }
-
-    @Test
-    public void testCreateAndUpdateGrantsWithSeveralDates() {
-        String firstAwardDate="01/01/2000";
-        String secondAwardDate="06/01/2002";
-        String thirdAwardDate="08/15/2004";
-
-        String[] awardDates = { firstAwardDate, secondAwardDate, thirdAwardDate };
-
-        String firstStartDate="01/01/2001";
-        String secondStartDate="01/01/2003";
-        String thirdStartDate="01/01/2005";
-
-        String[] startDates= { firstStartDate, secondStartDate, thirdStartDate};
-
-        String firstEndDate="12/31/2001";
-        String secondEndDate="12/31/2004";
-        String thirdEndDate="12/31/2007";
-
-        String[] endDates = { firstEndDate, secondEndDate, thirdEndDate };
-
-        String firstAwardNumber="777979";
-        String secondAwardNumber="77111111";
-        String thirdAwardNumber="109111111";
-
-        String[] awardNumbers= {firstAwardNumber, secondAwardNumber, thirdAwardNumber };
-
-        String grantNumber = "M00-8675309";
     }
 
 }

@@ -19,7 +19,6 @@ package org.dataconservancy.pass.grant.integration;
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
 import org.dataconservancy.pass.grant.data.*;
-import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
@@ -128,7 +127,7 @@ public class HarvardPilotPassUpdaterIT {
         assertEquals( grantProjectName[0], passGrant.getProjectName() );
         assertEquals( createJodaDateTime(grantStartDate[0]), passGrant.getStartDate() );
         assertEquals( createJodaDateTime(grantEndDate[0]), passGrant.getEndDate() );
-        assertEquals( passUser0Uri, passGrant.getPi() ); //Reckondwith
+        assertEquals( passUser0Uri, passGrant.getPi() ); //Pblic
         assertEquals( 1, passGrant.getCoPis().size() );
         assertEquals( passUser1Uri, passGrant.getCoPis().get(0));
 
@@ -139,8 +138,8 @@ public class HarvardPilotPassUpdaterIT {
         assertEquals(1, statistics.getCoPisAdded());
 
         //now simulate an incremental pull since the initial,  adjust the stored grant
-        //we add a new co-pi Jones in the "1" iteration, and change the pi to Einstein in the "2" iteration
-        //we drop co-pi jones in the last iteration
+        //we add a new co-pi Squirrel in the "1" iteration, and change the pi to Einstein in the "2" iteration
+        //we drop co-pi Squirrel in the last iteration
 
         Map<String, String> piRecord1 = makeRowMap(1, 0, "P");
         Map<String, String> coPiRecord1 = makeRowMap(1, 1, "C");
@@ -167,12 +166,11 @@ public class HarvardPilotPassUpdaterIT {
         assertEquals( grantIdPrefix + grantLocalKey[1], passGrant.getLocalKey() );//earliest of the additions
         assertEquals( grantProjectName[1], passGrant.getProjectName() );//earliest of the additions
         assertEquals( createJodaDateTime(grantStartDate[1]), passGrant.getStartDate() );//earliest of the additions
-        assertEquals( createJodaDateTime(grantEndDate[2]), passGrant.getEndDate() );//latest of the additions
-        assertEquals( passUser1Uri, passGrant.getPi() );//Class
-        assertEquals( 3, passGrant.getCoPis().size() );
-        assertTrue( passGrant.getCoPis().contains(passUser0Uri) );//Public
-         assertTrue( passGrant.getCoPis().contains(passUser1Uri) );//Sinister
-        assertTrue( passGrant.getCoPis().contains(passUser2Uri) );//Squirrel
+        assertEquals( createJodaDateTime(grantEndDate[1]), passGrant.getEndDate() );//earliest of the additions
+        assertEquals( passUser0Uri, passGrant.getPi() );//first one in the pull
+        assertEquals( 2, passGrant.getCoPis().size() );
+        assertTrue( passGrant.getCoPis().contains(passUser1Uri) );//Public
+        assertTrue( passGrant.getCoPis().contains(passUser2Uri) );//Sinister
     }
 
     /**
