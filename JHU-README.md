@@ -103,7 +103,7 @@ will therefore look like this:
 
 `8675309:policies/e7/3f/26/70/e73f2670-6ef6-4201-bbcd-04631a93d852`
 
-The `policy.proerties` file will have to be kept up to date if additional funders are assigned policies. A different 
+The `policy.properties` file will have to be kept up to date if additional funders are assigned policies. A different 
 mechanism will be needed to add additional policies, as we require the policies reference in the properties file to be 
 already present in the system.
 
