@@ -22,7 +22,7 @@ import org.dataconservancy.pass.grant.data.*;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
-import org.junit.Before;;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -51,7 +51,7 @@ public class HarvardPilotPassUpdaterIT {
     String[] grantStartDate = { "07/01/2000", "07/01/2002", "07/01/2004" };
     String[] grantEndDate = { "06/30/2002", "06/30/2004", "06/30/2006"};
  //   String[] grantUpdateTimestamp = { "2006-03-11 00:00:00.0","2010-04-05 00:00:00.0", "2015-11-11 00:00:00.0" };
-    String[] userEmployeeId= { "jpubli1@harvard.edu", "ssinis11@harvard.edu", "rsquir1@harvard.edu"};
+    String[] userEmployeeId= { "A0000001", "A0000002", "A0000003"};
     String[] userFirstName = {"John", "Simon", "Rocket"};
     String[] userLastName = { "Public", "Sinister", "Squirrel" };
     String[] userEmail = { "jpubli1@harvard.edu", "ssinis11@harvard.edu", "rsquir1@harvard.edu" };
@@ -60,7 +60,7 @@ public class HarvardPilotPassUpdaterIT {
     String directFunderPolicyUriString;
 
     String grantIdPrefix = "harvard.edu:grant:";
-    String employeeidPrefix = "harvard.edu:employeeid:";
+    String institutionalIdPrefix = "harvard.edu:jhed:";
 
 
 
@@ -93,8 +93,11 @@ public class HarvardPilotPassUpdaterIT {
     /**
      * The behavior of PassUpdate's updatePass() method is to compare the data coming in on the ResultSet with
      * the existing data in Pass, and create objects if Pass does not yet have them, and update them if they exist in Pass but
-     * there are differences in the fields for which COEUS is the authoritative source, or COEUS has a clue about other fields which are null
+     * there are differences in the fields for whichthe pull is the authoritative source, or else has a clue about other fields which are null
      * on the PASS object.
+     *
+     * For the Harvard Pilot, we use the user name on the email address to stand for the user's eppn fpr the purposes of populating that
+     * locator id field
      *
      * @throws InterruptedException - the exception
      */
@@ -112,11 +115,11 @@ public class HarvardPilotPassUpdaterIT {
 
         passUpdater.updatePass(resultSet, "grant");
         sleep(10000);
-        URI passUser0Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[0] );
+        URI passUser0Uri = passClient.findByAttribute(User.class, "locatorIds", institutionalIdPrefix + userEmail[0].split("@")[0] );
         assertNotNull( passUser0Uri );
         URI passGrantUri = passClient.findByAttribute(Grant.class, "localKey", grantIdPrefix + grantLocalKey[2]);
         assertNotNull( passGrantUri );
-        URI passUser1Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[1] );
+        URI passUser1Uri = passClient.findByAttribute(User.class, "locatorIds", institutionalIdPrefix + userEmail[1].split("@")[0] );
         assertNotNull( passUser1Uri );
 
         Grant passGrant = passClient.readResource( passGrantUri, Grant.class );
@@ -154,11 +157,11 @@ public class HarvardPilotPassUpdaterIT {
         resultSet.add(piRecord2);
 
         passUpdater.updatePass(resultSet, "grant");
-        sleep(10000);
+        sleep(12000);
 
         passGrant = passClient.readResource( passGrantUri, Grant.class );
 
-        URI passUser2Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[2] );
+        URI passUser2Uri = passClient.findByAttribute(User.class, "locatorIds", institutionalIdPrefix + userEmail[2].split("@")[0] );
         assertNotNull( passUser2Uri );
 
         assertEquals( grantAwardNumber[1], passGrant.getAwardNumber() );//earliest of the additions
@@ -178,7 +181,7 @@ public class HarvardPilotPassUpdaterIT {
      * @param iteration the iteration of the (multi-award) grant
      * @param user the user supplied in the record
      * @param abbrRole the role: Pi ("P") or co-pi (C" or "K")
-     * @return
+     * @return the row map for the pull record
      */
     private Map<String, String> makeRowMap( int iteration, int user, String abbrRole) {
         Map<String, String> rowMap = new HashMap<>();
@@ -196,7 +199,7 @@ public class HarvardPilotPassUpdaterIT {
 
         rowMap.put(C_USER_FIRST_NAME, userFirstName[user]);
         rowMap.put(C_USER_LAST_NAME, userLastName[user]);
-        rowMap.put(C_USER_EMAIL, userEmail[user]);;
+        rowMap.put(C_USER_EMAIL, userEmail[user]);
         rowMap.put(C_USER_EMPLOYEE_ID, userEmployeeId[user]);
 
         rowMap.put(C_ABBREVIATED_ROLE, abbrRole);

@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
 /**
- * This implementation of the Grant Connector interface processes date given to us in an Excel spreadsheet. We take in the information to produce
- * an intermediate date object which is compatible with our PASS data loading setup.
+ * This implementation of the Grant Connector interface processes data given to us in an Excel spreadsheet. We take in the information to produce
+ * an intermediate data object which is compatible with our PASS data loading setup.
  *
  * @author jrm
  */
@@ -111,7 +111,8 @@ public class HarvardPilotConnector implements GrantConnector {
                     LOG.debug("Processing grant record  ...");
 
                     //we only process rows with a Harvard ID
-                    String employeeId = stringify(cells.getCell(7)); //we use email as employee id
+                    String employeeId = stringify(cells.getCell(6));
+                    //String email = stringify(cells.getCell(7));
 
                     if(employeeId != null && employeeId.length()>0)  {
                         Map<String, String> rowMap = new HashMap<>();
@@ -125,7 +126,7 @@ public class HarvardPilotConnector implements GrantConnector {
                         String role = stringify(cells.getCell(5)); //F: Role
                         rowMap.put(C_ABBREVIATED_ROLE, sortRole(role));
 
-                        rowMap.put(C_USER_EMPLOYEE_ID, employeeId); //row G used to be Harvard id, is missing now
+                        rowMap.put(C_USER_EMPLOYEE_ID, stringify(cells.getCell(6))); //row G used to be Harvard id, we hack it for now
                         rowMap.put(C_USER_EMAIL, stringify(cells.getCell(7))); //H: PI Email
 
                         String funderLocalKey = stringify(cells.getCell(8)); //I: Funder ID

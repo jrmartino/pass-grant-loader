@@ -61,7 +61,6 @@ public class BasicPassUpdaterIT {
     private final List<Map<String, String>> resultSet = new ArrayList<>();
     private static final String DOMAIN = "default.domain";
     private static final String employeeidPrefix = DOMAIN + ":employeeid:";
-    private static final String jhedPrefix = DOMAIN + ":jhed:";
     private final CoeusPassEntityUtil passEntityUtil = new CoeusPassEntityUtil();
     private final Map<String, URI> funderPolicyUriMap = new HashMap<>();
 
@@ -123,9 +122,7 @@ public class BasicPassUpdaterIT {
             rowMap.put(C_USER_MIDDLE_NAME, C_USER_MIDDLE_NAME + i);
             rowMap.put(C_USER_LAST_NAME, C_USER_LAST_NAME + i);
             rowMap.put(C_USER_EMAIL, C_USER_EMAIL + i);
-            //rowMap.put(C_USER_INSTITUTIONAL_ID, C_USER_INSTITUTIONAL_ID + i);
             rowMap.put(C_USER_EMPLOYEE_ID, C_USER_EMPLOYEE_ID + i);
-            //rowMap.put(C_USER_HOPKINS_ID, C_USER_HOPKINS_ID + i);
 
             rowMap.put(C_UPDATE_TIMESTAMP, "2018-01-01 0" + i + ":00:00.0");
             rowMap.put(C_ABBREVIATED_ROLE, (i % 2 == 0 ? "P" : "C"));
@@ -283,9 +280,6 @@ public class BasicPassUpdaterIT {
 
             //employeeId and localKey were localized by the grant loader
             user.getLocatorIds().add(employeeidPrefix + C_USER_EMPLOYEE_ID + i);
-            //String hopkinsidPrefix = DOMAIN + ":hopkinsid:";
-            //user.getLocatorIds().add(hopkinsidPrefix + C_USER_HOPKINS_ID + i);
-            //user.getLocatorIds().add(jhedPrefix + C_USER_INSTITUTIONAL_ID.toLowerCase() + i);
             user.setFirstName(C_USER_FIRST_NAME + i);
             user.setMiddleName(C_USER_MIDDLE_NAME + i);
             user.setLastName(C_USER_LAST_NAME + i);

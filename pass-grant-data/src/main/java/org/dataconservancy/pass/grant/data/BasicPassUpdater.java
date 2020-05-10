@@ -49,23 +49,23 @@ public class BasicPassUpdater implements PassUpdater{
 
     private String DOMAIN = "default.domain";
 
-    private static Logger LOG = LoggerFactory.getLogger(DefaultPassUpdater.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultPassUpdater.class);
     private String latestUpdateString = "";
 
-    private PassClient passClient;
-    private PassUpdateStatistics statistics = new PassUpdateStatistics();
-    private PassEntityUtil passEntityUtil;
+    private final PassClient passClient;
+    private final PassUpdateStatistics statistics = new PassUpdateStatistics();
+    private final PassEntityUtil passEntityUtil;
 
     //used in test classes
-    private Map<URI, Grant> grantUriMap = new HashMap<>();
+    private final Map<URI, Grant> grantUriMap = new HashMap<>();
 
     //used in unit test
     //some entities may be referenced many times during an update, but just need to be updated the first time
     //they are encountered. these include Users and Funders. we save the overhead of redundant updates
     //of these by looking them up here; if they are on the Map, they have already been processed
     //
-    private Map<String, URI> funderMap = new HashMap<>();
-    private Map<String, URI> userMap = new HashMap<>();
+    private final Map<String, URI> funderMap = new HashMap<>();
+    private final Map<String, URI> userMap = new HashMap<>();
 
     private String mode;
 
@@ -399,7 +399,7 @@ public class BasicPassUpdater implements PassUpdater{
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
         //last attempt is the JHED ID. this order is specified by the order of the List as constructed on updatedUser
         URI passUserUri = null;
-        ListIterator idIterator = systemUser.getLocatorIds().listIterator();
+        ListIterator<String> idIterator = systemUser.getLocatorIds().listIterator();
 
         while (passUserUri == null && idIterator.hasNext()) {
             String id = String.valueOf(idIterator.next());
@@ -521,7 +521,7 @@ public class BasicPassUpdater implements PassUpdater{
     //used in unit test
     Map<String, URI> getUserMap() { return userMap; }
 
-    void setDomain(String domain) {
+    public void setDomain(String domain) {
         this.DOMAIN = domain;
     }
 

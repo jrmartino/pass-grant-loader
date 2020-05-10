@@ -13,17 +13,18 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.C_USER_INSTITU
 
 public class JhuPassInitUpdater extends DefaultPassUpdater {
 
-    private static Logger LOG = LoggerFactory.getLogger(JhuPassInitUpdater.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JhuPassInitUpdater.class);
+    private static final String DOMAIN = "johnshopkins.edu";
 
     public JhuPassInitUpdater(PassClient passClient)
     {
         super(new CoeusPassInitEntityUtil(), passClient);
-        super.setDomain("johnshopkins.edu");
+        super.setDomain(DOMAIN);
     }
 
     public JhuPassInitUpdater() {
         super(new CoeusPassInitEntityUtil());
-        super.setDomain("johnshopkins.edu");
+        super.setDomain(DOMAIN);
     }
 
     @Override
@@ -46,7 +47,6 @@ public class JhuPassInitUpdater extends DefaultPassUpdater {
             jhedId = rowMap.get(C_USER_INSTITUTIONAL_ID).toLowerCase();
         }
         //Build the List of locatorIds - put the most reliable ids first
-        String DOMAIN = "johnshopkins.edu";
         if (employeeId != null) {
             String EMPLOYEE_ID_TYPE = "employeeid";
             user.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, employeeId).serialize());

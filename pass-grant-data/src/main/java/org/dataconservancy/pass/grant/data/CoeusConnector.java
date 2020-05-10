@@ -29,8 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
@@ -41,7 +39,7 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
  * @author jrm@jhu.edu
  */
 public class CoeusConnector implements GrantConnector {
-    private static Logger LOG = LoggerFactory.getLogger(CoeusConnector.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CoeusConnector.class);
     //property names
     private static final String COEUS_URL = "coeus.url";
     private static final String COEUS_USER = "coeus.user";
@@ -51,7 +49,7 @@ public class CoeusConnector implements GrantConnector {
     private String coeusUser;
     private String coeusPassword;
 
-    private Properties funderPolicyProperties;
+    private final Properties funderPolicyProperties;
 
     private DirectoryServiceUtil directoryServiceUtil;
 

@@ -97,7 +97,7 @@ public class JhuPassInitUpdaterIT {
      * interesting fields are the investigator fields: all CO-PIs ever on the grant should stay on the
      * co-pi field throughout iterations. If a PI is changed, they should appear on the CO-PI field
      *
-     * @throws InterruptedException
+     * @throws InterruptedException from joda data time creation
      */
     @Test
     public void  processInitGrantIT() throws InterruptedException {
@@ -179,7 +179,7 @@ public class JhuPassInitUpdaterIT {
      * @param iteration the iteration of the (multi-award) grant
      * @param user the user supplied in the record
      * @param abbrRole the role: Pi ("P") or co-pi (C" or "K")
-     * @return
+     * @return the row map for the record
      */
     private Map<String, String> makeRowMap( int iteration, int user, String abbrRole) {
         Map<String, String> rowMap = new HashMap<>();

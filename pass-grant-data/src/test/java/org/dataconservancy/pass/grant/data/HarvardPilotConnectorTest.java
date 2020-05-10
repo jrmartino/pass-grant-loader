@@ -101,17 +101,17 @@ public class HarvardPilotConnectorTest {
                 "C",
                 "P"
         };
- /*       String[] harvardIds = {"86753091",
-                "86753092",
-                "86753093",
-                "86753094",
-                "86753095",
+        String[] harvardIds = {"wdrumstick",
+                "gflanksteak",
+                "ddbrisket",
+                "abacon",
+                "efarmer",
                 "",
-                "86753097",
-                "86753098",
-                "86753099"
-        };  commented out because we aren't using these (yet) - emails instead*/
-        String[] harvardIds = {"wdrumstick@harvard.edu",
+                "csteer",
+                "dbovine",
+                "bcow"
+        };
+   /*     String[] harvardIds = {"wdrumstick@harvard.edu",
                 "gflanksteak@harvard.edu",
                 "ddbrisket@harvard.edu",
                 "abacon@harvard.edu",
@@ -120,7 +120,7 @@ public class HarvardPilotConnectorTest {
                 "csteer@harvard.edu",
                 "dbovine@harvard.edu",
                 "bcow@harvard.edu"
-        };
+        }; */
         String[] emails = {"wdrumstick@harvard.edu",
                 "gflanksteak@harvard.edu",
                 "ddbrisket@harvard.edu",

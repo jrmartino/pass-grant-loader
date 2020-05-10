@@ -76,8 +76,8 @@ class DirectoryServiceUtil {
         EMPLOYEE2HOPKINS("EmployeeID_to_HopkinsID", "employeeid"),
         HOPKINS2EMPLOYEE("HopkinsID_to_EmployeeID", "hopkinsid");
 
-        private String serviceUrlEnding;
-        private String queryParameter;
+        private final String serviceUrlEnding;
+        private final String queryParameter;
 
         Type(String serviceUrlEnding, String queryParameter) {
             this.serviceUrlEnding = serviceUrlEnding;

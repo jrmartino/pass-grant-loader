@@ -28,10 +28,8 @@ import java.util.stream.Collectors;
 /**
  * A utility class for handling Grants, Users or Funders. One function performed is comparison of two instances of
  * these PASS entity classes. These comparisons are reduced to only those fields which are updatable by
- * data from the Harvard data, so that two objects are considered "Harvard equal" iff they agree on these fields.
- *
- * Another function performed by this utility class is to construct an updated version of an instance of one of these classes
- * by merging a (possibly) existing Pass object with new information obtained from a Harvard data pull.
+ * data from the source pull. Stored objects are evaluated and updated according to the PassEntityUtil implementation
+ * supplied to this updater
  *
  * @author jrm@jhu.edu
  */
@@ -40,7 +38,7 @@ public class BasicPassEntityUtil implements PassEntityUtil{
 
 
     /**
-     *  This method takes a Harvard Funder, calculates whether it needs to be updated, and if so, returns the updated object
+     *  This method takes a Funder, calculates whether it needs to be updated, and if so, returns the updated object
      *  to be be ingested into the repository. if not, returns null.
      * @param stored the Funder as it is stored in the PASS backend
      * @param system the version of the Funder from the Harvard pull
@@ -54,10 +52,10 @@ public class BasicPassEntityUtil implements PassEntityUtil{
     }
 
     /**
-     *  This method takes a Harvard User, calculates whether it needs to be updated, and if so, returns the updated object
+     *  This method takes a User, calculates whether it needs to be updated, and if so, returns the updated object
      *  to be be ingested into the repository. if not, returns null.
      * @param stored the User as it is stored in the PASS backend
-     * @param system the version of the user from the Harvard pull
+     * @param system the version of the user from the pull
      * @return the updated User - null if the User does not need to be updated
      */
     public User update(User system, User stored) {
@@ -71,7 +69,7 @@ public class BasicPassEntityUtil implements PassEntityUtil{
      *  This method takes a Harvard Grant, calculates whether it needs to be updated, and if so, returns the updated object
      *  to be be ingested into the repository. if not, returns null.
      * @param stored the Grant as it is stored in the PASS backend
-     * @param system the version of the Grant from the Harvard pull
+     * @param system the version of the Grant from the pull
      * @return the updated object - null if the Grant does not need to be updated
      */
     public Grant update(Grant system, Grant stored) {
@@ -84,9 +82,10 @@ public class BasicPassEntityUtil implements PassEntityUtil{
     /**
      * Compare two Funder objects
      *
-     * @param system the version of the Funder as seen in the Harvard system pull
+     * @param system the version of the Funder as seen in the system pull
      * @param stored the version of the Funder as read from Pass
-     * @return a boolean which asserts whether the two supplied Funders are "Harvard equal"
+     * @return a boolean which asserts whether the pulled object contains information which can
+     * update the stored object
      */
     private boolean funderNeedsUpdate(Funder system, Funder stored) {
 
@@ -98,11 +97,11 @@ public class BasicPassEntityUtil implements PassEntityUtil{
     }
 
     /**
-     * Update a Pass Funder object with new information from Harvard
+     * Update a Pass Funder object with new information from a system pull
      *
-     * @param system the version of the Funder as seen in the Harvard system pull
+     * @param system the version of the Funder as seen in the  system pull
      * @param stored the version of the Funder as read from Pass
-     * @return the Funder object which represents the Pass object, with any new information from Harvard merged in
+     * @return the Funder object which represents the Pass object, with any new information from the pull merged in
      */
     private Funder updateFunder (Funder system, Funder stored) {
         stored.setLocalKey(system.getLocalKey());
@@ -113,11 +112,11 @@ public class BasicPassEntityUtil implements PassEntityUtil{
 
     /**
      * Compare two User objects. We only care about those fields for which  is the authoritative source
-     * After recent changes. this method would be more accurately named "storedUserDoesNotNeedToBeUpdated"
+     * After recent changes.
      *
      * @param system the version of the User as seen in the Harvard system pull
      * @param stored the version of the User as read from Pass
-     * @return a boolean which asserts whether the two supplied Users are "Harvard equal"
+     * @return a boolean which asserts whether the stored object needs updating
      */
     private  boolean userNeedsUpdate(User system, User stored) {
         if (system.getFirstName() != null ? !system.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return true;
@@ -135,9 +134,9 @@ public class BasicPassEntityUtil implements PassEntityUtil{
      * the localKey, which this application and Shibboleth both rely on; and  email, which this application only populates
      * if Shib hasn't done so already.
      *
-     * @param system the version of the User as seen in the Harvard system pull
+     * @param system the version of the User as seen in the system pull
      * @param stored the version of the User as read from Pass
-     * @return the User object which represents the Pass object, with any new information from Harvard merged in
+     * @return the User object which represents the Pass object, with any new information merged in
      */
     private User updateUser (User system, User stored) {
         stored.setFirstName(system.getFirstName());
@@ -156,7 +155,7 @@ public class BasicPassEntityUtil implements PassEntityUtil{
      * Compare two Grant objects. Note that the Lists of Co-Pis are compared as Sets
      * @param system the version of the Grant as seen in the system pull
      * @param stored the version of the Grant as read from Pass
-     * @return a boolean which asserts whether the two supplied Grants are "Harvard equal"
+     * @return a boolean which asserts whether the stored ubject needs updating
      */
     private boolean grantNeedsUpdate(Grant system, Grant stored) {
         if (system.getAwardNumber() != null ? !system.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return true;
@@ -176,7 +175,7 @@ public class BasicPassEntityUtil implements PassEntityUtil{
      *
      * @param system the version of the Grant as seen in the system pull
      * @param stored the version of the Grant as read from Pass
-     * @return the Grant object which represents the Pass object, with any new information from Harvard merged in
+     * @return the Grant object which represents the Pass object, with any new information  merged in
      */
     private Grant updateGrant(Grant system, Grant stored) {
         stored.setAwardNumber(system.getAwardNumber());

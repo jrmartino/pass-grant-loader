@@ -46,20 +46,20 @@ public class DefaultPassUpdater implements PassUpdater{
 
     private String DOMAIN = "default.domain";
 
-    private static Logger LOG = LoggerFactory.getLogger(DefaultPassUpdater.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultPassUpdater.class);
     private String latestUpdateString = "";
 
-    private PassClient passClient;
-    private PassUpdateStatistics statistics = new PassUpdateStatistics();
-    private PassEntityUtil passEntityUtil;
+    private final PassClient passClient;
+    private final PassUpdateStatistics statistics = new PassUpdateStatistics();
+    private final PassEntityUtil passEntityUtil;
 
-    private Map<URI, Grant> grantUriMap = new HashMap<>();
+    private final Map<URI, Grant> grantUriMap = new HashMap<>();
 
     //some entities may be referenced many times during an update, but just need to be updated the first time
     //they are encountered. these include Users and Funders. we save the overhead of redundant updates
     //of these by looking them up here; if they are on the Map, they have already been processed
-    private Map<String, URI> funderMap = new HashMap<>();
-    private Map<String, URI> userMap = new HashMap<>();
+    private final Map<String, URI> funderMap = new HashMap<>();
+    private final Map<String, URI> userMap = new HashMap<>();
 
     private String mode;
 
@@ -176,11 +176,11 @@ public class DefaultPassUpdater implements PassUpdater{
             DateTime startDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_START_DATE, null));
             DateTime endDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_END_DATE, null));
 
-            //set values that should match earliest iteration of the grant
-            //these are used only for the initial grant load
-            //we test for both award date and start date in case one is missing - belt and suspenders
-            if (startDate != null && (grant.getStartDate() == null || startDate.isBefore(grant.getStartDate())) ||
-                    awardDate != null && (grant.getAwardDate() == null || awardDate.isBefore(grant.getAwardDate()))) {
+            //set values that should match earliest iteration of the grant. we wet these on the system record
+            //in case they are needed to update a stored grant record.
+            //these values will not override existing stored values unless the PassEntityUtil implementation
+            //allows it.
+            if (startDate != null && (grant.getStartDate() == null || startDate.isBefore(grant.getStartDate()))) {
                 grant.setAwardDate(awardDate);
                 grant.setProjectName(rowMap.get(C_GRANT_PROJECT_NAME));
                 grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
@@ -416,7 +416,7 @@ public class DefaultPassUpdater implements PassUpdater{
         //we first check to see if the user is known by the Hopkins ID. If not, we check the employee ID.
         //last attempt is the JHED ID. this order is specified by the order of the List as constructed on updatedUser
         URI passUserUri = null;
-        ListIterator idIterator = systemUser.getLocatorIds().listIterator();
+        ListIterator<String> idIterator = systemUser.getLocatorIds().listIterator();
 
         while (passUserUri == null && idIterator.hasNext()) {
             String id = String.valueOf(idIterator.next());
@@ -518,7 +518,6 @@ public class DefaultPassUpdater implements PassUpdater{
     public PassUpdateStatistics getStatistics() {
         return statistics;
     }
-
 
     public Map<URI, Grant> getGrantUriMap() {
         return grantUriMap;

@@ -23,7 +23,7 @@ import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.Policy;
 import org.dataconservancy.pass.model.User;
-import org.junit.Before;;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.net.URI;
@@ -97,7 +97,7 @@ public class JhuPassUpdaterIT {
      * interesting fields are the investigator fields: all CO-PIs ever on the grant should stay on the
      * co-pi field throughout iterations. If a PI is changed, they should appear on the CO-PI field
      *
-     * @throws InterruptedException
+     * @throws InterruptedException from joda date time creation
      */
     @Test
     public void  processGrantIT() throws InterruptedException {
@@ -180,7 +180,7 @@ public class JhuPassUpdaterIT {
      * @param iteration the iteration of the (multi-award) grant
      * @param user the user supplied in the record
      * @param abbrRole the role: Pi ("P") or co-pi (C" or "K")
-     * @return
+     * @return row map for pull record
      */
     private Map<String, String> makeRowMap( int iteration, int user, String abbrRole) {
         Map<String, String> rowMap = new HashMap<>();
