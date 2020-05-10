@@ -6,6 +6,10 @@ import org.dataconservancy.pass.model.Grant;
 import java.net.URI;
 import java.util.HashSet;
 
+/**
+ * This subclass is for the special case where we need to correct information on existing PASS objects for which we
+ * normally consider the PASS information to be authoritative.
+ */
 public class CoeusPassInitEntityUtil extends CoeusPassEntityUtil {
 
     @Override
@@ -66,10 +70,7 @@ public class CoeusPassInitEntityUtil extends CoeusPassEntityUtil {
                 system.getCoPis().add ( storedPi );
             }
         }
-
-        if (system.getCoPis().contains(system.getPi())) {
-            system.getCoPis().remove(system.getPi());
-        }
+        system.getCoPis().remove(system.getPi());
 
         stored.setPi( system.getPi() );
         stored.setCoPis( system.getCoPis() );

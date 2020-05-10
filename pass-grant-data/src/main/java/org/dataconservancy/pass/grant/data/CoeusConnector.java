@@ -307,7 +307,7 @@ public class CoeusConnector implements GrantConnector {
     }
 
     private String buildUserQueryString(String startDate) {
-        String viewFields [] = {
+        String[] viewFields = {
                 C_USER_FIRST_NAME,
                 C_USER_MIDDLE_NAME,
                 C_USER_LAST_NAME,
@@ -333,7 +333,7 @@ public class CoeusConnector implements GrantConnector {
 
     private String buildFunderQueryString() {
 
-        String viewFields [] = {//doesn't matter whether the funder is primary or direct - these are the column names in the SWIFT_SPONSOR view
+        String[] viewFields = {//doesn't matter whether the funder is primary or direct - these are the column names in the SWIFT_SPONSOR view
                 C_PRIMARY_FUNDER_NAME,
                 C_PRIMARY_FUNDER_LOCAL_KEY };
 

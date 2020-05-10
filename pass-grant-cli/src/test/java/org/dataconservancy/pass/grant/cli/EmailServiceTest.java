@@ -19,7 +19,6 @@ package org.dataconservancy.pass.grant.cli;
 import com.icegreen.greenmail.util.GreenMail;
 import com.icegreen.greenmail.util.ServerSetupTest;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,13 +27,16 @@ import javax.mail.internet.MimeMessage;
 import java.io.IOException;
 import java.util.Properties;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Test classs for email service
  * @author jrm@jhu.edu
  */
 public class EmailServiceTest {
 
-    private Properties mailProperties = System.getProperties();
+    private final Properties mailProperties = System.getProperties();
     private EmailService underTest;
     private GreenMail testServer;
 
@@ -63,7 +65,7 @@ public class EmailServiceTest {
 
         if (!started) {
             // try one more time
-            Thread.sleep(5000l);
+            Thread.sleep(5000L);
             testServer.start();
         }
 
@@ -80,14 +82,14 @@ public class EmailServiceTest {
         String messageSubject = "TEST";
         underTest.sendEmailMessage(messageSubject, messageBody);
         // Check that only one message was sent
-        Integer numMessages = testServer.getReceivedMessages().length;
-        Assert.assertTrue("Expected only one message, got " + numMessages, numMessages == 1);
+        int numMessages = testServer.getReceivedMessages().length;
+        assertEquals("Expected only one message, got " + numMessages, 1, numMessages);
 
         // Check that the message is just a plaintext message
         MimeMessage message = testServer.getReceivedMessages()[0];
-        Assert.assertTrue("Subject of message was not correct", message.getSubject().equals(messageSubject));
-        Assert.assertTrue("Content of message was not a string as expected", message.getContent() instanceof String);
-        Assert.assertTrue(message.getContent().toString().contains(messageBody));
+        assertEquals("Subject of message was not correct", message.getSubject(), messageSubject);
+        assertTrue("Content of message was not a string as expected", message.getContent() instanceof String);
+        assertTrue(message.getContent().toString().contains(messageBody));
     }
 
     @After

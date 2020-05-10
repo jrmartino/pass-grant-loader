@@ -31,6 +31,10 @@ import java.util.stream.Collectors;
  * data from the source pull. Stored objects are evaluated and updated according to the PassEntityUtil implementation
  * supplied to this updater
  *
+ *
+ * This basic implementation deals with a smallish set of fields - other implementations will have to address more
+ * fields if they are to be stored on PASS objects.
+ *
  * @author jrm@jhu.edu
  */
 

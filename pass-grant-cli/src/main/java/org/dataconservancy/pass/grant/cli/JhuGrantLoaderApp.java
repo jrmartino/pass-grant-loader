@@ -15,14 +15,13 @@
  */
 
 package org.dataconservancy.pass.grant.cli;
-
 import org.dataconservancy.pass.grant.data.*;
 
 import java.util.Properties;
 
 class JhuGrantLoaderApp extends BaseGrantLoaderApp {
 
-    boolean init = false;
+    boolean init;
 
     JhuGrantLoaderApp(String startDate, String awardEndDate, boolean email, String mode, String action, String dataFileName, boolean init) {
         super(startDate, awardEndDate, email, mode, action, dataFileName);

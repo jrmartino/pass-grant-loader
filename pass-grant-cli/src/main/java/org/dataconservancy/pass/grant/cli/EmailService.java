@@ -31,12 +31,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An email service for reporting errors or results of running the {@code CoeusGrantLoaderApp}
+ * An email service for reporting errors or results of running a GrantLoaderApp
  * @author jrm@jhu.edu
  */
 class EmailService {
-    private static Logger LOG = LoggerFactory.getLogger(EmailService.class);
-    private Properties mailProperties;
+    private static final Logger LOG = LoggerFactory.getLogger(EmailService.class);
+    private final Properties mailProperties;
 
     /**
      * The constructor

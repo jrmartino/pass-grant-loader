@@ -49,7 +49,7 @@ public class HarvardPilotConnector implements GrantConnector {
     protected static final String HARVARD_DATA_FILE_PATH_PROPERTY = "harvard.data.file.path";
 
     private String xlsxDataFilePath;
-    private Properties funderPolicyProperties;
+    private final Properties funderPolicyProperties;
 
     private static final Logger LOG = LoggerFactory.getLogger(HarvardPilotConnector.class);
 
@@ -99,7 +99,7 @@ public class HarvardPilotConnector implements GrantConnector {
                 Map<String, String> rowMap = new HashMap<>();
                 rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, localKey.toString());
                 rowMap.put(C_PRIMARY_FUNDER_NAME, funderNameMap.get(localKey.toString()));
-                if (funderPolicyProperties.keySet().contains(localKey)) {
+                if (funderPolicyProperties.containsKey(localKey)) {
                     rowMap.put(C_PRIMARY_FUNDER_POLICY, funderPolicyProperties.getProperty(localKey.toString()));
                 }
                 resultSet.add(rowMap);
@@ -157,7 +157,7 @@ public class HarvardPilotConnector implements GrantConnector {
      * Stringify a cell's contents. Since our numerical cells which are dates are all integers but are interpreted
      * by the POI framework as doubles, we correct these to integers
      *
-     * @param cell
+     * @param cell spreadsheet cell
      * @return a string representing a cell's contents
      */
     private String stringify(Cell cell) {

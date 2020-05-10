@@ -16,6 +16,9 @@
 
 package org.dataconservancy.pass.grant.cli;
 
+/**
+ * A class containing all error strings for errors caught by the Loader Apps
+ */
 class DataLoaderErrors {
     static String ERR_HOME_DIRECTORY_NOT_FOUND = "No home directory found for the application. Please specify a valid absolute path.";
     static String ERR_HOME_DIRECTORY_NOT_READABLE_AND_WRITABLE = "Supplied home directory must be readable" +

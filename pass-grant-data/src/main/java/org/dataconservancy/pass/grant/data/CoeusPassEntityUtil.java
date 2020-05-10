@@ -194,10 +194,7 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
                 system.getCoPis().add ( storedPi );
             }
         }
-
-        if (system.getCoPis().contains(system.getPi())) {
-            system.getCoPis().remove(system.getPi());
-        }
+        system.getCoPis().remove(system.getPi());
 
         stored.setPi( system.getPi() );
         stored.setCoPis( system.getCoPis() );
