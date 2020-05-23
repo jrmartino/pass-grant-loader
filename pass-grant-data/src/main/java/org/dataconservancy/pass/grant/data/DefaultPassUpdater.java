@@ -181,7 +181,6 @@ public class DefaultPassUpdater implements PassUpdater{
             //these values will not override existing stored values unless the PassEntityUtil implementation
             //allows it.
             if (startDate != null && (grant.getStartDate() == null || startDate.isBefore(grant.getStartDate()))) {
-                grant.setAwardDate(awardDate);
                 grant.setProjectName(rowMap.get(C_GRANT_PROJECT_NAME));
                 grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
                 grant.setDirectFunder(funderMap.get(directFunderLocalKey));
@@ -194,6 +193,22 @@ public class DefaultPassUpdater implements PassUpdater{
             //use !isBefore in case more than one PI is specified, need to process more than one
             if (endDate != null && (grant.getEndDate() == null || !endDate.isBefore(grant.getEndDate()))) {
                 grant.setEndDate(endDate);
+                //status should be the latest one
+                String status = rowMap.getOrDefault(C_GRANT_AWARD_STATUS, null);
+                if (status != null) {
+                    switch (status) {
+                        case "Active":
+                            grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
+                            break;
+                        case "Pre-Award":
+                            grant.setAwardStatus(Grant.AwardStatus.PRE_AWARD);
+                            break;
+                        case "Terminated":
+                            grant.setAwardStatus(Grant.AwardStatus.TERMINATED);
+                    }
+                } else {
+                    grant.setAwardStatus(null);
+                }
 
                 //we want the PI to be the one listed on the most recent grant iteration
                 if ( abbreviatedRole.equals("P") ) {
@@ -211,23 +226,6 @@ public class DefaultPassUpdater implements PassUpdater{
                             }
                         }
                     }
-                }
-
-                String status = rowMap.getOrDefault(C_GRANT_AWARD_STATUS, null);
-
-                if (status != null) {
-                    switch (status) {
-                        case "Active":
-                            grant.setAwardStatus(Grant.AwardStatus.ACTIVE);
-                            break;
-                        case "Pre-Award":
-                            grant.setAwardStatus(Grant.AwardStatus.PRE_AWARD);
-                            break;
-                        case "Terminated":
-                            grant.setAwardStatus(Grant.AwardStatus.TERMINATED);
-                    }
-                } else {
-                    grant.setAwardStatus(null);
                 }
             }
 
