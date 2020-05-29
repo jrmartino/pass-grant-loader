@@ -44,8 +44,8 @@ public class JhuPassUpdaterIT {
     String[] grantLocalKey = { "10000001", "10000001","10000001" }; //all the same, different from other ITs tho
     String[] grantProjectName = {"Stupendous Research Project I", "Stupendous Research Project II", "Stupendous Research Project III" };
     String[] grantAwardDate = { "01/01/1999",  "01/01/2001", "01/01/2003" };
-    String[] grantStartDate = { "07/01/2000", "07/01/2002", "07/01/2004" };
-    String[] grantEndDate = { "06/30/2002", "06/30/2004", "06/30/2006"};
+    String[] grantStartDate = { "07/01/2000", "07/01/2000", "07/01/2000" }; //these appear to ge the same for all awards
+    String[] grantEndDate = { "06/30/2004", "06/30/2004", "06/30/2004"};//these seem to be the same for all awards
     String[] grantUpdateTimestamp = { "2006-03-11 00:00:00.0","2010-04-05 00:00:00.0", "2015-11-11 00:00:00.0" };
     String[] userEmployeeId= { "31000000", "31000001", "31000002"};
     String[] userInstitutionalId = {"arecko1", "sclass1", "jgunn1" };

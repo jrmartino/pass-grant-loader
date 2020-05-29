@@ -73,13 +73,37 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return the updated object - null if the Grant does not need to be updated
      */
     public Grant update(Grant system, Grant stored) {
+        //adjust the system view of co-pis  by merging in the stored view of pi and co-pis
+        for( URI uri : stored.getCoPis() ) {
+            if ( !system.getCoPis().contains(uri) ) {
+                system.getCoPis().add(uri);
+            }
+        }
+
+        //need to be careful, system pi might be null if there is no record for it
+        //this is to finalize the version of the co-pi list we want to compare between
+        //system and stored
+        URI storedPi = stored.getPi();
+        if ( system.getPi() != null ) {
+            if (!system.getPi().equals(storedPi)) {
+                // stored.setPi( system.getPi() );
+                if (!system.getCoPis().contains(storedPi)) {
+                    system.getCoPis().add(storedPi);
+                }
+                system.getCoPis().remove(system.getPi());
+            }
+        } else { //system view is null, do not trigger update based on this field
+            system.setPi( storedPi );
+        }
+
+        //now system view has all available info we want in this grant - look for update trigger
         if (grantNeedsUpdate(system, stored)) {
             return updateGrant(system, stored);
         }
         return null;
     }
 
-    /**
+    /**0p
      * Compare two Funder objects
      *
      * @param system the version of the Funder as seen in the COEUS system pull
@@ -103,7 +127,7 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      * @return the Funder object which represents the Pass object, with any new information from COEUS merged in
      */
     private Funder updateFunder (Funder system, Funder stored) {
-        stored.setLocalKey(system.getLocalKey());
+        //stored.setLocalKey(system.getLocalKey());
         if (system.getName() != null) {  stored.setName(system.getName()); }
         if (system.getPolicy() != null) { stored.setPolicy(system.getPolicy()); }
         return stored;
@@ -173,7 +197,8 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
     }
 
     /**
-     * Update a Pass Grant object with new information from COEUS
+     * Update a Pass Grant object with new information from COEUS - only updatable fields are considered.
+     * the PASS version is authoritative for the rest
      *
      * @param system the version of the Grant as seen in the COEUS system pull
      * @param stored the version of the Grant as read from Pass
@@ -181,26 +206,9 @@ public class CoeusPassEntityUtil implements PassEntityUtil{
      */
     private Grant updateGrant(Grant system, Grant stored) {
         stored.setAwardStatus(system.getAwardStatus());
-
-        //adjust the system view of co-pis  by merging in the stored view
-        for( URI uri : stored.getCoPis() ) {
-            if ( !system.getCoPis().contains(uri) ) {
-                system.getCoPis().add(uri);
-            }
-        }
-        URI storedPi = stored.getPi();
-        if ( !system.getPi().equals( storedPi )) {
-            if ( !system.getCoPis().contains( storedPi )) {
-                system.getCoPis().add ( storedPi );
-            }
-        }
-        system.getCoPis().remove(system.getPi());
-
-        stored.setPi( system.getPi() );
+        stored.setPi(system.getPi());
         stored.setCoPis( system.getCoPis() );
-        if ( system.getEndDate().isAfter(stored.getEndDate())) {
-            stored.setEndDate(system.getEndDate());
-        }
+        stored.setEndDate(system.getEndDate());
         return stored;
     }
 

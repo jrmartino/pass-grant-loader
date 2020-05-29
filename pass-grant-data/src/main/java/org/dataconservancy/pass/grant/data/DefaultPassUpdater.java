@@ -171,7 +171,7 @@ public class DefaultPassUpdater implements PassUpdater{
                 }
             }
 
-            //now do things which may depend on the date
+            //now do things which may depend on the date - award date is the only one that changes
             DateTime awardDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_AWARD_DATE, null));
             DateTime startDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_START_DATE, null));
             DateTime endDate =  createJodaDateTime(rowMap.getOrDefault(C_GRANT_END_DATE, null));
@@ -180,19 +180,23 @@ public class DefaultPassUpdater implements PassUpdater{
             //in case they are needed to update a stored grant record.
             //these values will not override existing stored values unless the PassEntityUtil implementation
             //allows it.
-            if (startDate != null && (grant.getStartDate() == null || startDate.isBefore(grant.getStartDate()))) {
+            //we mostly have awardDate, but will use start date as a fallback if not
+            if ( (awardDate != null && (grant.getAwardDate() == null || awardDate.isBefore(grant.getAwardDate()))) ||
+                  awardDate == null &&  (startDate != null && (grant.getStartDate() == null || startDate.isBefore(grant.getStartDate())))) {
                 grant.setProjectName(rowMap.get(C_GRANT_PROJECT_NAME));
                 grant.setAwardNumber(rowMap.get(C_GRANT_AWARD_NUMBER));
                 grant.setDirectFunder(funderMap.get(directFunderLocalKey));
                 grant.setPrimaryFunder(funderMap.get(primaryFunderLocalKey));
-                grant.setAwardDate(awardDate);
                 grant.setStartDate(startDate);
+                grant.setAwardDate(awardDate);
             }
 
             //set values that should match the latest iteration of the grant
             //use !isBefore in case more than one PI is specified, need to process more than one
-            if (endDate != null && (grant.getEndDate() == null || !endDate.isBefore(grant.getEndDate()))) {
-                grant.setEndDate(endDate);
+            //we mostly have awardDate, but will use end date as a fallback if not
+            if ( (awardDate != null && (grant.getAwardDate() == null || !awardDate.isBefore(grant.getAwardDate()))) ||
+                  awardDate == null &&  ( endDate != null && (grant.getEndDate() == null || !endDate.isBefore(grant.getEndDate()))) ){
+                grant.setEndDate( endDate);
                 //status should be the latest one
                 String status = rowMap.getOrDefault(C_GRANT_AWARD_STATUS, null);
                 if (status != null) {
@@ -214,12 +218,12 @@ public class DefaultPassUpdater implements PassUpdater{
                 if ( abbreviatedRole.equals("P") ) {
                     URI userId=userMap.get(employeeId);
                     URI oldPiId=grant.getPi();
+                    grant.setPi(userId);
+                    grant.getCoPis().remove(userId);
                     if ( oldPiId == null ) {
-                        grant.setPi(userId);
                         statistics.addPi();
                     } else {
                         if ( !oldPiId.equals(userId) ) {
-                            grant.setPi(userId);
                             if ( !grant.getCoPis().contains(oldPiId) ) {
                                 grant.getCoPis().add(oldPiId);
                                 statistics.addCoPi();

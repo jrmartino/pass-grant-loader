@@ -14,6 +14,30 @@ public class CoeusPassInitEntityUtil extends CoeusPassEntityUtil {
 
     @Override
     public Grant update(Grant system, Grant stored) {
+        //adjust the system view of co-pis  by merging in the stored view of pi and co-pis
+        for( URI uri : stored.getCoPis() ) {
+            if ( !system.getCoPis().contains(uri) ) {
+                system.getCoPis().add(uri);
+            }
+        }
+
+        //need to be careful, system pi might be null if there is no record for it
+        //this is to finalize the version of the co-pi list we want to compare between
+        //system and stored
+        URI storedPi = stored.getPi();
+        if ( system.getPi() != null ) {
+            if (!system.getPi().equals(storedPi)) {
+               // stored.setPi( system.getPi() );
+                if (!system.getCoPis().contains(storedPi)) {
+                    system.getCoPis().add(storedPi);
+                }
+                system.getCoPis().remove(system.getPi());
+            }
+        } else { //system view is null, do not trigger update based on this field
+            system.setPi( storedPi );
+        }
+
+        //now system view has all available info we want in this grant - look for update trigger
         if (this.grantNeedsUpdate(system, stored)) {
             return this.updateGrant(system, stored);
         }
@@ -57,23 +81,9 @@ public class CoeusPassInitEntityUtil extends CoeusPassEntityUtil {
         stored.setProjectName(system.getProjectName());
         stored.setPrimaryFunder(system.getPrimaryFunder());
         stored.setDirectFunder(system.getDirectFunder());
-
-        //adjust the system view of co-pis  by merging in the stored view
-        for( URI uri : stored.getCoPis() ) {
-            if ( !system.getCoPis().contains(uri) ) {
-                system.getCoPis().add(uri);
-            }
-        }
-        URI storedPi = stored.getPi();
-        if ( !system.getPi().equals( storedPi )) {
-            if ( !system.getCoPis().contains( storedPi )) {
-                system.getCoPis().add ( storedPi );
-            }
-        }
-        system.getCoPis().remove(system.getPi());
-
-        stored.setPi( system.getPi() );
+        stored.setPi( system.getPi());
         stored.setCoPis( system.getCoPis() );
+
         //since this is essentially an initial pull, we can just take the system values
         stored.setAwardDate(system.getAwardDate());
         stored.setStartDate(system.getStartDate());
