@@ -64,6 +64,11 @@ public class JhuGrantLoaderCLI {
             "01/01/2011")
     private static String awardEndDate = "01/01/2011";
 
+    /** Specifies whether this run is an "initializing run" which is allowed to overwrite normally non-writable fields on grants */
+    @Option(name = "-i", aliases = {"-init", "--init", "-initialize", "--initialize" }, usage = "When set to true, changes the behavior of the loader to allow it" +
+            "to update all fields stored on grants with info coming in from the pull. This is useful when updating existing grant records due to a change in policy" +
+            "about what the semantics of the stored records are.")
+    private static boolean init = false;
 
     /** Specifies an optional action - either "pull" or "load" - to restrict the operation of the application to only pull data
      * from COEUS to store in a file, or to only load into PASS data taken from a stored file, respectively. In either case, the path to
@@ -113,7 +118,7 @@ public class JhuGrantLoaderCLI {
             }
 
             /* Run the package generation application proper */
-            JhuGrantLoaderApp app = new JhuGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName);
+            JhuGrantLoaderApp app = new JhuGrantLoaderApp(startDate, awardEndDate, email, mode, action, dataFileName, init);
             app.run();
             System.exit((0));
         } catch (CmdLineException e) {

@@ -21,6 +21,8 @@ import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 
 import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -45,7 +47,7 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
          * @return the updated Funder - null if the Funder does not need to be updated
          */
         public Funder update(Funder system, Funder stored) {
-            if (!harvardFundersEqual(system, stored)) {
+            if (funderNeedsUpdate(system, stored)) {
                 return updateFunder(system, stored);
             }
             return null;
@@ -59,7 +61,7 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
          * @return the updated User - null if the User does not need to be updated
          */
         public User update(User system, User stored) {
-            if (!harvardUsersEqual(system, stored)) {
+            if (userNeedsUpdate(system, stored)) {
                 return updateUser(system, stored);
             }
             return null;
@@ -73,7 +75,7 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
          * @return the updated object - null if the Grant does not need to be updated
          */
         public Grant update(Grant system, Grant stored) {
-            if (!harvardGrantsEqual(system, stored)) {
+            if (grantNeedsUpdate(system, stored)) {
                 return updateGrant(system, stored);
             }
             return null;
@@ -86,13 +88,13 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
          * @param stored the version of the Funder as read from Pass
          * @return a boolean which asserts whether the two supplied Funders are "Harvard equal"
          */
-        private boolean harvardFundersEqual(Funder system, Funder stored) {
+        private boolean funderNeedsUpdate(Funder system, Funder stored) {
 
             //this adjustment handles the case where we take data from policy.properties file, which has no name info
-            if (system.getName() != null && !system.getName().equals(stored.getName())) return false;
-            if (system.getLocalKey() != null ? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-            if (system.getPolicy() != null ? !system.getPolicy().equals(stored.getPolicy()) : stored.getPolicy() != null) return false;
-            return true;
+            if (system.getName() != null && !system.getName().equals(stored.getName())) return true;
+            if (system.getLocalKey() != null ? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return true;
+            if (system.getPolicy() != null ? !system.getPolicy().equals(stored.getPolicy()) : stored.getPolicy() != null) return true;
+            return false;
         }
 
         /**
@@ -117,16 +119,16 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
          * @param stored the version of the User as read from Pass
          * @return a boolean which asserts whether the two supplied Users are "Harvard equal"
          */
-        private  boolean harvardUsersEqual(User system, User stored) {
+        private  boolean userNeedsUpdate(User system, User stored) {
             //first the fields for which Harvard is authoritative
-            if (system.getFirstName() != null ? !system.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return false;
-            //if (system.getMiddleName() != null ? !system.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return false;
-            if (system.getLastName() != null ? !system.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return false;
-            if (system.getLocatorIds() != null? !stored.getLocatorIds().containsAll(system.getLocatorIds()): stored.getLocatorIds() != null) return false;
-            //next, other fields which require some reasoning to decide whether an system is necessary
-            if (system.getEmail() != null && stored.getEmail() == null) return false;
-            if (system.getDisplayName() != null && stored.getDisplayName() == null) return false;
-            return true;
+            if (system.getFirstName() != null ? !system.getFirstName().equals(stored.getFirstName()) : stored.getFirstName() != null) return true;
+            //if (system.getMiddleName() != null ? !system.getMiddleName().equals(stored.getMiddleName()) : stored.getMiddleName() != null) return true;
+            if (system.getLastName() != null ? !system.getLastName().equals(stored.getLastName()) : stored.getLastName() != null) return true;
+            if (system.getLocatorIds() != null? !stored.getLocatorIds().containsAll(system.getLocatorIds()): stored.getLocatorIds() != null) return true;
+            //next, other fields which require some reasoning to decide whether an update is necessary
+            if (system.getEmail() != null && stored.getEmail() == null) return true;
+            if (system.getDisplayName() != null && stored.getDisplayName() == null) return true;
+            return false;
         }
 
         /**
@@ -143,7 +145,11 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
             stored.setFirstName(system.getFirstName());
             //stored.setMiddleName(system.getMiddleName());
             stored.setLastName(system.getLastName());
-            stored.setLocatorIds(system.getLocatorIds());
+            Set<String> idSet = new HashSet<>();
+            idSet.addAll(stored.getLocatorIds());
+            idSet.addAll(system.getLocatorIds());
+            stored.setLocatorIds(idSet.stream().collect(Collectors.toList()));
+            //stored.setLocatorIds(system.getLocatorIds());
             stored.setEmail(system.getEmail());
             stored.setDisplayName(system.getDisplayName());
             return stored;
@@ -155,18 +161,18 @@ public class HarvardPilotPassEntityUtil implements PassEntityUtil{
          * @param stored the version of the Grant as read from Pass
          * @return a boolean which asserts whether the two supplied Grants are "Harvard equal"
          */
-        private boolean harvardGrantsEqual(Grant system, Grant stored) {
-            if (system.getAwardNumber() != null ? !system.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return false;
-            //if (system.getAwardStatus() != null? !system.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return false;
-            if (system.getLocalKey() != null? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return false;
-            if (system.getProjectName() != null? !system.getProjectName().equals(stored.getProjectName()) : stored.getProjectName() != null) return false;
-            if (system.getPrimaryFunder() != null? !system.getPrimaryFunder().equals(stored.getPrimaryFunder()) : stored.getPrimaryFunder() != null) return false;
-            if (system.getDirectFunder() != null? !system.getDirectFunder().equals(stored.getDirectFunder()) : stored.getDirectFunder() != null) return false;
-            if (system.getPi() != null? !system.getPi().equals(stored.getPi()) : stored.getPi() != null) return false;
-            if (system.getCoPis() != null? !new HashSet(system.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return false;
-            //if (system.getAwardDate() != null? !system.getAwardDate().equals(stored.getAwardDate()) : stored.getAwardDate() != null) return false;
-            if (system.getStartDate() != null? !system.getStartDate().equals(stored.getStartDate()) : stored.getStartDate() != null) return false;
-            if (system.getEndDate() != null? !system.getEndDate().equals(stored.getEndDate()) : stored.getEndDate() != null) return false;
+        private boolean grantNeedsUpdate(Grant system, Grant stored) {
+            if (system.getAwardNumber() != null ? !system.getAwardNumber().equals(stored.getAwardNumber()) : stored.getAwardNumber() != null) return true;
+            //if (system.getAwardStatus() != null? !system.getAwardStatus().equals(stored.getAwardStatus()) : stored.getAwardStatus() != null) return true;
+            if (system.getLocalKey() != null? !system.getLocalKey().equals(stored.getLocalKey()) : stored.getLocalKey() != null) return true;
+            if (system.getProjectName() != null? !system.getProjectName().equals(stored.getProjectName()) : stored.getProjectName() != null) return true;
+            if (system.getPrimaryFunder() != null? !system.getPrimaryFunder().equals(stored.getPrimaryFunder()) : stored.getPrimaryFunder() != null) return true;
+            if (system.getDirectFunder() != null? !system.getDirectFunder().equals(stored.getDirectFunder()) : stored.getDirectFunder() != null) return true;
+            if (system.getPi() != null? !system.getPi().equals(stored.getPi()) : stored.getPi() != null) return true;
+            if (system.getCoPis() != null? !new HashSet(system.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return true;
+            //if (system.getAwardDate() != null? !system.getAwardDate().equals(stored.getAwardDate()) : stored.getAwardDate() != null) return true;
+            if (system.getStartDate() != null? !system.getStartDate().equals(stored.getStartDate()) : stored.getStartDate() != null) return true;
+            if (system.getEndDate() != null? !system.getEndDate().equals(stored.getEndDate()) : stored.getEndDate() != null) return true;
             return true;
         }
 

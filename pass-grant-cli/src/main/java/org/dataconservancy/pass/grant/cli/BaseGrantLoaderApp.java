@@ -34,6 +34,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -50,27 +51,28 @@ import static org.dataconservancy.pass.grant.data.DateTimeUtil.verifyDateTimeFor
  * use the PassLoader to take {@code List} representing the {@code ResultSet} to push this data into our PASS instance
  * via the java pass client.
  *
+ *
  * A large percentage of the code here is handling exceptional paths, as this is intended to be run in an automated
  * fashion, so care must be taken to log errors, report them to STDOUT, and also send email notifications.
  *
  * @author jrm@jhu.edu
  */
 abstract class BaseGrantLoaderApp {
-    private static Logger LOG = LoggerFactory.getLogger(BaseGrantLoaderApp.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BaseGrantLoaderApp.class);
     private EmailService emailService;
 
-    private File appHome;
+    private final File appHome;
     private String startDate;
-    private String awardEndDate;
+    private final String awardEndDate;
     private File updateTimestampsFile;
-    private boolean email;
-    private String mode;
-    private String action;
-    private String dataFileName;
+    private final boolean email;
+    private final String mode;
+    private final String action;
+    private final String dataFileName;
     private boolean local = false;
-    private boolean timestamp = true;
+    private boolean timestamp = false;
 
-    private String updateTimestampsFileName;
+    private final String updateTimestampsFileName;
 
     /**
      * Constructor for this class
@@ -247,7 +249,7 @@ abstract class BaseGrantLoaderApp {
             try (FileInputStream fis = new FileInputStream(dataFile);
                  ObjectInputStream in = new ObjectInputStream(fis)
                 ) {
-                resultSet = (List<Map<String, String>>)in.readObject();
+                resultSet = Collections.unmodifiableList((List<Map<String, String>>) in.readObject());
             } catch (IOException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             }

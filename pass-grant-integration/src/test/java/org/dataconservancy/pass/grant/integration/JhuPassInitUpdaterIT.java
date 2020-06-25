@@ -18,7 +18,7 @@ package org.dataconservancy.pass.grant.integration;
 
 import org.dataconservancy.pass.client.PassClient;
 import org.dataconservancy.pass.client.PassClientFactory;
-import org.dataconservancy.pass.grant.data.JhuPassUpdater;
+import org.dataconservancy.pass.grant.data.JhuPassInitUpdater;
 import org.dataconservancy.pass.grant.data.PassUpdateStatistics;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.Policy;
@@ -37,23 +37,22 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 import static org.dataconservancy.pass.grant.data.DateTimeUtil.createJodaDateTime;
 import static org.junit.Assert.*;
 
+public class JhuPassInitUpdaterIT {
 
-public class JhuPassUpdaterIT {
-
-    String[] grantAwardNumber = { "B10000000", "B10000001", "B10000002" };
-    String[] grantLocalKey = { "10000001", "10000001","10000001" }; //all the same, different from other ITs tho
-    String[] grantProjectName = {"Stupendous Research Project I", "Stupendous Research Project II", "Stupendous Research Project III" };
+    String[] grantAwardNumber = { "A10000000", "A10000001", "A10000002" };
+    String[] grantLocalKey = { "10000000", "10000000","10000000" }; //all the same
+    String[] grantProjectName = {"Awesome Research Project I", "Awesome Research Project II", "Awesome Research Project III" };
     String[] grantAwardDate = { "01/01/1999",  "01/01/2001", "01/01/2003" };
-    String[] grantStartDate = { "07/01/2000", "07/01/2000", "07/01/2000" }; //these appear to ge the same for all awards
-    String[] grantEndDate = { "06/30/2004", "06/30/2004", "06/30/2004"};//these seem to be the same for all awards
+    String[] grantStartDate = { "07/01/2000", "07/01/2002", "07/01/2004" };
+    String[] grantEndDate = { "06/30/2002", "06/30/2004", "06/30/2006"};
     String[] grantUpdateTimestamp = { "2006-03-11 00:00:00.0","2010-04-05 00:00:00.0", "2015-11-11 00:00:00.0" };
-    String[] userEmployeeId= { "31000000", "31000001", "31000002"};
-    String[] userInstitutionalId = {"arecko1", "sclass1", "jgunn1" };
-    String[] userHopkinsId = {"DOMNAR", "NROAD", "ROMAND" };
-    String[] userFirstName = {"Amanda", "Skip", "Janie"};
-    String[] userMiddleName = {"Bea", "Avery", "Gotta" };
-    String[] userLastName = { "Reckondwith", "Class", "Gunn" };
-    String[] userEmail = { "arecko1@jhu.edu", "sclass1@jhu.edu", "jgunn1@jhu.edu" };
+    String[] userEmployeeId= { "30000000", "30000001", "30000002"};
+    String[] userInstitutionalId = {"amelon1", "aeinst1", "jjones1" };
+    String[] userHopkinsId = {"RANDOM", "OMRNDA", "DRMONA" };
+    String[] userFirstName = {"Andrew", "Albert", "Junie"};
+    String[] userMiddleName = {"Smith", "Carnegie", "Beatrice" };
+    String[] userLastName = { "Melon", "Einstein", "Jones" };
+    String[] userEmail = { "amelon1@jhu.edu", "aeinst1@jhu.edu", "jjones1@jhu.edu" };
 
 
     String primaryFunderPolicyUriString;
@@ -66,7 +65,7 @@ public class JhuPassUpdaterIT {
     //String jhedidPrefis = "johnshopkins.edu:jhed:";
 
     PassClient passClient = PassClientFactory.getPassClient();
-    JhuPassUpdater passUpdater = new JhuPassUpdater(passClient);
+    JhuPassInitUpdater passUpdater = new JhuPassInitUpdater(passClient);
     PassUpdateStatistics statistics = passUpdater.getStatistics();
 
     @Before
@@ -77,78 +76,77 @@ public class JhuPassUpdaterIT {
         }
 
         Policy policy = new Policy();
-        policy.setTitle("Primary Policy 2");
-        policy.setDescription("BAA");
+        policy.setTitle("Primary Policy");
+        policy.setDescription("MOO");
         URI policyURI = passClient.createResource(policy);
         primaryFunderPolicyUriString = policyURI.toString().substring(prefix.length());
 
         policy =new Policy();
-        policy.setTitle("Direct Policy 2");
-        policy.setDescription("BAA");
+        policy.setTitle("Direct Policy");
+        policy.setDescription("MOO");
         policyURI =passClient.createResource(policy);
         directFunderPolicyUriString = policyURI.toString().substring(prefix.length());
 
     }
 
     /**
-     * we put an initial award for a grant into fedora, then simulate a pull of all subsequent records
+     * we put an initial award for a grant into fedora, then simulate a pull of all records related
+     * to this grant from the Beginning of Time (including records which created the initial object)
      *
      * We expect to see some fields retained from the initial award, and others updated. The most
      * interesting fields are the investigator fields: all CO-PIs ever on the grant should stay on the
      * co-pi field throughout iterations. If a PI is changed, they should appear on the CO-PI field
      *
-     * @throws InterruptedException from joda date time creation
+     * @throws InterruptedException from joda data time creation
      */
     @Test
-    public void  processGrantIT() throws InterruptedException {
+    public void  processInitGrantIT() throws InterruptedException {
         List<Map<String, String>> resultSet = new ArrayList<>();
 
-        //put in initial iteration as a correct existing record - PI is Reckondwith, Co-pi is Class
-        Map<String, String> piRecord0 = makeRowMap(0, 0, "P");
-        Map<String, String> coPiRecord0 = makeRowMap(0, 1, "C");
-
-        resultSet.add(piRecord0);
-        resultSet.add(coPiRecord0);
+        //put in last iteration as existing record - PI is Einstein
+        Map<String, String> piRecord2 = makeRowMap (2, 1, "P");
+        resultSet.add(piRecord2);
 
         passUpdater.updatePass(resultSet, "grant");
         sleep(10000);
-        URI passUser0Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[0] );
-        assertNotNull( passUser0Uri );
+
         URI passGrantUri = passClient.findByAttribute(Grant.class, "localKey", grantIdPrefix + grantLocalKey[2]);
         assertNotNull( passGrantUri );
+
         URI passUser1Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[1] );
         assertNotNull( passUser1Uri );
 
         Grant passGrant = passClient.readResource( passGrantUri, Grant.class );
 
-        assertEquals( grantAwardNumber[0], passGrant.getAwardNumber() );
+        assertEquals( grantAwardNumber[2], passGrant.getAwardNumber() );
         assertEquals( Grant.AwardStatus.ACTIVE, passGrant.getAwardStatus() );
-        assertEquals( grantIdPrefix + grantLocalKey[0], passGrant.getLocalKey() );
-        assertEquals( grantProjectName[0], passGrant.getProjectName() );
-        assertEquals( createJodaDateTime(grantAwardDate[0]), passGrant.getAwardDate() );
-        assertEquals( createJodaDateTime(grantStartDate[0]), passGrant.getStartDate() );
-        assertEquals( createJodaDateTime(grantEndDate[0]), passGrant.getEndDate() );
-        assertEquals( passUser0Uri, passGrant.getPi() ); //Reckondwith
-        assertEquals( 1, passGrant.getCoPis().size() );
-        assertEquals( passUser1Uri, passGrant.getCoPis().get(0));
+        assertEquals( grantIdPrefix + grantLocalKey[2], passGrant.getLocalKey() );
+        assertEquals( grantProjectName[2], passGrant.getProjectName() );
+        assertEquals( createJodaDateTime(grantAwardDate[2]), passGrant.getAwardDate() );
+        assertEquals( createJodaDateTime(grantStartDate[2]), passGrant.getStartDate() );
+        assertEquals( createJodaDateTime(grantEndDate[2]), passGrant.getEndDate() );
+        assertEquals( passUser1Uri, passGrant.getPi() ); //Einstein
+        assertEquals( 0, passGrant.getCoPis().size() );
 
         //check statistics
         assertEquals(1, statistics.getGrantsCreated());
-        assertEquals(2, statistics.getUsersCreated());
+        assertEquals(1, statistics.getUsersCreated());
         assertEquals(1, statistics.getPisAdded());
-        assertEquals(1, statistics.getCoPisAdded());
+        assertEquals(0, statistics.getCoPisAdded());
 
-        //now simulate an incremental pull since the initial,  adjust the stored grant
+        //now simulate a complete pull from the Beginning of Time and adjust the stored grant
         //we add a new co-pi Jones in the "1" iteration, and change the pi to Einstein in the "2" iteration
         //we drop co-pi jones in the last iteration
-
+        Map<String, String> piRecord0 = makeRowMap(0, 0, "P");
+        Map<String, String> coPiRecord0 = makeRowMap(0, 1, "C");
         Map<String, String> piRecord1 = makeRowMap(1, 0, "P");
         Map<String, String> coPiRecord1 = makeRowMap(1, 1, "C");
         Map<String, String> newCoPiRecord1 = makeRowMap(1, 2, "C");
-        Map<String, String> piRecord2 = makeRowMap (2, 1, "P");
 
-        //add in everything since the initial pull
+        //in the initial pull, we will find all of the records (check?)
         resultSet.clear();
+        resultSet.add(piRecord0);
+        resultSet.add(coPiRecord0);
         resultSet.add(piRecord1);
         resultSet.add(coPiRecord1);
         resultSet.add(newCoPiRecord1);
@@ -158,7 +156,8 @@ public class JhuPassUpdaterIT {
         sleep(10000);
 
         passGrant = passClient.readResource( passGrantUri, Grant.class );
-
+        URI passUser0Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[0] );
+        assertNotNull( passUser0Uri );
         URI passUser2Uri = passClient.findByAttribute(User.class, "locatorIds", employeeidPrefix + userEmployeeId[2] );
         assertNotNull( passUser2Uri );
 
@@ -169,10 +168,10 @@ public class JhuPassUpdaterIT {
         assertEquals( createJodaDateTime(grantAwardDate[0]), passGrant.getAwardDate() );//initial
         assertEquals( createJodaDateTime(grantStartDate[0]), passGrant.getStartDate() );//initial
         assertEquals( createJodaDateTime(grantEndDate[2]), passGrant.getEndDate() );//latest
-        assertEquals( passUser1Uri, passGrant.getPi() );//Class
+        assertEquals( passUser1Uri, passGrant.getPi() );//Einstein
         assertEquals( 2, passGrant.getCoPis().size() );
-        assertTrue( passGrant.getCoPis().contains(passUser0Uri) );//Reckondwith
-        assertTrue( passGrant.getCoPis().contains(passUser2Uri) );//Gunn
+        assertTrue( passGrant.getCoPis().contains(passUser0Uri) );//Melon
+        assertTrue( passGrant.getCoPis().contains(passUser2Uri) );//Jones
     }
 
     /**
@@ -180,7 +179,7 @@ public class JhuPassUpdaterIT {
      * @param iteration the iteration of the (multi-award) grant
      * @param user the user supplied in the record
      * @param abbrRole the role: Pi ("P") or co-pi (C" or "K")
-     * @return row map for pull record
+     * @return the row map for the record
      */
     private Map<String, String> makeRowMap( int iteration, int user, String abbrRole) {
         Map<String, String> rowMap = new HashMap<>();
@@ -213,6 +212,5 @@ public class JhuPassUpdaterIT {
 
         return  rowMap;
     }
-
 
 }

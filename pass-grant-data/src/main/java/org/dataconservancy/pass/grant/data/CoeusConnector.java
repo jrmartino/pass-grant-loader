@@ -29,8 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
 
@@ -41,7 +39,7 @@ import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
  * @author jrm@jhu.edu
  */
 public class CoeusConnector implements GrantConnector {
-    private static Logger LOG = LoggerFactory.getLogger(CoeusConnector.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CoeusConnector.class);
     //property names
     private static final String COEUS_URL = "coeus.url";
     private static final String COEUS_USER = "coeus.user";
@@ -51,7 +49,7 @@ public class CoeusConnector implements GrantConnector {
     private String coeusUser;
     private String coeusPassword;
 
-    private Properties funderPolicyProperties;
+    private final Properties funderPolicyProperties;
 
     private DirectoryServiceUtil directoryServiceUtil;
 
@@ -285,11 +283,11 @@ public class CoeusConnector implements GrantConnector {
         sb.append(String.join(", ",viewFields));
         sb.append(" FROM");
         sb.append(" COEUS.JHU_FACULTY_FORCE_PROP A");
-        sb.append(" INNER JOIN ");
-        sb.append(" (SELECT GRANT_NUMBER, MAX(UPDATE_TIMESTAMP) AS MAX_UPDATE_TIMESTAMP");
-        sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP GROUP BY GRANT_NUMBER) LATEST");
-        sb.append(" ON A.UPDATE_TIMESTAMP = LATEST.MAX_UPDATE_TIMESTAMP");
-        sb.append(" AND A.GRANT_NUMBER = LATEST.GRANT_NUMBER");
+       // sb.append(" INNER JOIN ");
+       // sb.append(" (SELECT GRANT_NUMBER, MAX(UPDATE_TIMESTAMP) AS MAX_UPDATE_TIMESTAMP");
+       // sb.append(" FROM COEUS.JHU_FACULTY_FORCE_PROP GROUP BY GRANT_NUMBER) LATEST");
+       // sb.append(" ON A.UPDATE_TIMESTAMP = LATEST.MAX_UPDATE_TIMESTAMP");
+       // sb.append(" AND A.GRANT_NUMBER = LATEST.GRANT_NUMBER");
         sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN B ON A.INST_PROPOSAL = B.INST_PROPOSAL");
         sb.append(" INNER JOIN COEUS.JHU_FACULTY_FORCE_PRSN_DETAIL C ON B.EMPLOYEE_ID = C.EMPLOYEE_ID");
         sb.append(" LEFT JOIN COEUS.SWIFT_SPONSOR D ON A.PRIME_SPONSOR_CODE = D.SPONSOR_CODE");
@@ -309,7 +307,7 @@ public class CoeusConnector implements GrantConnector {
     }
 
     private String buildUserQueryString(String startDate) {
-        String viewFields [] = {
+        String[] viewFields = {
                 C_USER_FIRST_NAME,
                 C_USER_MIDDLE_NAME,
                 C_USER_LAST_NAME,
@@ -335,7 +333,7 @@ public class CoeusConnector implements GrantConnector {
 
     private String buildFunderQueryString() {
 
-        String viewFields [] = {//doesn't matter whether the funder is primary or direct - these are the column names in the SWIFT_SPONSOR view
+        String[] viewFields = {//doesn't matter whether the funder is primary or direct - these are the column names in the SWIFT_SPONSOR view
                 C_PRIMARY_FUNDER_NAME,
                 C_PRIMARY_FUNDER_LOCAL_KEY };
 

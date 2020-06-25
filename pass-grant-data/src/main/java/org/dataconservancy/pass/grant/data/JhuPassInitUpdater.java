@@ -1,53 +1,29 @@
-/*
- * Copyright 2018 Johns Hopkins University
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.dataconservancy.pass.grant.data;
 
 import org.dataconservancy.pass.client.PassClient;
+import org.dataconservancy.pass.model.User;
 import org.dataconservancy.pass.model.support.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.dataconservancy.pass.model.User;
-
 import java.util.Map;
 
 import static org.dataconservancy.pass.grant.data.CoeusFieldNames.*;
+import static org.dataconservancy.pass.grant.data.CoeusFieldNames.C_USER_INSTITUTIONAL_ID;
 
+public class JhuPassInitUpdater extends DefaultPassUpdater {
 
-/**
- * This class is responsible for taking the Set of Maps derived from the ResultSet from the database query and
- * constructing a corresponding Collection of Grant or User objects, which it then sends to PASS to update.
- *
- * @author jrm@jhu.edu
- */
-
-public class JhuPassUpdater extends DefaultPassUpdater {
-
-    private static final Logger LOG = LoggerFactory.getLogger(JhuPassUpdater.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JhuPassInitUpdater.class);
     private static final String DOMAIN = "johnshopkins.edu";
 
-    public JhuPassUpdater(PassClient passClient)
+    public JhuPassInitUpdater(PassClient passClient)
     {
-        super(new CoeusPassEntityUtil(), passClient);
+        super(new CoeusPassInitEntityUtil(), passClient);
         super.setDomain(DOMAIN);
     }
 
-    public JhuPassUpdater() {
-        super(new CoeusPassEntityUtil());
+    public JhuPassInitUpdater() {
+        super(new CoeusPassInitEntityUtil());
         super.setDomain(DOMAIN);
     }
 

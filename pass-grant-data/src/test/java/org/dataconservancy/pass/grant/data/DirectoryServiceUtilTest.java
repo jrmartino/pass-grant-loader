@@ -33,21 +33,29 @@ import static org.dataconservancy.pass.grant.data.DirectoryServiceUtil.DIRECTORY
  * This is a test class for a simple directory lookup service running at the endpoint specified by "serviceUrl" below
  * the service type completes the URL, and the client id and client secret are supplied as headers.
  *
- * values for serviceUrl, clientId and slientSecret, must be supplied below.
+ * values for serviceUrl, clientId and clientSecret, must be supplied below.
  *
  * This test has been run against the running service with valid parameters and arguments supplied to the methods - this class has been
  * cleaned up after successful testing. because of the simplicity and isolation of this class, it does not need to be tested
  * every build - just when something about the service changes. so we ignore it for now.
+ *
+ * To test, provide real connection parameter values, and a real kopkins id / employee id pair
+ *
+ * @author jrm
  */
 @Ignore
 public class DirectoryServiceUtilTest {
     private DirectoryServiceUtil underTest;
 
+    private final String validEeid = ""; //actual employee id
+    private final String validHopkinsId = ""; //actual matching hopkins id
+
     @Before
     public void setup() {
-        String serviceUrl = "https://the.service/url";
+        final String serviceUrl = "https://the.service/url";
         final String clientId = "the-client-id";
         final String clientSecret = "the-client-secret";
+
         Properties connectionProperties = new Properties();
         connectionProperties.setProperty(DIRECTORY_SERVICE_BASE_URL, serviceUrl);
         connectionProperties.setProperty(DIRECTORY_SERVICE_CLIENT_ID, clientId);
@@ -57,16 +65,14 @@ public class DirectoryServiceUtilTest {
 
     @Test
     public void testGetHopkinsId() throws java.io.IOException {
-        String result = underTest.getHopkinsIdForEmployeeId("supply valid argument here");
-        Assert.assertEquals("expected value", result);
-        System.out.println(result);
-
+        String result = underTest.getHopkinsIdForEmployeeId(validEeid);
+        Assert.assertEquals(validHopkinsId, result);
     }
 
     @Test
     public void testGetEmployeeId() throws java.io.IOException {
-        String result = underTest.getEmployeeIdForHopkinsId("A58756");
-        Assert.assertEquals("expected value", result);
+        String result = underTest.getEmployeeIdForHopkinsId(validHopkinsId);
+        Assert.assertEquals(validEeid, result);
     }
 
     @Test

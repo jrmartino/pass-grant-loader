@@ -20,6 +20,11 @@ import org.dataconservancy.pass.model.Funder;
 import org.dataconservancy.pass.model.Grant;
 import org.dataconservancy.pass.model.User;
 
+/**
+ * This interface defines update methods for existing (stored) grants, users and funders. In practice, implementations will generally
+ * split this functionalite into two steps - the first step will reason over a stored object and the object developed in a system pull,
+ * and make th decision whether the object needs to be updated. The update methods eill act on that decision appropriately.
+ */
 public interface PassEntityUtil {
 
     /**
