@@ -71,7 +71,7 @@
         <pass.client.version>0.7.0</pass.client.version>
         <pass.client.api.version>0.7.0</pass.client.api.version>
         <pass.model.version>0.7.0</pass.model.version>
-        <ojdbc8.version>12.2.0.1</ojdbc8.version>
+        <ojdbc8.version>19.3.0.0</ojdbc8.version>
         <openpojo.version>0.8.13</openpojo.version>
         <slf4j.version>1.7.30</slf4j.version>
         <unitils.version>3.4.6</unitils.version>
@@ -196,7 +196,7 @@
                 <version>${greenmail.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.oracle</groupId>
+                <groupId>com.oracle.ojdbc</groupId>
                 <artifactId>ojdbc8</artifactId>
                 <version>${ojdbc8.version}</version>
             </dependency>
@@ -249,54 +249,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    <repositories>
-        <repository>
-            <id>dc.public.releases</id>
-            <name>Data Conservancy Public Maven Repository (releases)</name>
-            <layout>default</layout>
-            <url>http://maven.dataconservancy.org/public/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>dc.public.snapshots</id>
-            <name>Data Conservancy Public Maven Repository (snapshots)</name>
-            <layout>default</layout>
-            <url>scp://maven.dataconservancy.org/${scp.port}/data/maven-dc/public/snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>dc.private.releases</id>
-            <name>Data Conservancy Private Maven Repository (releases)</name>
-            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>dc.private.snapshots</id>
-            <name>Data Conservancy Private Maven Repository (snapshots)</name>
-            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/snapshots/</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
 
     <distributionManagement>
 
