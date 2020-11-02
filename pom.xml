@@ -250,21 +250,4 @@
         </dependencies>
     </dependencyManagement>
 
-    <distributionManagement>
-
-        <repository>
-            <id>dc.private.releases</id>
-            <name>Data Conservancy Private Maven Repository (releases)</name>
-            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/releases/</url>
-        </repository>
-
-        <snapshotRepository>
-            <id>dc.private.snapshots</id>
-            <name>Data Conservancy Private Maven Repository (snapshots)</name>
-            <url>scp://maven.dataconservancy.org:${scp.port}/data/maven-dc/private/snapshots/</url>
-            <uniqueVersion>false</uniqueVersion>
-        </snapshotRepository>
-
-    </distributionManagement>
-
 </project>
