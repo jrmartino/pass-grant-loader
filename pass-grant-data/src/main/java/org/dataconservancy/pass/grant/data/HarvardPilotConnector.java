@@ -95,7 +95,7 @@ public class HarvardPilotConnector implements GrantConnector {
         if (mode.equals("funder")) {
 
             for (Object localKey : funderNameMap.keySet()) {
-                LOG.debug("Processing funder object ... ");
+                LOG.debug("Processing funder object with localKey {}", localKey);
                 Map<String, String> rowMap = new HashMap<>();
                 rowMap.put(C_PRIMARY_FUNDER_LOCAL_KEY, localKey.toString());
                 rowMap.put(C_PRIMARY_FUNDER_NAME, funderNameMap.get(localKey.toString()));
@@ -108,7 +108,6 @@ public class HarvardPilotConnector implements GrantConnector {
         } else {//"grant" mode is default
             for (Row cells : grantSheet) {
                 if (cells.getRowNum() > 0) {//skip header
-                    LOG.debug("Processing grant record  ...");
 
                     //we only process rows with a Harvard ID
                     String employeeId = stringify(cells.getCell(6));
@@ -144,6 +143,7 @@ public class HarvardPilotConnector implements GrantConnector {
                         rowMap.put(C_GRANT_START_DATE, stringifyDate(cells.getCell(9))); //J: Grant Start Date
                         rowMap.put(C_GRANT_END_DATE, stringifyDate(cells.getCell(10))); //K: Grant End Date
                         resultSet.add(rowMap);
+                        LOG.debug("Added row to result set: {}", rowMap);
                     }
                 }
             }

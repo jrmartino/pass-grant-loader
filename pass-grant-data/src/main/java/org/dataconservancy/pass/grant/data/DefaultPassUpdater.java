@@ -105,7 +105,7 @@ public class DefaultPassUpdater implements PassUpdater{
         //Map and add to it as additional rows add information.
         Map<String, Grant> grantMap = new HashMap<>();
 
-        LOG.info("Processing result set with " + results.size() + " rows");
+        LOG.info("Processing result set with {} rows", results.size() );
         boolean modeChecked = false;
 
         for(Map<String,String> rowMap : results) {
@@ -150,7 +150,7 @@ public class DefaultPassUpdater implements PassUpdater{
 
             //now we know all about our user and funders for this record
             // let's get to the grant proper
-            LOG.debug("Processing grant with localKey " + grantLocalKey);
+            LOG.debug("Processing grant with localKey {}", grantLocalKey);
 
             //if this is the first record for this Grant, it will not be on the Map
             Grant grant;
@@ -270,7 +270,7 @@ public class DefaultPassUpdater implements PassUpdater{
                 }
             }
 
-            LOG.info("Processing result set with " + results.size() + " rows");
+            LOG.info("Processing result set with {} rows", results.size() );
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
             if (rowMap.containsKey(C_UPDATE_TIMESTAMP)) {
@@ -295,7 +295,7 @@ public class DefaultPassUpdater implements PassUpdater{
     private void updateFunders(Collection<Map<String, String>> results) {
 
         boolean modeChecked = false;
-        LOG.info("Processing result set with " + results.size() + " rows");
+        LOG.info("Processing result set with {} rows",  results.size() );
         for (Map<String, String> rowMap : results) {
 
             if (!modeChecked) {
@@ -327,7 +327,7 @@ public class DefaultPassUpdater implements PassUpdater{
             user.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, employeeId).serialize());
         }
         user.getRoles().add(User.Role.SUBMITTER);
-        LOG.debug("Built user with employee ID " + employeeId);
+        LOG.debug("Built user with employee ID {}",  employeeId);
         return user;
     }
 
@@ -346,10 +346,9 @@ public class DefaultPassUpdater implements PassUpdater{
             String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
             fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
             funder.setPolicy(URI.create(fedoraBaseUrl + policy));
-            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
-                    " and Policy " + policy);
+            LOG.debug("Processing Funder with localKey {} and policy {}", funder.getLocalKey(), policy);
         }
-        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
+        LOG.debug("Built Funder with localKey {}", funder.getLocalKey());
 
         return funder;
     }
@@ -365,10 +364,9 @@ public class DefaultPassUpdater implements PassUpdater{
             String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
             fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
             funder.setPolicy(URI.create(fedoraBaseUrl + policy));
-            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
-                    " and Policy " + policy);
+            LOG.debug("Processing Funder with localKey {} and policy {}",funder.getLocalKey(), policy);
         }
-        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
+        LOG.debug("Built Funder with localKey {}", funder.getLocalKey());
 
         return funder;
     }
@@ -462,10 +460,10 @@ public class DefaultPassUpdater implements PassUpdater{
         String fullLocalKey = new Identifier(DOMAIN, GRANT_ID_TYPE, baseLocalKey).serialize();
         systemGrant.setLocalKey(fullLocalKey);
 
-        LOG.debug("Looking for grant with localKey " + fullLocalKey);
+        LOG.debug("Looking for grant with localKey {}", fullLocalKey);
         URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", fullLocalKey);
         if (passGrantURI != null ) {
-            LOG.debug("Found grant with localKey " + fullLocalKey);
+            LOG.debug("Found grant with localKey {}", fullLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
             if (storedGrant == null) {
                 throw new RuntimeException("Could not read Funder object with URI " + passGrantURI);
@@ -474,12 +472,12 @@ public class DefaultPassUpdater implements PassUpdater{
             if ( (updatedGrant = passEntityUtil.update(systemGrant, storedGrant)) != null) {//need to update
                 passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();
-                LOG.debug("Updating grant with local key " + systemGrant.getLocalKey());
+                LOG.debug("Updating grant with local key {}", systemGrant.getLocalKey());
             }
         } else {//don't have a stored Grant for this URI - this one is new to Pass
                 passGrantURI = passClient.createResource(systemGrant);
                 statistics.addGrantsCreated();
-                LOG.debug("Creating grant with local key " + systemGrant.getLocalKey());
+                LOG.debug("Creating grant with local key {}", systemGrant.getLocalKey());
         }
         return passGrantURI;
     }

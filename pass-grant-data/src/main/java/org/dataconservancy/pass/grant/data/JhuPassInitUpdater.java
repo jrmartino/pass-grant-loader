@@ -15,6 +15,9 @@ public class JhuPassInitUpdater extends DefaultPassUpdater {
 
     private static final Logger LOG = LoggerFactory.getLogger(JhuPassInitUpdater.class);
     private static final String DOMAIN = "johnshopkins.edu";
+    private static final String EMPLOYEE_ID_TYPE = "employeeid";
+    private static final String HOPKINS_ID_TYPE = "hopkinsid";
+    private static final String JHED_ID_TYPE = "jhed";
 
     public JhuPassInitUpdater(PassClient passClient)
     {
@@ -48,19 +51,16 @@ public class JhuPassInitUpdater extends DefaultPassUpdater {
         }
         //Build the List of locatorIds - put the most reliable ids first
         if (employeeId != null) {
-            String EMPLOYEE_ID_TYPE = "employeeid";
             user.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, employeeId).serialize());
         }
         if (hopkinsId != null) {
-            String HOPKINS_ID_TYPE = "hopkinsid";
             user.getLocatorIds().add(new Identifier(DOMAIN, HOPKINS_ID_TYPE, hopkinsId).serialize());
         }
         if (jhedId != null) {
-            String JHED_ID_TYPE = "jhed";
             user.getLocatorIds().add(new Identifier(DOMAIN, JHED_ID_TYPE, jhedId).serialize());
         }
         user.getRoles().add(User.Role.SUBMITTER);
-        LOG.debug("Built user with employee ID " + employeeId);
+        LOG.debug("Built user with employee ID {}", employeeId);
         return user;
     }
 

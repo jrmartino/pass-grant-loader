@@ -49,7 +49,7 @@ public class BasicPassUpdater implements PassUpdater{
 
     private String DOMAIN = "default.domain";
 
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultPassUpdater.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BasicPassUpdater.class);
     private String latestUpdateString = "";
 
     private final PassClient passClient;
@@ -111,7 +111,7 @@ public class BasicPassUpdater implements PassUpdater{
         //Map and add to it as additional rows add information.
         Map<String, Grant> grantMap = new HashMap<>();
 
-        LOG.info("Processing result set with " + results.size() + " rows");
+        LOG.info("Processing result set with {} rows", results.size() );
         boolean modeChecked = false;
 
         for(Map<String,String> rowMap : results){
@@ -132,7 +132,7 @@ public class BasicPassUpdater implements PassUpdater{
             String primaryFunderLocalKey = rowMap.get(C_PRIMARY_FUNDER_LOCAL_KEY);
             primaryFunderLocalKey = (primaryFunderLocalKey == null? directFunderLocalKey: primaryFunderLocalKey);
             Grant grant;
-            LOG.debug("Processing grant with localKey " + grantLocalKey);
+            LOG.debug("Processing grant with localKey {}", grantLocalKey);
             //if this is the first record for this Grant, it will not be on the Map
             //we process all data which is common to every record for this grant
             //i.e., everything except the investigator(s)
@@ -250,7 +250,7 @@ public class BasicPassUpdater implements PassUpdater{
                 }
             }
 
-            LOG.info("Processing result set with " + results.size() + " rows");
+            LOG.info("Processing result set with {} rows", results.size() );
             User updatedUser = buildUser(rowMap);
             updateUserInPass(updatedUser);
             if (rowMap.containsKey(C_UPDATE_TIMESTAMP)) {
@@ -275,7 +275,7 @@ public class BasicPassUpdater implements PassUpdater{
     private void updateFunders(Collection<Map<String, String>> results) {
 
         boolean modeChecked = false;
-        LOG.info("Processing result set with " + results.size() + " rows");
+        LOG.info("Processing result set with {} rows", results.size() );
         for (Map<String, String> rowMap : results) {
 
             if (!modeChecked) {
@@ -307,7 +307,7 @@ public class BasicPassUpdater implements PassUpdater{
             user.getLocatorIds().add(new Identifier(DOMAIN, EMPLOYEE_ID_TYPE, employeeId).serialize());
         }
         user.getRoles().add(User.Role.SUBMITTER);
-        LOG.debug("Built user with employee ID " + employeeId);
+        LOG.debug("Built user with employee ID {}", employeeId);
         return user;
     }
 
@@ -326,10 +326,10 @@ public class BasicPassUpdater implements PassUpdater{
             String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
             fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
             funder.setPolicy(URI.create(fedoraBaseUrl + policy));
-            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
+            LOG.debug("Processing Funder with localKey {}", funder.getLocalKey() +
                     " and Policy " + policy);
         }
-        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
+        LOG.debug("Built Funder with localKey {}", funder.getLocalKey());
 
         return funder;
     }
@@ -345,10 +345,9 @@ public class BasicPassUpdater implements PassUpdater{
             String fedoraBaseUrl = System.getProperty("pass.fedora.baseurl");
             fedoraBaseUrl = fedoraBaseUrl.endsWith("/") ? fedoraBaseUrl : fedoraBaseUrl + "/";
             funder.setPolicy(URI.create(fedoraBaseUrl + policy));
-            LOG.info("Processing Funder with localKey " + funder.getLocalKey() +
-                    " and Policy " + policy);
+            LOG.debug("Processing Funder with localKey {} and policy {}", funder.getLocalKey(), policy);
         }
-        LOG.debug("Built Funder with localKey " + funder.getLocalKey());
+        LOG.debug("Built Funder with localKey {}", funder.getLocalKey());
 
         return funder;
     }
@@ -444,26 +443,26 @@ public class BasicPassUpdater implements PassUpdater{
         String fullLocalKey = new Identifier(DOMAIN, GRANT_ID_TYPE, baseLocalKey).serialize();
         systemGrant.setLocalKey(fullLocalKey);
 
-        LOG.debug("Looking for grant with localKey " + fullLocalKey);
+        LOG.debug("Looking for grant with localKey {}", fullLocalKey);
         URI passGrantURI = passClient.findByAttribute(Grant.class, "localKey", fullLocalKey);
         if (passGrantURI != null ) {
-            LOG.debug("Found grant with localKey " + fullLocalKey);
+            LOG.debug("Found grant with localKey {} ", fullLocalKey);
             Grant storedGrant = passClient.readResource(passGrantURI, Grant.class);
             if (storedGrant == null) {
                 throw new RuntimeException("Could not read Funder object with URI " + passGrantURI);
             }
             Grant updatedGrant;
             if ( (updatedGrant = passEntityUtil.update(systemGrant, storedGrant)) != null) {//need to update
-                LOG.debug("Updating grant with localKey " + storedGrant.getLocalKey() + " to localKey " + systemGrant.getLocalKey());
+                LOG.debug("Updating grant with localKey {} to localKey {}", storedGrant.getLocalKey(), systemGrant.getLocalKey());
                 passClient.updateResource(updatedGrant);
                 statistics.addGrantsUpdated();
-                LOG.debug("Updating grant with award number " + systemGrant.getLocalKey());
+                LOG.debug("Updating grant with award number {}", systemGrant.getLocalKey());
             }//if the Pass version is COEUS-equal to our version from the update, we don't have to do anything
             //this can happen if the Grant was updated in COEUS only with information we don't consume here
         } else {//don't have a stored Grant for this URI - this one is new to Pass
             passGrantURI = passClient.createResource(systemGrant);
             statistics.addGrantsCreated();
-            LOG.debug("Creating grant with award number " + systemGrant.getLocalKey());
+            LOG.debug("Creating grant with award number {}", systemGrant.getLocalKey());
         }
         return passGrantURI;
     }

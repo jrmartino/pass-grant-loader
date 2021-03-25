@@ -140,13 +140,13 @@ public class CoeusConnector implements GrantConnector {
                         funderPolicyProperties.stringPropertyNames().contains(directFunderLocalKey)) {
                     rowMap.put(C_DIRECT_FUNDER_POLICY, funderPolicyProperties.getProperty(directFunderLocalKey));
                 }
-                LOG.debug("Record processed: " + rowMap.toString());
+                LOG.debug("Record processed: {}", rowMap );
                 if (!mapList.contains(rowMap)) {
                     mapList.add(rowMap);
                 }
             }
         }
-        LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
+        LOG.info("Retrieved result set from COEUS: {} records processed", mapList.size() );
         return mapList;
     }
 
@@ -210,7 +210,7 @@ public class CoeusConnector implements GrantConnector {
                 if (employeeId != null) {
                     rowMap.put(C_USER_HOPKINS_ID, directoryServiceUtil.getHopkinsIdForEmployeeId(employeeId));
                 }
-                LOG.debug("Record processed: " + rowMap.toString());
+                LOG.debug("Record processed: {}", rowMap);
                 if (!mapList.contains(rowMap)) {
                     mapList.add(rowMap);
                 }
@@ -218,7 +218,7 @@ public class CoeusConnector implements GrantConnector {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LOG.info("Retrieved result set from COEUS: " + mapList.size() + " records processed");
+        LOG.info("Retrieved result set from COEUS: {} records processed", mapList.size() );
         return mapList;
     }
 
@@ -302,7 +302,7 @@ public class CoeusConnector implements GrantConnector {
 
         String queryString = sb.toString();
 
-        LOG.debug("Query string is: " + queryString);
+        LOG.debug("Query string is: {}", queryString);
         return queryString;
     }
 
@@ -327,7 +327,7 @@ public class CoeusConnector implements GrantConnector {
 
         String queryString = sb.toString();
 
-        LOG.debug("Query string is: " + queryString);
+        LOG.debug("Query string is: {}", queryString);
         return queryString;
     }
 
@@ -349,7 +349,7 @@ public class CoeusConnector implements GrantConnector {
         sb.append(")");
         String queryString = sb.toString();
 
-        LOG.debug("Query string is: " + queryString);
+        LOG.debug("Query string is: {} ", queryString);
         return queryString;
 
     }
