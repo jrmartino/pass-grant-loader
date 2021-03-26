@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Johns Hopkins University
+ * Copyright 2018-2021 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package org.dataconservancy.pass.grant.cli;
 
 /**
  * An Exception class to manage the various Exceptions thrown to the {@code CoeusGrantLoaderApp}, which then forwards this single exception
- * type tp the CLI
+ * type to the CLI
  */
 class PassCliException extends Exception {
+    private static final long serialVersionUID = 1L;
+
     PassCliException(String message) {
         super(message);
     }

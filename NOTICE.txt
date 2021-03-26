@@ -1,4 +1,4 @@
-Copyright 2018 Johns Hopkins University
+Copyright 2018-2021 Johns Hopkins University
  
 OA-PASS (Open Access – Public Access Submission System) code is licensed under the Apache License, Version 2.0 (the "License"); you may not use code in this repository except in compliance with the License.
 

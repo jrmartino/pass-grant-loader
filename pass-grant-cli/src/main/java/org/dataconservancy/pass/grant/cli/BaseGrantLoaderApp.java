@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Johns Hopkins University
+ * Copyright 2018-2021 Johns Hopkins University
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,8 +250,8 @@ abstract class BaseGrantLoaderApp {
                  ObjectInputStream in = new ObjectInputStream(fis)
                 ) {
                 resultSet = Collections.unmodifiableList((List<Map<String, String>>) in.readObject());
-            } catch (IOException | ClassNotFoundException ex) {
-                ex.printStackTrace();
+            } catch (IOException | ClassNotFoundException | ClassCastException ex) {
+                throw processException(ERR_DATA_FILE_CANNOT_READ, ex);
             }
         }
 
@@ -419,7 +419,7 @@ abstract class BaseGrantLoaderApp {
     }
 
     /**
-     * This method determines which objects may be uppdated - override in child classes
+     * This method determines which objects may be updated - override in child classes
      * @param s the string for the mode
      * @return whether we support this mode
      */

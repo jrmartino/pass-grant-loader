@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ Copyright 2018 Johns Hopkins University
+  ~ Copyright 2018-2021 Johns Hopkins University
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
   -->
 
 <configuration>
-
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>${COEUS_HOME}/coeus_loader.log</file>
         <append>true</append>
@@ -26,9 +25,25 @@
             </pattern>
         </encoder>
     </appender>
-    <root level="INFO">
-        <appender-ref ref="FILE"/>
-    </root>
+    <if condition='property("log-level").equals("debug")'>
+        <then>
+            <root level="DEBUG">
+                <appender-ref ref="FILE"/>
+            </root>
+        </then>
+    </if>
+    <if condition='property("log-level").equals("info")'>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="FILE"/>
+            </root>
+        </then>
+        <else>
+            <root level="ERROR">
+                <appender-ref ref="FILE"/>
+            </root>
+        </else>
+    </if>
     <logger name="org.dataconservancy.pass" additivity="false">
         <appender-ref ref="FILE"/>
     </logger>

@@ -60,7 +60,7 @@ public class CoeusPassInitEntityUtil extends CoeusPassEntityUtil {
      if (system.getPrimaryFunder() != null? !system.getPrimaryFunder().equals(stored.getPrimaryFunder()) : stored.getPrimaryFunder() != null) return true;
      if (system.getDirectFunder() != null? !system.getDirectFunder().equals(stored.getDirectFunder()) : stored.getDirectFunder() != null) return true;
      if (system.getPi() != null? !system.getPi().equals(stored.getPi()) : stored.getPi() != null) return true;
-     if (system.getCoPis() != null? !new HashSet(system.getCoPis()).equals(new HashSet(stored.getCoPis())): stored.getCoPis() != null) return true;
+     if (system.getCoPis() != null? !new HashSet<URI>(system.getCoPis()).equals(new HashSet<URI>(stored.getCoPis())): stored.getCoPis() != null) return true;
      if (system.getAwardDate() != null? system.getAwardDate().isBefore(stored.getAwardDate()) : stored.getAwardDate() != null) return true;
      if (system.getStartDate() != null? system.getStartDate().isBefore(stored.getStartDate()) : stored.getStartDate() != null) return true;
      if (system.getEndDate() != null? system.getEndDate().isAfter(stored.getEndDate()) : stored.getEndDate() != null) return true;

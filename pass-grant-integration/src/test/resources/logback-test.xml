@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2018 Johns Hopkins University
+  ~ Copyright 2018-2021 Johns Hopkins University
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -23,9 +23,25 @@
             </pattern>
         </encoder>
     </appender>
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
-    </root>
+    <if condition='property("log-level").equals("debug")'>
+        <then>
+            <root level="DEBUG">
+                <appender-ref ref="STDOUT"/>
+            </root>
+        </then>
+    </if>
+    <if condition='property("log-level").equals("info")'>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="STDOUT"/>
+            </root>
+        </then>
+        <else>
+            <root level="ERROR">
+                <appender-ref ref="STDOUT"/>
+            </root>
+        </else>
+    </if>
     <logger name="org.dataconservancy.pass" additivity="false">
         <appender-ref ref="STDOUT"/>
     </logger>
