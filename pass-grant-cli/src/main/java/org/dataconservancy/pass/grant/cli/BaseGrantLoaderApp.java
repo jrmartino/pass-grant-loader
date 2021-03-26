@@ -198,7 +198,7 @@ abstract class BaseGrantLoaderApp {
             }
 
 
-        List<Map<String,String>> resultSet = null;
+        List<Map<String,String>> resultSet;
 
         //now do things;
         if (!action.equals("load")) {//action includes a pull - need to build a result set

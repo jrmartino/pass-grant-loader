@@ -23,7 +23,7 @@
     <groupId>org.dataconservancy.pass</groupId>
     <artifactId>pass-grant-loader</artifactId>
     <packaging>pom</packaging>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
 
     <modules>
         <module>pass-grant-cli</module>
@@ -93,8 +93,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven.compiler.plugin.version}</version>
                     <configuration>
-                        <source>11</source>
-                        <target>11</target>
+                        <source>1.9</source>
+                        <target>1.9</target>
                         <compilerArgument>-Xlint:all</compilerArgument>
                         <showWarnings>true</showWarnings>
                         <showDeprecation>true</showDeprecation>
